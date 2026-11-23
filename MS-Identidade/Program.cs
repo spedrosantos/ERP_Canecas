@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using MS_Identidade.Data;
+using MultiTenancy.Interfaces;
+using MultiTenancy.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +12,10 @@ var connectionString = builder.Configuration
 
 builder.Services.AddDbContext<MasterDbContext>(options =>
     options.UseNpgsql(connectionString));
+
+builder.Services.AddScoped<
+ITenantConnectionResolver,
+TenantConnectionResolver>();
 
 
 // Add services to the container.
