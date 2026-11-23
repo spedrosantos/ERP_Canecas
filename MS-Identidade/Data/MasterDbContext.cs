@@ -10,50 +10,13 @@ public class MasterDbContext : DbContext
     {
     }
 
-    public DbSet<Usuario> Usuarios => Set<Usuario>();
-
     public DbSet<Empresa> Empresas => Set<Empresa>();
-
-    public DbSet<UsuarioEmpresa> UsuariosEmpresas => Set<UsuarioEmpresa>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
-        ConfigurarUsuario(modelBuilder);
         ConfigurarEmpresa(modelBuilder);
-        ConfigurarUsuarioEmpresa(modelBuilder);
-    }
-
-    private static void ConfigurarUsuario(ModelBuilder modelBuilder)
-    {
-        var entity = modelBuilder.Entity<Usuario>();
-
-        entity.ToTable("usuarios");
-
-        entity.HasKey(x => x.Id);
-
-        entity.Property(x => x.Id)
-            .HasColumnName("id")
-            .UseIdentityAlwaysColumn();
-
-        entity.Property(x => x.Nome)
-            .HasColumnName("nome")
-            .HasMaxLength(150)
-            .IsRequired();
-
-        entity.Property(x => x.SenhaHash)
-            .HasColumnName("senha_hash")
-            .HasMaxLength(255)
-            .IsRequired();
-
-        entity.Property(x => x.Ativo)
-            .HasColumnName("ativo")
-            .HasDefaultValue(true);
-
-        entity.Property(x => x.CriadoEm)
-            .HasColumnName("criado_em")
-            .HasDefaultValueSql("NOW()");
     }
 
     private static void ConfigurarEmpresa(ModelBuilder modelBuilder)
@@ -101,47 +64,5 @@ public class MasterDbContext : DbContext
 
         entity.HasIndex(x => x.NomeBanco)
             .IsUnique();
-    }
-
-    private static void ConfigurarUsuarioEmpresa(ModelBuilder modelBuilder)
-    {
-        var entity = modelBuilder.Entity<UsuarioEmpresa>();
-
-        entity.ToTable("usuarios_empresas");
-
-        entity.HasKey(x => new
-        {
-            x.UsuarioId,
-            x.EmpresaId
-        });
-
-        entity.Property(x => x.UsuarioId)
-            .HasColumnName("usuario_id");
-
-        entity.Property(x => x.EmpresaId)
-            .HasColumnName("empresa_id");
-
-        entity.Property(x => x.Perfil)
-            .HasColumnName("perfil")
-            .HasMaxLength(50)
-            .IsRequired();
-
-        entity.Property(x => x.Ativo)
-            .HasColumnName("ativo")
-            .HasDefaultValue(true);
-
-        entity.Property(x => x.CriadoEm)
-            .HasColumnName("criado_em")
-            .HasDefaultValueSql("NOW()");
-
-        entity.HasOne(x => x.Usuario)
-            .WithMany()
-            .HasForeignKey(x => x.UsuarioId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        entity.HasOne(x => x.Empresa)
-            .WithMany()
-            .HasForeignKey(x => x.EmpresaId)
-            .OnDelete(DeleteBehavior.Restrict);
     }
 }
