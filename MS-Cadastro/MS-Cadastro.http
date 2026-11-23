@@ -1,0 +1,6 @@
+@MS_Cadastro_HostAddress = http://localhost:5259
+
+GET {{MS_Cadastro_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
