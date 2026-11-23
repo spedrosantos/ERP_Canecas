@@ -1,4 +1,16 @@
+using Microsoft.EntityFrameworkCore;
+using MS_Identidade.Data;
+
 var builder = WebApplication.CreateBuilder(args);
+
+var connectionString = builder.Configuration
+    .GetConnectionString("MasterConnection")
+    ?? throw new InvalidOperationException(
+        "Connection string MasterConnection não configurada.");
+
+builder.Services.AddDbContext<MasterDbContext>(options =>
+    options.UseNpgsql(connectionString));
+
 
 // Add services to the container.
 
