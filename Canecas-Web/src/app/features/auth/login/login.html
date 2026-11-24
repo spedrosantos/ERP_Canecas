@@ -27,6 +27,7 @@
             inputmode="numeric"
             autocomplete="off"
             formControlName="empresa"
+            [readOnly]="enviando()"
             aria-describedby="estado-empresa"
             [attr.aria-invalid]="(controles.empresa.touched && controles.empresa.invalid) || estadoTema() === 'empresa-invalida'"
           />
@@ -56,6 +57,7 @@
             inputmode="numeric"
             autocomplete="username"
             formControlName="usuario"
+            [readOnly]="enviando()"
             aria-describedby="estado-usuario"
             [attr.aria-invalid]="controles.usuario.touched && controles.usuario.invalid"
           />
@@ -78,6 +80,7 @@
               [type]="senhaVisivel() ? 'text' : 'password'"
               autocomplete="current-password"
               formControlName="senha"
+              [readOnly]="enviando()"
               aria-describedby="estado-senha"
               [attr.aria-invalid]="controles.senha.touched && controles.senha.invalid"
             />
@@ -92,9 +95,18 @@
           </div>
         </div>
 
-        <button class="entrar" type="submit">Entrar</button>
-        @if (envioValidado()) {
-          <p class="feedback envio" role="status">A autenticação ainda não está disponível.</p>
+        <button class="entrar" type="submit" [disabled]="enviando()" [attr.aria-busy]="enviando()">
+          @if (enviando()) {
+            <span class="indicador" aria-hidden="true"></span>
+            Entrando…
+          } @else {
+            Entrar
+          }
+        </button>
+        @if (erroLogin()) {
+          <p class="feedback envio" role="alert">{{ erroLogin() }}</p>
+        } @else if (sessaoExpirada()) {
+          <p class="feedback envio" role="status">Sua sessão expirou. Entre novamente.</p>
         }
       </form>
     </div>

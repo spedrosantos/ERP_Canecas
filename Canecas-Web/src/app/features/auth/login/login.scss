@@ -209,6 +209,10 @@ button:focus-visible {
   &:hover {
     background-color: color-mix(in srgb, var(--destaque) 82%, #101723);
   }
+
+  &:disabled {
+    cursor: wait;
+  }
 }
 
 .envio {
