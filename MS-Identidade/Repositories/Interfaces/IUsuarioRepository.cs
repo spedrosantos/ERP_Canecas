@@ -8,5 +8,9 @@ public interface IUsuarioRepository
 
     Task<Usuario?> ObterPorIdAsync(long id);
 
+    Task<Usuario?> ObterParaAtualizacaoAsync(long id);
+
+    Task SalvarAlteracoesAsync();
+
     Task<List<Usuario>> ListarAsync();
 }

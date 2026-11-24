@@ -89,6 +89,7 @@ builder.Services.AddAuthorization(options =>
     {
         "USUARIO",
         "USUARIO_CADASTRAR",
+        "USUARIO_EDITAR",
         "USUARIO_PERMISSOES"
     })
     {

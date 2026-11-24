@@ -27,4 +27,19 @@ public class PermissaoRepository : IPermissaoRepository
         .AsNoTracking()
         .ToListAsync();
     }
+
+    public async Task<ILookup<long, Feature>> ListarPorUsuariosAtivosAsync()
+    {
+        var permissoes = await (
+            from uf in _context.UsuariosFeatures
+            join usuario in _context.Usuarios on uf.UsuarioId equals usuario.Id
+            join feature in _context.Features on uf.FeatureId equals feature.Id
+            where usuario.Ativo && feature.Ativo
+            select new { uf.UsuarioId, Feature = feature }
+        )
+        .AsNoTracking()
+        .ToListAsync();
+
+        return permissoes.ToLookup(x => x.UsuarioId, x => x.Feature);
+    }
 }

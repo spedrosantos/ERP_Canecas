@@ -47,10 +47,44 @@ public class UsuariosController : ControllerBase
         return StatusCode(StatusCodes.Status201Created, usuario);
     }
 
+    [HttpPut("{id:long}")]
+    [Authorize(Policy = "USUARIO_EDITAR")]
+    public async Task<ActionResult<UsuarioResponseDTO>> Editar(
+        long id, EditarUsuarioDTO dto)
+    {
+        if (!TentarObterEmpresaId(out var empresaId))
+            return Unauthorized();
+
+        var usuario = await _usuarioService.EditarAsync(empresaId, id, dto);
+
+        return usuario is null ? NotFound() : Ok(usuario);
+    }
+
+    [HttpPatch("{id:long}/situacao")]
+    [Authorize(Policy = "USUARIO_EDITAR")]
+    public async Task<ActionResult<UsuarioResponseDTO>> AlterarSituacao(
+        long id, AlterarSituacaoUsuarioDTO dto)
+    {
+        if (!TentarObterEmpresaId(out var empresaId)
+            || !TentarObterId("usuario_id", out var usuarioAutenticadoId))
+            return Unauthorized();
+
+        var (usuario, conflito) = await _usuarioService.AlterarSituacaoAsync(
+            empresaId, usuarioAutenticadoId, id, dto.Ativo.GetValueOrDefault());
+
+        if (conflito is not null)
+            return Conflict(new { mensagem = conflito });
+
+        return usuario is null ? NotFound() : Ok(usuario);
+    }
+
     private bool TentarObterEmpresaId(out long empresaId)
     {
-        var empresaIdClaim = User.FindFirst("empresa_id")?.Value;
+        return TentarObterId("empresa_id", out empresaId);
+    }
 
-        return long.TryParse(empresaIdClaim, out empresaId) && empresaId > 0;
+    private bool TentarObterId(string claim, out long id)
+    {
+        return long.TryParse(User.FindFirst(claim)?.Value, out id) && id > 0;
     }
 }

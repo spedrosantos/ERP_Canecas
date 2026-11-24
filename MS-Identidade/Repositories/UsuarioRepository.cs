@@ -30,6 +30,16 @@ public class UsuarioRepository : IUsuarioRepository
             .FirstOrDefaultAsync(x => x.Id == id);
     }
 
+    public Task<Usuario?> ObterParaAtualizacaoAsync(long id)
+    {
+        return _context.Usuarios.FirstOrDefaultAsync(x => x.Id == id);
+    }
+
+    public async Task SalvarAlteracoesAsync()
+    {
+        await _context.SaveChangesAsync();
+    }
+
     public async Task<List<Usuario>> ListarAsync()
     {
         return await _context.Usuarios

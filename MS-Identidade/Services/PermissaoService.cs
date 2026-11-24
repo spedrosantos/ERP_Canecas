@@ -45,6 +45,13 @@ public class PermissaoService : IPermissaoService
         var features = await permissaoRepository
             .ListarPorUsuarioAsync(usuarioId);
 
+        return PossuiPermissaoEfetiva(features, codigoFeature);
+    }
+
+    internal static bool PossuiPermissaoEfetiva(
+        IEnumerable<Feature> features,
+        string codigoFeature)
+    {
         var feature = features.FirstOrDefault(
             x => x.Codigo == codigoFeature);
 
