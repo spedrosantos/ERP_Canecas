@@ -9,6 +9,7 @@ export const FEATURES = {
   usuarios: 'USUARIO',
   cadastrarUsuario: 'USUARIO_CADASTRAR',
   editarUsuario: 'USUARIO_EDITAR',
+  alterarSenhaUsuario: 'USUARIO_ALTERAR_SENHA',
   permissoes: 'USUARIO_PERMISSOES',
 } as const;
 
@@ -52,7 +53,8 @@ export class FeatureService {
 
   permiteRota(codigo: string): boolean {
     return this.tem(codigo) && (codigo !== FEATURES.usuarios ||
-      this.tem(FEATURES.cadastrarUsuario) || this.tem(FEATURES.editarUsuario));
+      this.tem(FEATURES.cadastrarUsuario) || this.tem(FEATURES.editarUsuario) ||
+      this.tem(FEATURES.alterarSenhaUsuario));
   }
 
   temFilha(codigo: string): boolean {

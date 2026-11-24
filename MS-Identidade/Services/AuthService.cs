@@ -53,4 +53,16 @@ public class AuthService : IAuthService
 
         return usuario;
     }
+
+    public async Task<bool> UsuarioAtivoAsync(long empresaId, long usuarioId)
+    {
+        var empresa = await _empresaRepository.ObterPorIdAsync(empresaId);
+        if (empresa is not { Ativo: true })
+            return false;
+
+        await using var context = _contextFactory.Criar(empresa.NomeBanco);
+        var situacoes = await new UsuarioRepository(context).ListarSituacoesAsync([usuarioId]);
+
+        return situacoes.GetValueOrDefault(usuarioId);
+    }
 }

@@ -9,6 +9,8 @@ public interface IUsuarioService
     Task<UsuarioResponseDTO?> EditarAsync(
         long empresaId, long id, EditarUsuarioDTO dto);
 
+    Task<UsuarioResponseDTO?> AlterarSenhaAsync(long empresaId, long id, string senha);
+
     Task<(UsuarioResponseDTO? Usuario, string? Conflito)> AlterarSituacaoAsync(
         long empresaId, long usuarioAutenticadoId, long id, bool ativo);
 

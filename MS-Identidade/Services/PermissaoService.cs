@@ -82,7 +82,8 @@ public class PermissaoService : IPermissaoService
         await using var context = await CriarContextoAsync(empresaId)
             ?? throw new InvalidOperationException("Empresa inexistente ou inativa.");
 
-        if (await new UsuarioRepository(context).ObterPorIdAsync(usuarioId) is null)
+        var situacoes = await new UsuarioRepository(context).ListarSituacoesAsync([usuarioId]);
+        if (!situacoes.GetValueOrDefault(usuarioId))
             return null;
 
         var features = await new PermissaoRepository(context).ListarAtribuidasAsync(usuarioId);
@@ -96,8 +97,8 @@ public class PermissaoService : IPermissaoService
         if (context is null)
             return null;
 
-        var usuarios = await new UsuarioRepository(context).ListarAsync();
-        if (!usuarios.Any(usuario => usuario.Id == operadorId && usuario.Ativo))
+        var usuarios = await new UsuarioRepository(context).ListarAtivosAsync();
+        if (!usuarios.Any(usuario => usuario.Id == operadorId))
             return null;
 
         var repository = new PermissaoRepository(context);
@@ -141,7 +142,7 @@ public class PermissaoService : IPermissaoService
                 return ResultadoAtualizacaoPermissoes.SemAutoridade;
 
             var situacoes = await new UsuarioRepository(context).ListarSituacoesAsync(usuariosIds);
-            if (situacoes.Count != usuariosIds.Count)
+            if (situacoes.Count != usuariosIds.Count || situacoes.Values.Any(ativo => !ativo))
                 return ResultadoAtualizacaoPermissoes.UsuarioInexistente;
 
             var catalogo = (await repository.ListarCatalogoAsync()).ToDictionary(f => f.Id);
@@ -226,7 +227,7 @@ public class PermissaoService : IPermissaoService
                 return ResultadoAtualizacaoPermissoes.SemAutoridade;
 
             var usuario = await new UsuarioRepository(context).ObterPorIdAsync(usuarioId);
-            if (usuario is null)
+            if (usuario is not { Ativo: true })
                 return ResultadoAtualizacaoPermissoes.UsuarioInexistente;
 
             var catalogo = (await repository.ListarFeaturesAtivasAsync()).ToDictionary(f => f.Id);

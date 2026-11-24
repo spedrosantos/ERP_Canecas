@@ -67,12 +67,29 @@ public class UsuariosController : ControllerBase
     [HttpPut("{id:long}")]
     [Authorize(Policy = "USUARIO_EDITAR")]
     public async Task<ActionResult<UsuarioResponseDTO>> Editar(
-        long id, EditarUsuarioDTO dto)
+        long id, EditarUsuarioDTO dto, [FromServices] IAuthorizationService autorizacao)
     {
         if (!TentarObterEmpresaId(out var empresaId))
             return Unauthorized();
 
+        if (dto.Senha is not null
+            && !(await autorizacao.AuthorizeAsync(User, "USUARIO_ALTERAR_SENHA")).Succeeded)
+            return Forbid();
+
         var usuario = await _usuarioService.EditarAsync(empresaId, id, dto);
+
+        return usuario is null ? NotFound() : Ok(usuario);
+    }
+
+    [HttpPatch("{id:long}/senha")]
+    [Authorize(Policy = "USUARIO_ALTERAR_SENHA")]
+    public async Task<ActionResult<UsuarioResponseDTO>> AlterarSenha(
+        long id, AlterarSenhaUsuarioDTO dto)
+    {
+        if (!TentarObterEmpresaId(out var empresaId))
+            return Unauthorized();
+
+        var usuario = await _usuarioService.AlterarSenhaAsync(empresaId, id, dto.Senha);
 
         return usuario is null ? NotFound() : Ok(usuario);
     }

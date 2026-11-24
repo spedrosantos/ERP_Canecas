@@ -44,7 +44,7 @@
               <th scope="col" class="codigo">Código</th>
               <th scope="col">Nome</th>
               <th scope="col" class="coluna-situacao">Situação</th>
-              @if (podeEditar()) {
+              @if (podeEditar() || podeAlterarSenha()) {
                 <th scope="col" class="coluna-acoes">Ações</th>
               }
             </tr>
@@ -59,9 +59,10 @@
                     {{ usuario.ativo ? 'Ativo' : 'Inativo' }}
                   </span>
                 </td>
-                @if (podeEditar()) {
+                @if (podeEditar() || podeAlterarSenha()) {
                 <td class="coluna-acoes">
                   <div class="acoes">
+                    @if (podeEditar()) {
                     <button type="button" (click)="abrirEditor(editor, usuario)">
                       <svg class="icone icone-acao" aria-hidden="true"><use href="icons/bootstrap-icons.svg#pencil" /></svg>Editar
                     </button>
@@ -69,12 +70,17 @@
                       <svg class="icone icone-acao" aria-hidden="true"><use [attr.href]="'icons/bootstrap-icons.svg#' + (usuario.ativo ? 'dash-circle' : 'plus-circle')" /></svg>
                       {{ usuario.ativo ? 'Desativar' : 'Ativar' }}
                     </button>
+                    } @else {
+                      <button type="button" (click)="abrirEditor(editor, usuario, true)">
+                        <svg class="icone icone-acao" aria-hidden="true"><use href="icons/bootstrap-icons.svg#key" /></svg>Alterar senha
+                      </button>
+                    }
                   </div>
                 </td>
                 }
               </tr>
             } @empty {
-              <tr><td [attr.colspan]="podeEditar() ? 4 : 3" class="estado">Nenhum usuário encontrado.</td></tr>
+              <tr><td [attr.colspan]="podeEditar() || podeAlterarSenha() ? 4 : 3" class="estado">Nenhum usuário encontrado.</td></tr>
             }
           </tbody>
         </table>
@@ -86,7 +92,10 @@
 <dialog #editor aria-labelledby="titulo-editor" (cancel)="cancelarDialogo($event)"
   (close)="formulario.reset()">
   <form [formGroup]="formulario" (ngSubmit)="salvarEditor(editor)" novalidate>
-    <h2 id="titulo-editor">{{ usuarioEmEdicao() ? 'Editar usuário' : 'Novo usuário' }}</h2>
+    <h2 id="titulo-editor">
+      {{ somenteSenha() ? 'Alterar senha de ' + usuarioEmEdicao()?.nome : usuarioEmEdicao() ? 'Editar usuário' : 'Novo usuário' }}
+    </h2>
+    @if (!somenteSenha()) {
     <label>
       Nome
       <input autofocus type="text" autocomplete="name" maxlength="150" formControlName="nome"
@@ -98,11 +107,14 @@
         Informe um nome com até 150 caracteres.
       }
     </div>
+    }
+    @if (exibirSenha()) {
     <div class="campo-senha">
       <label for="usuario-senha">{{ usuarioEmEdicao() ? 'Nova senha' : 'Senha' }}</label>
       <div class="controle-senha">
         <input id="usuario-senha" [type]="senhaVisivel() ? 'text' : 'password'"
           autocomplete="new-password" formControlName="senha" [readOnly]="salvando()"
+          [attr.autofocus]="somenteSenha() ? '' : null"
           aria-describedby="erro-senha"
           [attr.aria-invalid]="formulario.controls.senha.touched && formulario.controls.senha.invalid" />
         <button type="button" (click)="senhaVisivel.update((visivel) => !visivel)"
@@ -149,6 +161,7 @@
           }
         }
       </div>
+    }
     }
     @if (erroModal()) {
       <p class="erro" role="alert">{{ erroModal() }}</p>

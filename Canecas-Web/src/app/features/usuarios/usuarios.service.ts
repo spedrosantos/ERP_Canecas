@@ -20,6 +20,10 @@ export class UsuariosService {
     return this.http.put<Usuario>(`${this.url}/${id}`, dados);
   }
 
+  alterarSenha(id: number, senha: string) {
+    return this.http.patch<Usuario>(`${this.url}/${id}/senha`, { senha });
+  }
+
   alterarSituacao(id: number, ativo: boolean) {
     return this.http.patch<Usuario>(`${this.url}/${id}/situacao`, { ativo });
   }

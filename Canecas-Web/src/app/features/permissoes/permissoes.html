@@ -29,8 +29,8 @@
                   [disabled]="!codigoValido(usuario.id)"
                   (change)="selecionarUsuario(usuario.id, selecionado.checked)" />
                 <span class="nome">{{ usuario.id }} - {{ usuario.nome }}</span>
-                @if (usuario.proprioUsuario || !usuario.ativo) {
-                  <span class="codigo">{{ usuario.proprioUsuario ? 'Você' : 'Inativo' }}</span>
+                @if (usuario.proprioUsuario) {
+                  <span class="codigo">Você</span>
                 }
               </label>
             </li>

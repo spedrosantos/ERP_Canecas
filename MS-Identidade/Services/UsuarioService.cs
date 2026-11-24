@@ -83,6 +83,21 @@ public class UsuarioService : IUsuarioService
         return MapearUsuario(usuario);
     }
 
+    public async Task<UsuarioResponseDTO?> AlterarSenhaAsync(long empresaId, long id, string senha)
+    {
+        await using var context = await CriarContextoAsync(empresaId);
+        var repository = new UsuarioRepository(context);
+        var usuario = await repository.ObterParaAtualizacaoAsync(id);
+
+        if (usuario is null)
+            return null;
+
+        usuario.SenhaHash = _passwordHasher.HashPassword(usuario, senha);
+        await repository.SalvarAlteracoesAsync();
+
+        return MapearUsuario(usuario);
+    }
+
     public async Task<(UsuarioResponseDTO? Usuario, string? Conflito)> AlterarSituacaoAsync(
         long empresaId, long usuarioAutenticadoId, long id, bool ativo)
     {

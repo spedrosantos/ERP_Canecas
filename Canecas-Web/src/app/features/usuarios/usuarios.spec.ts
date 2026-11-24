@@ -72,9 +72,24 @@ describe('Usuários', () => {
     }
 
     tela.querySelector<HTMLButtonElement>('tbody button')!.click();
+    expect(tela.querySelector('#usuario-senha')).toBeNull();
     preencher('[formControlName="nome"]', 'Álvaro Silva');
     const salvar = tela.querySelector<HTMLButtonElement>('form button[type="submit"]')!;
     expect(salvar.disabled).toBe(false);
+    tela.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
+    const edicao = http.expectOne({ method: 'PUT', url: '/api/usuarios/23' });
+    expect(edicao.request.headers.get('Authorization')).toBe('Bearer jwt-teste');
+    expect(edicao.request.body).toEqual({ nome: 'Álvaro Silva' });
+    edicao.flush({ id: 23, nome: 'Álvaro Silva', ativo: true, criadoEm: '2026-01-01' });
+    fixture.detectChanges();
+
+    acesso.set(new Set([
+      FEATURES.usuarios, FEATURES.cadastrarUsuario, FEATURES.editarUsuario, FEATURES.alterarSenhaUsuario,
+    ]));
+    fixture.detectChanges();
+    tela.querySelector<HTMLButtonElement>('tbody button')!.click();
+    const senha = tela.querySelector<HTMLInputElement>('#usuario-senha')!;
+    const confirmarSenha = tela.querySelector<HTMLInputElement>('#usuario-confirmar-senha')!;
     preencher('#usuario-confirmar-senha', 'senha123');
     expect(salvar.disabled).toBe(true);
     preencher('#usuario-senha', 'senha456');
@@ -85,16 +100,6 @@ describe('Usuários', () => {
     preencher('#usuario-senha', '');
     preencher('#usuario-confirmar-senha', '');
     expect(salvar.disabled).toBe(false);
-    tela.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
-    const edicao = http.expectOne({ method: 'PUT', url: '/api/usuarios/23' });
-    expect(edicao.request.headers.get('Authorization')).toBe('Bearer jwt-teste');
-    expect(edicao.request.body).toEqual({ nome: 'Álvaro Silva' });
-    edicao.flush({ id: 23, nome: 'Álvaro Silva', ativo: true, criadoEm: '2026-01-01' });
-    fixture.detectChanges();
-
-    tela.querySelector<HTMLButtonElement>('tbody button')!.click();
-    const senha = tela.querySelector<HTMLInputElement>('#usuario-senha')!;
-    const confirmarSenha = tela.querySelector<HTMLInputElement>('#usuario-confirmar-senha')!;
     tela.querySelector<HTMLButtonElement>('[aria-label="Mostrar senha"]')!.click();
     fixture.detectChanges();
     expect(senha.type).toBe('text');
@@ -131,6 +136,21 @@ describe('Usuários', () => {
     cadastro.flush(null, { status: 403, statusText: 'Forbidden' });
     fixture.detectChanges();
     expect(tela.querySelector('dialog[open] [role="alert"]')?.textContent).toContain('não tem permissão');
+    tela.querySelector<HTMLButtonElement>('dialog[open] .acoes-modal button')!.click();
+
+    acesso.set(new Set([FEATURES.usuarios, FEATURES.alterarSenhaUsuario]));
+    fixture.detectChanges();
+    const alterarSenha = tela.querySelector<HTMLButtonElement>('tbody button')!;
+    expect(alterarSenha.textContent).toContain('Alterar senha');
+    alterarSenha.click();
+    expect(tela.querySelector('[formControlName="nome"]')).toBeNull();
+    preencher('#usuario-senha', 'novaSenha123');
+    preencher('#usuario-confirmar-senha', 'novaSenha123');
+    tela.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
+    const senhaSeparada = http.expectOne({ method: 'PATCH', url: '/api/usuarios/23/senha' });
+    expect(senhaSeparada.request.headers.get('Authorization')).toBe('Bearer jwt-teste');
+    expect(senhaSeparada.request.body).toEqual({ senha: 'novaSenha123' });
+    senhaSeparada.flush({ id: 23, nome: 'Álvaro Silva', ativo: true, criadoEm: '2026-01-01' });
     http.verify();
   });
 });

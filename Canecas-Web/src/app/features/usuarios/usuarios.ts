@@ -55,6 +55,7 @@ export class Usuarios {
 
   protected readonly podeCadastrar = computed(() => this.features.tem(FEATURES.cadastrarUsuario));
   protected readonly podeEditar = computed(() => this.features.tem(FEATURES.editarUsuario));
+  protected readonly podeAlterarSenha = computed(() => this.features.tem(FEATURES.alterarSenhaUsuario));
 
   protected readonly busca = this.fb.control('');
   protected readonly situacao = this.fb.control<FiltroSituacao>('todos');
@@ -79,6 +80,14 @@ export class Usuarios {
   protected readonly erroModal = signal('');
   protected readonly aviso = signal('');
   protected readonly usuarioEmEdicao = signal<Usuario | null>(null);
+  protected readonly somenteSenha = signal(false);
+  protected readonly exibirSenha = computed(() => !this.usuarioEmEdicao() || this.podeAlterarSenha());
+  private readonly podeSalvarEditor = computed(() => {
+    if (this.somenteSenha()) {
+      return this.podeAlterarSenha();
+    }
+    return this.usuarioEmEdicao() ? this.podeEditar() : this.podeCadastrar();
+  });
   protected readonly alvoSituacao = signal<Usuario | null>(null);
   protected readonly senhaVisivel = signal(false);
   protected readonly confirmacaoVisivel = signal(false);
@@ -110,9 +119,12 @@ export class Usuarios {
     effect(() => {
       const editor = this.editor()?.nativeElement;
       const confirmacao = this.confirmacao()?.nativeElement;
-      const podeSalvar = this.usuarioEmEdicao() ? this.podeEditar() : this.podeCadastrar();
-      if (!podeSalvar && editor?.open) {
+      if (!this.podeSalvarEditor() && editor?.open) {
         editor.close();
+      }
+      if (!this.exibirSenha()) {
+        this.formulario.controls.senha.reset();
+        this.formulario.controls.confirmarSenha.reset();
       }
       if (!this.podeEditar() && confirmacao?.open) {
         confirmacao.close();
@@ -136,8 +148,8 @@ export class Usuarios {
       });
   }
 
-  protected abrirEditor(dialogo: HTMLDialogElement, usuario: Usuario | null = null): void {
-    if (!(usuario ? this.podeEditar() : this.podeCadastrar())) {
+  protected abrirEditor(dialogo: HTMLDialogElement, usuario: Usuario | null = null, somenteSenha = false): void {
+    if (!(somenteSenha ? this.podeAlterarSenha() : usuario ? this.podeEditar() : this.podeCadastrar())) {
       return;
     }
 
@@ -146,11 +158,17 @@ export class Usuarios {
     }
 
     this.usuarioEmEdicao.set(usuario);
+    this.somenteSenha.set(somenteSenha);
     this.erroModal.set('');
     this.senhaVisivel.set(false);
     this.confirmacaoVisivel.set(false);
-    const { senha } = this.formulario.controls;
-    if (usuario) {
+    const { nome, senha } = this.formulario.controls;
+    if (somenteSenha) {
+      nome.disable();
+    } else {
+      nome.enable();
+    }
+    if (usuario && !somenteSenha) {
       senha.removeValidators(Validators.required);
     } else {
       senha.addValidators(Validators.required);
@@ -162,7 +180,7 @@ export class Usuarios {
 
   protected salvarEditor(dialogo: HTMLDialogElement): void {
     const usuario = this.usuarioEmEdicao();
-    if (this.salvando() || !(usuario ? this.podeEditar() : this.podeCadastrar())) {
+    if (this.salvando() || !this.podeSalvarEditor()) {
       return;
     }
 
@@ -174,8 +192,12 @@ export class Usuarios {
     const { nome, senha } = this.formulario.getRawValue();
     const dados = { nome: nome.trim() };
     if (usuario) {
-      const edicao = senha ? { ...dados, senha } : dados;
-      this.salvar(dialogo, this.api.editar(usuario.id, edicao), 'Usuário atualizado.');
+      if (this.somenteSenha()) {
+        this.salvar(dialogo, this.api.alterarSenha(usuario.id, senha), 'Senha alterada.');
+      } else {
+        const edicao = senha && this.podeAlterarSenha() ? { ...dados, senha } : dados;
+        this.salvar(dialogo, this.api.editar(usuario.id, edicao), 'Usuário atualizado.');
+      }
     } else {
       this.salvar(dialogo, this.api.cadastrar({ ...dados, senha }), 'Usuário cadastrado.');
     }

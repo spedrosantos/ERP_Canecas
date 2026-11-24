@@ -41,8 +41,9 @@ describe('Permissões em lote', () => {
     const dados = {
       usuarios: [
         { id: 4, nome: 'Álvaro', ativo: true, proprioUsuario: false, featureIds: [10, 11, 13] },
-        { id: 5, nome: 'Bianca', ativo: false, proprioUsuario: false, featureIds: [10, 13] },
+        { id: 5, nome: 'Bianca', ativo: true, proprioUsuario: false, featureIds: [10, 13] },
         { id: 1, nome: 'Operador', ativo: true, proprioUsuario: true, featureIds: [10, 11, 13] },
+        { id: 6, nome: 'Inativo', ativo: false, proprioUsuario: false, featureIds: [10] },
       ],
       features: [
         { id: 10, nome: 'Usuários', codigo: FEATURES.usuarios, idFeaturePai: null },
@@ -55,6 +56,7 @@ describe('Permissões em lote', () => {
     consulta.flush(dados);
     fixture.detectChanges();
     expect(tela.querySelector('.lista')?.textContent).toContain('Operador');
+    expect(tela.querySelector('.lista')?.textContent).not.toContain('Inativo');
     const propriaConta = tela.querySelectorAll<HTMLInputElement>('.lista input')[2];
     expect(propriaConta.disabled).toBe(false);
     propriaConta.click();

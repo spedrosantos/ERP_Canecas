@@ -99,8 +99,8 @@ export class Permissoes {
   protected readonly aviso = signal('');
   protected readonly usuariosFiltrados = computed(() => {
     const termo = normalizar(this.termo());
-    return this.dados()?.usuarios.filter(usuario =>
-      String(usuario.id).includes(termo) || normalizar(usuario.nome).includes(termo),
+    return this.dados()?.usuarios.filter(usuario => usuario.ativo &&
+      (String(usuario.id).includes(termo) || normalizar(usuario.nome).includes(termo)),
     ) ?? [];
   });
   private readonly arvore = computed(() => montarArvore(this.dados()?.features ?? []));
