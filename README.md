@@ -4,7 +4,7 @@
 
 <p><strong>Enterprise Resource Planning Platform</strong></p>
 
-<p>Plataforma ERP modular desenvolvida com C# e .NET, organizada em serviços independentes e preparada para isolamento de dados por empresa.</p>
+<p>Plataforma ERP desenvolvida com C# e .NET, organizada em serviços independentes e com isolamento de dados por empresa.</p>
 
 <p>
   <img src="https://img.shields.io/badge/.NET-10.0-512BD4?style=flat-square&logo=dotnet&logoColor=white" alt=".NET 10" />
@@ -28,170 +28,252 @@
 
 ### Visão geral
 
-O **ERP Canecas** é uma plataforma de gestão empresarial desenvolvida com foco em modularidade, segurança, escalabilidade e separação de responsabilidades.
+O **ERP Canecas** é uma plataforma de gestão empresarial em desenvolvimento, construída com C# e .NET. A solução está organizada em serviços independentes e utiliza PostgreSQL para persistência de dados.
 
-A solução adota uma arquitetura baseada em microserviços, organizando os domínios do sistema em serviços independentes. A infraestrutura também contempla uma estratégia de **Multi-Tenancy com bancos de dados separados por empresa**, permitindo manter os dados operacionais de cada organização isolados.
+A arquitetura adota a estratégia **Database per Tenant**: as informações centrais das empresas ficam em um banco Master, enquanto os dados operacionais e de identidade de cada empresa ficam em um banco próprio. A conexão do tenant é resolvida dinamicamente a partir do cadastro da empresa.
 
-O projeto está em desenvolvimento. Esta documentação descreve a estrutura e os recursos presentes no repositório no estágio atual.
+Neste estágio, o principal serviço funcional é o **MS-Identidade**, responsável pelo login, emissão de tokens JWT, cadastro de usuários e autorização baseada em funcionalidades. O **MS-Cadastro** está no estágio inicial de scaffold do ASP.NET Core e ainda não contém cadastros empresariais implementados.
 
 ### Arquitetura
 
-A solução é composta por serviços ASP.NET Core e uma biblioteca compartilhada para a infraestrutura de Multi-Tenancy.
+O diagrama representa o fluxo atualmente implementado. O MS-Cadastro aparece separado porque ainda não possui integração funcional com os demais componentes.
 
-\`\`\`mermaid
-flowchart TB
+```mermaid
+flowchart LR
     CLIENT["Aplicação cliente"]
-    ID["MS-Identidade"]
-    CAD["MS-Cadastro"]
-    SHARED["Shared.MultiTenancy"]
+
+    subgraph IDENTITY["MS-Identidade"]
+        AUTH["AuthService"]
+        USER["UsuarioService"]
+        FACTORY["TenantContextFactory"]
+    end
 
     MASTER[("PostgreSQL<br/>Master Database")]
-    TENANT[("PostgreSQL<br/>Tenant Database")]
+    RESOLVER["Shared.MultiTenancy<br/>TenantConnectionResolver"]
+    TENANT[("PostgreSQL<br/>Tenant Database<br/>schema identidade")]
 
-    CLIENT --> ID
-    CLIENT --> CAD
-    ID --> MASTER
-    ID --> SHARED
-    SHARED --> TENANT
+    CLIENT --> AUTH
+    CLIENT --> USER
+    AUTH --> MASTER
+    USER --> MASTER
+    AUTH --> FACTORY
+    USER --> FACTORY
+    FACTORY --> RESOLVER
+    RESOLVER --> TENANT
 
-    classDef service fill:#1d4ed8,color:#fff,stroke:#1e40af
-    classDef shared fill:#475569,color:#fff,stroke:#334155
-    classDef database fill:#0f766e,color:#fff,stroke:#115e59
+    subgraph INITIAL["Serviço em scaffold"]
+        CAD["MS-Cadastro<br/>ASP.NET Core template"]
+    end
+```
 
-    class ID,CAD service
-    class SHARED shared
-    class MASTER,TENANT database
-\`\`\`
-
-*O diagrama apresenta a visão conceitual da solução. O MS-Cadastro está em estágio inicial e suas integrações ainda não estão implementadas.*
-
-### Serviços e componentes
+### Componentes
 
 #### MS-Identidade
 
-Responsável pela autenticação, gerenciamento de usuários e autorização de acesso à plataforma.
+Serviço responsável pela autenticação, gerenciamento de usuários e autorização de acesso.
 
-**Recursos implementados:**
+**Autenticação e tokens**
 
-- Autenticação baseada em JSON Web Tokens (JWT).
-- Validação de credenciais e situação do usuário e da empresa.
-- Hash e verificação de senhas com os recursos do ASP.NET Core Identity.
-- Geração de tokens com identificação do usuário e da empresa.
-- Autorização baseada em funcionalidades (*Feature-Based Authorization*).
-- Policies e handler de autorização personalizados.
-- Repositórios e serviços para organização das regras de acesso.
-- Contextos de dados separados para informações centrais e dados do tenant.
+- Login por empresa, usuário e senha.
+- Verificação do status ativo da empresa e do usuário.
+- Verificação de senha com `PasswordHasher<Usuario>` do ASP.NET Core.
+- Emissão de JWT assinado com HMAC-SHA256.
+- Claims de identificação do usuário (`usuario_id`), da empresa (`empresa_id`) e nome (`nome`).
+- Validação de assinatura, emissor, audiência e validade do token.
+- Identificador único do token por meio da claim `jti`.
+
+**Cadastro de usuários**
+
+- Cadastro vinculado à empresa identificada no token.
+- Validação da empresa antes de acessar o banco do tenant.
+- Hash da senha antes da persistência.
+- Retorno dos dados do usuário sem expor o hash da senha.
+- Proteção do endpoint por autenticação e pela policy `USUARIO_CADASTRAR`.
+
+#### Autorização baseada em funcionalidades
+
+O serviço utiliza autorização baseada em funcionalidades (*Feature-Based Authorization*) com Policies do ASP.NET Core e um handler personalizado.
+
+As funcionalidades são representadas pela entidade `Feature`, que possui código, nome, status e referência opcional à funcionalidade pai. A associação entre usuários e funcionalidades é armazenada em `UsuarioFeature`.
+
+A implementação atual verifica se o usuário possui a funcionalidade solicitada ativa e percorre sua cadeia de funcionalidades pai. A autorização depende de a cadeia necessária estar presente entre as funcionalidades ativas atribuídas ao usuário.
+
+Policies configuradas no serviço:
+
+| Código | Finalidade |
+|---|---|
+| `USUARIO` | Funcionalidades relacionadas à gestão de usuários |
+| `USUARIO_CADASTRAR` | Autorizar o cadastro de usuários |
+| `USUARIO_PERMISSOES` | Funcionalidades relacionadas às permissões de usuários |
+
+O `FeatureAuthorizationHandler` obtém os identificadores do usuário e da empresa a partir das claims do JWT e delega a verificação ao `PermissaoService`.
 
 #### MS-Cadastro
 
-Serviço destinado à centralização das operações de cadastro e gerenciamento de informações utilizadas pelos módulos do ERP.
+Projeto ASP.NET Core criado como parte da solução. Atualmente contém a estrutura inicial do serviço e o endpoint de exemplo `WeatherForecast`, gerado pelo template padrão.
 
-Atualmente em fase inicial de desenvolvimento.
+As operações de cadastro empresarial ainda não foram implementadas.
 
 #### Shared.MultiTenancy
 
-Biblioteca compartilhada responsável por componentes de infraestrutura relacionados à resolução de conexões por empresa.
+Biblioteca compartilhada que concentra a resolução de conexões dos bancos dos tenants.
 
-**Responsabilidades:**
+O componente `TenantConnectionResolver` recebe o nome do banco associado à empresa e procura a connection string correspondente na configuração da aplicação. O `TenantContextFactory`, no MS-Identidade, utiliza essa resolução para criar um `TenantDbContext` conectado ao banco selecionado.
 
-- Resolução da conexão do banco de dados do tenant.
-- Integração com PostgreSQL por meio de Npgsql.
-- Compartilhamento de componentes de infraestrutura entre serviços.
+### Persistência e isolamento de dados
 
-### Autenticação e autorização
+A solução utiliza PostgreSQL com bancos separados por empresa.
 
-A autenticação utiliza JWT. A validação dos tokens contempla assinatura, emissor, audiência e período de validade.
-
-O controle de acesso utiliza autorização baseada em funcionalidades. Cada funcionalidade possui um código que pode ser utilizado em uma Policy do ASP.NET Core, permitindo centralizar as regras de autorização.
-
-| Código | Descrição |
+| Banco / contexto | Responsabilidade |
 |---|---|
-| \`USUARIO\` | Acesso às funcionalidades de usuários |
-| \`USUARIO_CADASTRAR\` | Permissão para cadastrar usuários |
-| \`USUARIO_PERMISSOES\` | Gerenciamento de permissões |
+| Master Database | Armazenar o cadastro central das empresas e o nome do banco associado a cada uma |
+| Tenant Database | Armazenar os dados de identidade e as funcionalidades da empresa |
 
-### Multi-Tenancy e persistência
+No banco Master, o `MasterDbContext` mapeia a tabela `empresas`, incluindo razão social, nome fantasia, CNPJ, nome do banco e status. O CNPJ e o nome do banco possuem índices únicos.
 
-A estratégia de persistência utiliza PostgreSQL e separa as informações centrais das empresas dos dados operacionais de cada tenant.
+No banco de cada tenant, o `TenantDbContext` mapeia as tabelas abaixo no schema `identidade`:
 
-| Componente | Responsabilidade |
+| Tabela | Finalidade |
 |---|---|
-| Master Database | Armazena informações centrais das empresas e a identificação de suas bases de dados |
-| Tenant Database | Armazena os dados operacionais de uma empresa |
+| `usuarios` | Dados e hash de senha dos usuários |
+| `features` | Catálogo de funcionalidades e relação hierárquica |
+| `usuarios_features` | Associação entre usuários e funcionalidades |
 
-A resolução da conexão do tenant é realizada pela biblioteca compartilhada \`Shared.MultiTenancy\`. O acesso aos dados utiliza Entity Framework Core e Npgsql.
+O acesso ao Master é feito por `MasterDbContext`. O acesso ao banco da empresa é criado sob demanda por `TenantContextFactory`, utilizando o `TenantConnectionResolver`.
+
+### API disponível
+
+| Método | Rota | Acesso | Descrição |
+|---|---|---|---|
+| POST | `/api/auth/login` | Público | Valida as credenciais e retorna um JWT |
+| POST | `/api/usuarios` | JWT + policy `USUARIO_CADASTRAR` | Cadastra um usuário na empresa do token |
+
+**Dados esperados no login:**
+
+| Campo | Tipo | Descrição |
+|---|---|---|
+| `EmpresaId` | `long` | Identificador da empresa no banco Master |
+| `UsuarioId` | `long` | Identificador do usuário no banco do tenant |
+| `Senha` | `string` | Senha informada pelo usuário |
+
+**Dados esperados no cadastro de usuário:**
+
+| Campo | Tipo | Descrição |
+|---|---|---|
+| `Nome` | `string` | Nome do usuário |
+| `Senha` | `string` | Senha inicial, armazenada como hash |
+
+O login retorna identificadores do usuário e da empresa, nome, token e data de expiração. O cadastro retorna identificador, nome, status e data de criação.
 
 ### Tecnologias
 
-| Tecnologia | Aplicação |
+| Tecnologia | Utilização |
 |---|---|
 | C# | Linguagem principal |
 | .NET 10 | Plataforma de desenvolvimento |
-| ASP.NET Core | Construção de APIs |
+| ASP.NET Core Web API | Construção dos serviços HTTP |
 | PostgreSQL | Banco de dados relacional |
 | Entity Framework Core | Mapeamento objeto-relacional |
-| Npgsql | Integração com PostgreSQL |
-| JWT | Autenticação baseada em tokens |
+| Npgsql | Provedor de acesso ao PostgreSQL |
+| JWT Bearer | Autenticação por token |
+| ASP.NET Core PasswordHasher | Hash e verificação de senhas |
 | Git e GitHub | Versionamento e hospedagem do código |
 
 ### Estrutura do repositório
 
-\`\`\`text
+```text
 ERP_Canecas/
 ├── MS-Identidade/
 │   ├── Authorization/
+│   │   ├── FeatureAuthorizationHandler.cs
+│   │   └── FeatureRequirement.cs
 │   ├── Controllers/
+│   │   ├── AuthController.cs
+│   │   └── UsuariosController.cs
 │   ├── DTOs/
+│   │   ├── Auth/
+│   │   └── Usuarios/
 │   ├── Data/
+│   │   ├── Interfaces/
+│   │   ├── MasterDbContext.cs
+│   │   ├── TenantContextFactory.cs
+│   │   └── TenantDbContext.cs
 │   ├── Entities/
 │   ├── Repositories/
+│   │   └── Interfaces/
 │   ├── Services/
-│   └── Program.cs
+│   │   └── Interfaces/
+│   ├── Program.cs
+│   └── MS-Identidade.csproj
 │
 ├── MS-Cadastro/
 │   ├── Controllers/
-│   └── Program.cs
+│   │   └── WeatherForecastController.cs
+│   ├── Program.cs
+│   └── MS-Cadastro.csproj
 │
 ├── Shared/
 │   └── MultiTenancy/
 │       ├── Interfaces/
-│       └── Services/
+│       ├── Services/
+│       └── MultiTenancy.csproj
 │
 └── ERP_Canecas.sln
-\`\`\`
+```
 
-### Execução local
+### Configuração do ambiente
 
 #### Pré-requisitos
 
-- .NET 10 SDK
-- PostgreSQL
-- Git
+- .NET 10 SDK.
+- PostgreSQL.
+- Git.
 
 #### Clonar o repositório
 
-\`\`\`bash
+```bash
 git clone https://github.com/spedrosantos/ERP_Canecas.git
 cd ERP_Canecas
-\`\`\`
+```
 
-#### Configuração
+#### Configurar as credenciais
 
-Antes de executar o serviço, configure os parâmetros necessários para conexão com o PostgreSQL e autenticação JWT. As configurações devem ser fornecidas por arquivos locais não versionados, User Secrets ou variáveis de ambiente.
+O projeto MS-Identidade possui suporte a User Secrets. Configure as connection strings e a chave JWT localmente, sem incluí-las nos arquivos versionados.
 
-Não armazene credenciais, strings de conexão com senhas ou chaves JWT diretamente no repositório.
+Exemplo para o ambiente local utilizado no desenvolvimento, com PostgreSQL na porta `5433`:
 
-#### Executar o serviço de identidade
+```bash
+dotnet user-secrets set "ConnectionStrings:MasterConnection" "Host=localhost;Port=5433;Database=canecas_erp_master;Username=SEU_USUARIO;Password=SUA_SENHA" --project MS-Identidade
 
-\`\`\`bash
-dotnet run --project MS-Identidade
-\`\`\`
+dotnet user-secrets set "ConnectionStrings:canecas_erp_boracup" "Host=localhost;Port=5433;Database=canecas_erp_boracup;Username=SEU_USUARIO;Password=SUA_SENHA" --project MS-Identidade
 
-O serviço depende das configurações de banco de dados e JWT para inicialização.
+dotnet user-secrets set "Jwt:Key" "SUA_CHAVE_JWT_FORTE" --project MS-Identidade
+```
 
-### Estado do projeto
+A chave de configuração `ConnectionStrings:canecas_erp_boracup` deve corresponder ao valor armazenado em `NomeBanco` no cadastro da empresa. Para cada nova empresa, configure uma connection string cujo nome corresponda ao respectivo banco.
 
-O ERP Canecas está em desenvolvimento. Os serviços possuem diferentes níveis de implementação; portanto, nem todos os componentes descritos na arquitetura conceitual estão disponíveis para execução ou integração nesta etapa.
+O emissor, a audiência e o tempo de expiração do JWT possuem valores padrão em `appsettings.json`. A chave de assinatura deve ser fornecida fora do repositório.
+
+#### Preparar os bancos de dados
+
+O repositório contém os mapeamentos do Entity Framework Core, mas não inclui migrations nem scripts SQL para criação da estrutura. Antes de executar o serviço, os bancos e as tabelas mapeadas pelos contextos devem estar preparados conforme a estrutura definida para o projeto.
+
+#### Restaurar e executar
+
+Na raiz da solução:
+
+```bash
+dotnet restore ERP_Canecas.sln
+dotnet run --project MS-Identidade/MS-Identidade.csproj
+```
+
+O documento OpenAPI é disponibilizado pelo MS-Identidade em ambiente de desenvolvimento.
+
+### Estado atual
+
+O MS-Identidade possui implementação de login, emissão e validação de JWT, cadastro de usuários e autorização baseada em funcionalidades. A resolução dinâmica de conexões por empresa está implementada na biblioteca compartilhada e é utilizada pelo serviço de identidade.
+
+O MS-Cadastro permanece no estágio inicial do template ASP.NET Core. A solução continua em desenvolvimento e os componentes ainda não implementados não são apresentados como funcionalidades disponíveis.
 
 ---
 
@@ -199,98 +281,142 @@ O ERP Canecas está em desenvolvimento. Os serviços possuem diferentes níveis 
 
 ### Overview
 
-**ERP Canecas** is an Enterprise Resource Planning platform developed with a focus on modularity, security, scalability, and separation of concerns.
+**ERP Canecas** is an Enterprise Resource Planning platform under development, built with C# and .NET. The solution is organized into independent services and uses PostgreSQL for data persistence.
 
-The solution follows a microservices-based approach, organizing system domains into independent services. Its infrastructure also includes a **Multi-Tenancy strategy with separate databases per company**, keeping each organization's operational data isolated.
+The architecture follows a **Database per Tenant** strategy: central company information is stored in a Master database, while each company's operational and identity data is stored in its own database. Tenant connections are resolved dynamically using the company's registration data.
 
-The project is currently under development. This documentation describes the repository structure and capabilities available at its current stage.
+At this stage, the main functional service is **MS-Identidade**, responsible for login, JWT issuance, user registration, and feature-based authorization. **MS-Cadastro** is currently at the initial ASP.NET Core scaffold stage and does not yet contain implemented business registration features.
 
 ### Architecture
 
-The solution consists of ASP.NET Core services and a shared library for Multi-Tenancy infrastructure.
+The diagram represents the currently implemented flow. MS-Cadastro is shown separately because it does not yet have functional integrations with the other components.
 
-\`\`\`mermaid
-flowchart TB
+```mermaid
+flowchart LR
     CLIENT["Client application"]
-    ID["MS-Identidade"]
-    CAD["MS-Cadastro"]
-    SHARED["Shared.MultiTenancy"]
+
+    subgraph IDENTITY["MS-Identidade"]
+        AUTH["AuthService"]
+        USER["UsuarioService"]
+        FACTORY["TenantContextFactory"]
+    end
 
     MASTER[("PostgreSQL<br/>Master Database")]
-    TENANT[("PostgreSQL<br/>Tenant Database")]
+    RESOLVER["Shared.MultiTenancy<br/>TenantConnectionResolver"]
+    TENANT[("PostgreSQL<br/>Tenant Database<br/>identidade schema")]
 
-    CLIENT --> ID
-    CLIENT --> CAD
-    ID --> MASTER
-    ID --> SHARED
-    SHARED --> TENANT
+    CLIENT --> AUTH
+    CLIENT --> USER
+    AUTH --> MASTER
+    USER --> MASTER
+    AUTH --> FACTORY
+    USER --> FACTORY
+    FACTORY --> RESOLVER
+    RESOLVER --> TENANT
 
-    classDef service fill:#1d4ed8,color:#fff,stroke:#1e40af
-    classDef shared fill:#475569,color:#fff,stroke:#334155
-    classDef database fill:#0f766e,color:#fff,stroke:#115e59
+    subgraph INITIAL["Service scaffold"]
+        CAD["MS-Cadastro<br/>ASP.NET Core template"]
+    end
+```
 
-    class ID,CAD service
-    class SHARED shared
-    class MASTER,TENANT database
-\`\`\`
-
-*The diagram represents the conceptual solution architecture. MS-Cadastro is at an early development stage, and its integrations have not yet been implemented.*
-
-### Services and components
+### Components
 
 #### MS-Identidade
 
-Responsible for authentication, user management, and platform access authorization.
+Service responsible for authentication, user management, and access authorization.
 
-**Implemented capabilities:**
+**Authentication and tokens**
 
-- JSON Web Token (JWT) authentication.
-- Credential and company/user status validation.
-- Password hashing and verification using ASP.NET Core Identity components.
-- Token generation with user and company identification.
-- Feature-Based Authorization.
-- Custom authorization policies and handlers.
-- Repositories and services for access-rule organization.
-- Separate data contexts for central information and tenant data.
+- Login using company ID, user ID, and password.
+- Validation of the company's and user's active status.
+- Password verification using ASP.NET Core's `PasswordHasher<Usuario>`.
+- HMAC-SHA256 signed JWT issuance.
+- User (`usuario_id`), company (`empresa_id`), and name (`nome`) claims.
+- Token validation for signature, issuer, audience, and lifetime.
+- Unique token identifier through the `jti` claim.
+
+**User registration**
+
+- User registration associated with the company identified by the token.
+- Company validation before accessing the tenant database.
+- Password hashing before persistence.
+- Response containing user data without exposing the password hash.
+- Endpoint protected by authentication and the `USUARIO_CADASTRAR` policy.
+
+#### Feature-based authorization
+
+The service uses *Feature-Based Authorization* through ASP.NET Core Policies and a custom authorization handler.
+
+Features are represented by the `Feature` entity, which contains a code, name, active status, and optional parent-feature reference. The relationship between users and features is stored in `UsuarioFeature`.
+
+The current implementation checks whether the requested feature is actively assigned to the user and traverses its parent-feature chain. Authorization requires the necessary chain to be present among the active features assigned to that user.
+
+Policies configured in the service:
+
+| Code | Purpose |
+|---|---|
+| `USUARIO` | User management features |
+| `USUARIO_CADASTRAR` | Authorize user registration |
+| `USUARIO_PERMISSOES` | User permission management features |
+
+The `FeatureAuthorizationHandler` obtains the user and company identifiers from JWT claims and delegates the permission check to `PermissaoService`.
 
 #### MS-Cadastro
 
-Service intended to centralize registration operations and information management used by ERP modules.
+ASP.NET Core project included in the solution. It currently contains the initial service structure and the `WeatherForecast` sample endpoint generated by the default template.
 
-Currently in its initial development stage.
+Business registration operations have not yet been implemented.
 
 #### Shared.MultiTenancy
 
-Shared library responsible for infrastructure components related to company-specific database connection resolution.
+Shared library that centralizes tenant database connection resolution.
 
-**Responsibilities:**
+The `TenantConnectionResolver` receives the database name associated with a company and retrieves the matching connection string from application configuration. The `TenantContextFactory`, in MS-Identidade, uses this resolver to create a `TenantDbContext` connected to the selected database.
 
-- Tenant database connection resolution.
-- PostgreSQL integration through Npgsql.
-- Shared infrastructure components across services.
+### Data persistence and isolation
 
-### Authentication and authorization
+The solution uses PostgreSQL with separate databases for each company.
 
-Authentication is implemented using JWT. Token validation includes signature, issuer, audience, and expiration checks.
-
-Access control follows a feature-based authorization model. Each feature has a unique code that can be associated with an ASP.NET Core Policy, centralizing authorization rules.
-
-| Code | Description |
+| Database / context | Responsibility |
 |---|---|
-| \`USUARIO\` | Access to user management features |
-| \`USUARIO_CADASTRAR\` | Permission to register users |
-| \`USUARIO_PERMISSOES\` | Permission management |
+| Master Database | Stores the central company registry and the database name associated with each company |
+| Tenant Database | Stores each company's identity data and features |
 
-### Multi-Tenancy and data persistence
+In the Master database, `MasterDbContext` maps the `empresas` table, including legal name, trade name, CNPJ, database name, and status. CNPJ and database name have unique indexes.
 
-The persistence strategy uses PostgreSQL and separates central company information from each tenant's operational data.
+In each tenant database, `TenantDbContext` maps the following tables under the `identidade` schema:
 
-| Component | Responsibility |
+| Table | Purpose |
 |---|---|
-| Master Database | Stores central company information and identifies its database |
-| Tenant Database | Stores a company's operational data |
+| `usuarios` | User data and password hashes |
+| `features` | Feature catalog and hierarchical relationships |
+| `usuarios_features` | Relationship between users and features |
 
-Tenant connection resolution is handled by the shared \`Shared.MultiTenancy\` library. Data access uses Entity Framework Core and Npgsql.
+Master access is provided through `MasterDbContext`. Access to a company's database is created on demand by `TenantContextFactory`, using `TenantConnectionResolver`.
+
+### Available API
+
+| Method | Route | Access | Description |
+|---|---|---|---|
+| POST | `/api/auth/login` | Public | Validates credentials and returns a JWT |
+| POST | `/api/usuarios` | JWT + `USUARIO_CADASTRAR` policy | Registers a user in the company identified by the token |
+
+**Login request fields:**
+
+| Field | Type | Description |
+|---|---|---|
+| `EmpresaId` | `long` | Company identifier in the Master database |
+| `UsuarioId` | `long` | User identifier in the tenant database |
+| `Senha` | `string` | User password |
+
+**User registration request fields:**
+
+| Field | Type | Description |
+|---|---|---|
+| `Nome` | `string` | User name |
+| `Senha` | `string` | Initial password, stored as a hash |
+
+The login response includes the user and company identifiers, name, token, and expiration date. The registration response includes the user identifier, name, status, and creation date.
 
 ### Technology stack
 
@@ -298,78 +424,116 @@ Tenant connection resolution is handled by the shared \`Shared.MultiTenancy\` li
 |---|---|
 | C# | Main programming language |
 | .NET 10 | Development platform |
-| ASP.NET Core | API development |
+| ASP.NET Core Web API | HTTP service development |
 | PostgreSQL | Relational database |
 | Entity Framework Core | Object-relational mapping |
-| Npgsql | PostgreSQL integration |
-| JWT | Token-based authentication |
+| Npgsql | PostgreSQL data provider |
+| JWT Bearer | Token-based authentication |
+| ASP.NET Core PasswordHasher | Password hashing and verification |
 | Git and GitHub | Version control and source code hosting |
 
 ### Repository structure
 
-\`\`\`text
+```text
 ERP_Canecas/
 ├── MS-Identidade/
 │   ├── Authorization/
+│   │   ├── FeatureAuthorizationHandler.cs
+│   │   └── FeatureRequirement.cs
 │   ├── Controllers/
+│   │   ├── AuthController.cs
+│   │   └── UsuariosController.cs
 │   ├── DTOs/
+│   │   ├── Auth/
+│   │   └── Usuarios/
 │   ├── Data/
+│   │   ├── Interfaces/
+│   │   ├── MasterDbContext.cs
+│   │   ├── TenantContextFactory.cs
+│   │   └── TenantDbContext.cs
 │   ├── Entities/
 │   ├── Repositories/
+│   │   └── Interfaces/
 │   ├── Services/
-│   └── Program.cs
+│   │   └── Interfaces/
+│   ├── Program.cs
+│   └── MS-Identidade.csproj
 │
 ├── MS-Cadastro/
 │   ├── Controllers/
-│   └── Program.cs
+│   │   └── WeatherForecastController.cs
+│   ├── Program.cs
+│   └── MS-Cadastro.csproj
 │
 ├── Shared/
 │   └── MultiTenancy/
 │       ├── Interfaces/
-│       └── Services/
+│       ├── Services/
+│       └── MultiTenancy.csproj
 │
 └── ERP_Canecas.sln
-\`\`\`
+```
 
-### Local setup
+### Environment setup
 
 #### Prerequisites
 
-- .NET 10 SDK
-- PostgreSQL
-- Git
+- .NET 10 SDK.
+- PostgreSQL.
+- Git.
 
 #### Clone the repository
 
-\`\`\`bash
+```bash
 git clone https://github.com/spedrosantos/ERP_Canecas.git
 cd ERP_Canecas
-\`\`\`
+```
 
-#### Configuration
+#### Configure credentials
 
-Before running the service, configure the required PostgreSQL connection and JWT authentication settings. Supply configuration through local untracked files, User Secrets, or environment variables.
+The MS-Identidade project supports User Secrets. Configure connection strings and the JWT signing key locally, without adding them to version-controlled files.
 
-Do not commit credentials, connection strings containing passwords, or JWT signing keys to the repository.
+Example for the local development environment, using PostgreSQL on port `5433`:
 
-#### Run the identity service
+```bash
+dotnet user-secrets set "ConnectionStrings:MasterConnection" "Host=localhost;Port=5433;Database=canecas_erp_master;Username=YOUR_USER;Password=YOUR_PASSWORD" --project MS-Identidade
 
-\`\`\`bash
-dotnet run --project MS-Identidade
-\`\`\`
+dotnet user-secrets set "ConnectionStrings:canecas_erp_boracup" "Host=localhost;Port=5433;Database=canecas_erp_boracup;Username=YOUR_USER;Password=YOUR_PASSWORD" --project MS-Identidade
 
-The service requires database and JWT configuration to start.
+dotnet user-secrets set "Jwt:Key" "YOUR_STRONG_JWT_SIGNING_KEY" --project MS-Identidade
+```
 
-### Project status
+The configuration key `ConnectionStrings:canecas_erp_boracup` must match the value stored in `NomeBanco` in the company record. For each additional company, configure a connection string whose name matches that company's database name.
 
-ERP Canecas is under development. Services are at different implementation stages; therefore, not every component shown in the conceptual architecture is currently available for execution or integration.
+The issuer, audience, and token expiration time have default values in `appsettings.json`. The signing key must be supplied outside the repository.
+
+#### Prepare the databases
+
+The repository contains the Entity Framework Core mappings but does not include migrations or SQL scripts for creating the database schema. Before running the service, the databases and tables mapped by the contexts must be provisioned according to the project's database structure.
+
+#### Restore and run
+
+From the solution root:
+
+```bash
+dotnet restore ERP_Canecas.sln
+dotnet run --project MS-Identidade/MS-Identidade.csproj
+```
+
+The OpenAPI document is exposed by MS-Identidade in the Development environment.
+
+### Current status
+
+MS-Identidade implements login, JWT issuance and validation, user registration, and feature-based authorization. Dynamic company-specific connection resolution is implemented in the shared library and used by the identity service.
+
+MS-Cadastro remains at the initial ASP.NET Core template stage. The solution is still under development, and components that have not yet been implemented are not described as available features.
 
 ---
 
 <div align="center">
 
-<p><strong>ERP Canecas</strong></p>
-<p>C# · .NET 10 · PostgreSQL</p>
-<p><a href="https://github.com/spedrosantos">Pedro Santos</a></p>
+<strong>ERP Canecas</strong><br />
+C# · .NET 10 · PostgreSQL<br />
+<a href="https://github.com/spedrosantos">Pedro Santos</a>
 
 </div>
