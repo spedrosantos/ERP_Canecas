@@ -1,0 +1,85 @@
+<div class="estrutura" [class.recolhida]="recolhida()">
+  <aside class="barra-lateral" [class.menu-movel-aberto]="menuMovelAberto()">
+    <header class="identidade">
+      <a class="marca" routerLink="/home" [title]="empresa()" (click)="menuMovelAberto.set(false)">
+        @let logoUrl = tema().logoUrl;
+        @if (logoUrl && logoComErro() !== logoUrl) {
+          <img class="marca-logo" [src]="logoUrl" alt="" (error)="logoComErro.set(logoUrl)" />
+        } @else {
+          <span class="marca-simbolo" aria-hidden="true">{{ empresa().charAt(0) }}</span>
+        }
+        <span class="marca-nome rotulo-menu">{{ empresa() }}</span>
+      </a>
+
+      <button
+        class="controle-menu controle-desktop"
+        type="button"
+        aria-controls="navegacao-principal"
+        [attr.aria-expanded]="!recolhida()"
+        [attr.aria-label]="recolhida() ? 'Expandir menu lateral' : 'Recolher menu lateral'"
+        [title]="recolhida() ? 'Expandir menu lateral' : 'Recolher menu lateral'"
+        (click)="recolhida.update((valor) => !valor)"
+      >
+        <span class="icone-menu" aria-hidden="true"></span>
+      </button>
+      <button
+        class="controle-menu controle-movel"
+        type="button"
+        aria-controls="navegacao-principal"
+        [attr.aria-expanded]="menuMovelAberto()"
+        [attr.aria-label]="menuMovelAberto() ? 'Fechar menu' : 'Abrir menu'"
+        (click)="menuMovelAberto.update((valor) => !valor)"
+      >
+        <span class="icone-menu" aria-hidden="true"></span>
+      </button>
+    </header>
+
+    <div id="navegacao-principal" class="navegacao">
+      <nav aria-label="Menu principal">
+        <a
+          class="item-menu"
+          routerLink="/home"
+          routerLinkActive="item-ativo"
+          ariaCurrentWhenActive="page"
+          title="Início"
+          (click)="menuMovelAberto.set(false)"
+        >
+          <span class="icone-item" aria-hidden="true">⌂</span>
+          <span class="rotulo-menu">Início</span>
+        </a>
+
+        <details class="configuracoes" #configuracoes>
+          <summary
+            class="item-menu"
+            title="Configurações"
+            (click)="expandirConfiguracoes($event, configuracoes)"
+          >
+            <span class="icone-item" aria-hidden="true">⚙</span>
+            <span class="rotulo-menu">Configurações</span>
+          </summary>
+          <ul class="submenu">
+            <li><button type="button" disabled>Cadastro de usuários</button></li>
+            <li><button type="button" disabled>Permissões</button></li>
+          </ul>
+        </details>
+      </nav>
+
+      <div class="conta">
+        @if (auth.usuario(); as usuario) {
+          <div class="usuario" [title]="usuario.nome">
+            <span class="usuario-inicial" aria-hidden="true">{{ usuario.nome.charAt(0) }}</span>
+            <span class="usuario-nome rotulo-menu">{{ usuario.nome }}</span>
+          </div>
+        }
+        <button class="item-menu sair" type="button" title="Sair" (click)="auth.logout()">
+          <span class="icone-item" aria-hidden="true">⇥</span>
+          <span class="rotulo-menu">Sair</span>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="conteudo" id="conteudo-principal">
+    <router-outlet />
+  </main>
+</div>

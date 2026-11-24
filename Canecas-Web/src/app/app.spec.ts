@@ -125,6 +125,22 @@ describe('App', () => {
       expect(router.url).toBe('/home');
       expect(tela.querySelector('h1')?.textContent).toContain('Ana');
       expect(tema.temaAtual().nomeFantasia).toBe('Empresa Exemplo');
+      expect(tela.querySelector('aside header .marca-nome')?.textContent).toBe('Empresa Exemplo');
+      expect(tela.querySelector('aside .usuario-nome')?.textContent).toBe('Ana');
+      expect(tela.querySelector('aside .sair')?.textContent).toContain('Sair');
+      expect(tela.querySelector('nav a')?.getAttribute('aria-current')).toBe('page');
+
+      const controleDesktop = tela.querySelector<HTMLButtonElement>('aside .controle-desktop')!;
+      controleDesktop.click();
+      fixture.detectChanges();
+      expect(controleDesktop.getAttribute('aria-expanded')).toBe('false');
+      expect(tela.querySelector('.estrutura')?.classList.contains('recolhida')).toBe(true);
+
+      const controleMovel = tela.querySelector<HTMLButtonElement>('aside .controle-movel')!;
+      controleMovel.click();
+      fixture.detectChanges();
+      expect(controleMovel.getAttribute('aria-expanded')).toBe('true');
+      expect(tela.querySelector('aside')?.classList.contains('menu-movel-aberto')).toBe(true);
 
       client.get('/api/empresas/1/tema').subscribe();
       const temaPublico = http.expectOne('/api/empresas/1/tema');
