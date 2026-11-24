@@ -12,6 +12,8 @@ using MS_Identidade.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Microsoft.AspNetCore.Authorization;
+using MS_Identidade.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -75,7 +77,28 @@ builder.Services
         };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddScoped<
+    IAuthorizationHandler,
+    FeatureAuthorizationHandler>();
+
+builder.Services.AddAuthorization(options =>
+{
+    foreach (var codigo in new[]
+    {
+        "USUARIO",
+        "USUARIO_CADASTRAR",
+        "USUARIO_PERMISSOES"
+    })
+    {
+        options.AddPolicy(codigo, policy =>
+        {
+            policy.RequireAuthenticatedUser();
+
+            policy.AddRequirements(
+                new FeatureRequirement(codigo));
+        });
+    }
+});
 
 builder.Services.AddScoped<IPermissaoService, PermissaoService>();
 
