@@ -34,3 +34,15 @@ select,
 textarea {
   font: inherit;
 }
+
+.icone {
+  flex: none;
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.125em;
+  fill: currentColor;
+}
+
+.icone-acao {
+  margin-inline-end: 0.375rem;
+}

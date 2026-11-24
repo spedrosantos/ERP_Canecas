@@ -1,0 +1,185 @@
+<section class="pagina" aria-labelledby="titulo-usuarios">
+  <header class="cabecalho">
+    <h1 id="titulo-usuarios">Usuários</h1>
+    <button type="button" class="primario" [disabled]="carregando() || !!erroLista()"
+      (click)="abrirEditor(editor)">
+      <svg class="icone icone-acao" aria-hidden="true"><use href="icons/bootstrap-icons.svg#plus-lg" /></svg>Novo usuário
+    </button>
+  </header>
+
+  <p class="aviso" role="status">{{ aviso() }}</p>
+
+  <div class="painel" [attr.aria-busy]="carregando()">
+    <div class="filtros">
+      <label>
+        Buscar por código ou nome
+        <input type="search" [formControl]="busca" />
+      </label>
+      <label>
+        Situação
+        <select [formControl]="situacao">
+          <option value="todos">Todas</option>
+          <option value="ativos">Ativos</option>
+          <option value="inativos">Inativos</option>
+        </select>
+      </label>
+    </div>
+
+    @if (carregando()) {
+      <p class="estado" role="status">Carregando usuários…</p>
+    } @else if (erroLista()) {
+      <div class="estado">
+        <p class="erro" role="alert">{{ erroLista() }}</p>
+        <button type="button" (click)="carregar()">
+          <svg class="icone icone-acao" aria-hidden="true"><use href="icons/bootstrap-icons.svg#arrow-clockwise" /></svg>Tentar novamente
+        </button>
+      </div>
+    } @else {
+      <div class="rolagem" role="region" aria-label="Tabela de usuários" tabindex="0">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col" class="codigo">Código</th>
+              <th scope="col">Nome</th>
+              <th scope="col" class="coluna-situacao">Situação</th>
+              <th scope="col" class="coluna-acoes">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (usuario of filtrados(); track usuario.id) {
+              <tr>
+                <td class="codigo">{{ usuario.id }}</td>
+                <th scope="row">{{ usuario.nome }}</th>
+                <td class="coluna-situacao">
+                  <span class="situacao" [class.ativa]="usuario.ativo">
+                    {{ usuario.ativo ? 'Ativo' : 'Inativo' }}
+                  </span>
+                </td>
+                <td class="coluna-acoes">
+                  <div class="acoes">
+                    <button type="button" (click)="abrirEditor(editor, usuario)">
+                      <svg class="icone icone-acao" aria-hidden="true"><use href="icons/bootstrap-icons.svg#pencil" /></svg>Editar
+                    </button>
+                    <button type="button" (click)="abrirConfirmacao(confirmacao, usuario)">
+                      <svg class="icone icone-acao" aria-hidden="true"><use [attr.href]="'icons/bootstrap-icons.svg#' + (usuario.ativo ? 'dash-circle' : 'plus-circle')" /></svg>
+                      {{ usuario.ativo ? 'Desativar' : 'Ativar' }}
+                    </button>
+                    <button type="button" disabled title="Gerenciamento de permissões em uma próxima etapa">
+                      <svg class="icone icone-acao" aria-hidden="true"><use href="icons/bootstrap-icons.svg#key" /></svg>Permissões
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="4" class="estado">Nenhum usuário encontrado.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</section>
+
+<dialog #editor aria-labelledby="titulo-editor" (cancel)="cancelarDialogo($event)"
+  (close)="formulario.reset()">
+  <form [formGroup]="formulario" (ngSubmit)="salvarEditor(editor)" novalidate>
+    <h2 id="titulo-editor">{{ usuarioEmEdicao() ? 'Editar usuário' : 'Novo usuário' }}</h2>
+    <label>
+      Nome
+      <input autofocus type="text" autocomplete="name" maxlength="150" formControlName="nome"
+        [readOnly]="salvando()" aria-describedby="erro-nome"
+        [attr.aria-invalid]="formulario.controls.nome.touched && formulario.controls.nome.invalid" />
+    </label>
+    <div id="erro-nome" class="erro">
+      @if (formulario.controls.nome.touched && formulario.controls.nome.invalid) {
+        Informe um nome com até 150 caracteres.
+      }
+    </div>
+    <div class="campo-senha">
+      <label for="usuario-senha">{{ usuarioEmEdicao() ? 'Nova senha' : 'Senha' }}</label>
+      <div class="controle-senha">
+        <input id="usuario-senha" [type]="senhaVisivel() ? 'text' : 'password'"
+          autocomplete="new-password" formControlName="senha" [readOnly]="salvando()"
+          aria-describedby="erro-senha"
+          [attr.aria-invalid]="formulario.controls.senha.touched && formulario.controls.senha.invalid" />
+        <button type="button" (click)="senhaVisivel.update((visivel) => !visivel)"
+          [attr.aria-label]="senhaVisivel() ? 'Ocultar senha' : 'Mostrar senha'"
+          [title]="senhaVisivel() ? 'Ocultar senha' : 'Mostrar senha'">
+          <svg class="icone" aria-hidden="true">
+            <use [attr.href]="'icons/bootstrap-icons.svg#' + (senhaVisivel() ? 'eye-slash' : 'eye')" />
+          </svg>
+        </button>
+      </div>
+    </div>
+    <div id="erro-senha" class="erro">
+      @if (formulario.controls.senha.touched && formulario.controls.senha.invalid) {
+        Informe uma senha válida com pelo menos 8 caracteres.
+      }
+    </div>
+    @if (usuarioEmEdicao()) {
+      @let confirmacao = formulario.controls.confirmarSenha;
+      @let exibirErro = formulario.controls.senha.touched || confirmacao.touched;
+      <div class="campo-senha">
+        <label for="usuario-confirmar-senha">Confirmar nova senha</label>
+        <div class="controle-senha">
+          <input id="usuario-confirmar-senha" [type]="confirmacaoVisivel() ? 'text' : 'password'"
+            autocomplete="new-password" formControlName="confirmarSenha" [readOnly]="salvando()"
+            aria-describedby="erro-confirmacao-senha"
+            [attr.aria-invalid]="exibirErro && (confirmacao.invalid || !!formulario.errors)" />
+          <button type="button" (click)="confirmacaoVisivel.update((visivel) => !visivel)"
+            [attr.aria-label]="confirmacaoVisivel() ? 'Ocultar confirmação de senha' : 'Mostrar confirmação de senha'"
+            [title]="confirmacaoVisivel() ? 'Ocultar confirmação de senha' : 'Mostrar confirmação de senha'">
+            <svg class="icone" aria-hidden="true">
+              <use [attr.href]="'icons/bootstrap-icons.svg#' + (confirmacaoVisivel() ? 'eye-slash' : 'eye')" />
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div id="erro-confirmacao-senha" class="erro">
+        @if (exibirErro) {
+          @if (formulario.hasError('senhasIncompletas')) {
+            Preencha os dois campos de senha.
+          } @else if (confirmacao.hasError('minlength')) {
+            A confirmação deve ter pelo menos 8 caracteres.
+          } @else if (formulario.hasError('senhasDiferentes')) {
+            As senhas devem ser iguais.
+          }
+        }
+      </div>
+    }
+    @if (erroModal()) {
+      <p class="erro" role="alert">{{ erroModal() }}</p>
+    }
+    <div class="acoes-modal">
+      <button type="button" [disabled]="salvando()" (click)="editor.close()">
+        <svg class="icone icone-acao" aria-hidden="true"><use href="icons/bootstrap-icons.svg#x-lg" /></svg>Cancelar
+      </button>
+      <button class="primario" type="submit"
+        [disabled]="salvando() || formulario.controls.senha.invalid || formulario.controls.confirmarSenha.invalid || !!formulario.errors">
+        <svg class="icone icone-acao" aria-hidden="true"><use [attr.href]="'icons/bootstrap-icons.svg#' + (salvando() ? 'three-dots' : 'check-lg')" /></svg>
+        {{ salvando() ? 'Salvando…' : 'Salvar' }}
+      </button>
+    </div>
+  </form>
+</dialog>
+
+<dialog #confirmacao aria-labelledby="titulo-confirmacao" aria-describedby="descricao-confirmacao"
+  (cancel)="cancelarDialogo($event)">
+  <h2 id="titulo-confirmacao">{{ alvoSituacao()?.ativo ? 'Desativar usuário' : 'Ativar usuário' }}</h2>
+  <p id="descricao-confirmacao">
+    {{ alvoSituacao()?.ativo ? 'Desativar' : 'Ativar' }} a conta de <strong>{{ alvoSituacao()?.nome }}</strong>?
+  </p>
+  @if (erroModal()) {
+    <p class="erro" role="alert">{{ erroModal() }}</p>
+  }
+  <div class="acoes-modal">
+    <button autofocus type="button" [disabled]="salvando()" (click)="confirmacao.close()">
+      <svg class="icone icone-acao" aria-hidden="true"><use href="icons/bootstrap-icons.svg#x-lg" /></svg>Cancelar
+    </button>
+    <button class="primario" type="button" [disabled]="salvando()"
+      (click)="confirmarSituacao(confirmacao)">
+      <svg class="icone icone-acao" aria-hidden="true"><use [attr.href]="'icons/bootstrap-icons.svg#' + (salvando() ? 'three-dots' : alvoSituacao()?.ativo ? 'dash-circle' : 'plus-circle')" /></svg>
+      {{ salvando() ? 'Salvando…' : alvoSituacao()?.ativo ? 'Desativar' : 'Ativar' }}
+    </button>
+  </div>
+</dialog>

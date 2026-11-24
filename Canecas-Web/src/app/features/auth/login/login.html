@@ -85,6 +85,7 @@
               [attr.aria-invalid]="controles.senha.touched && controles.senha.invalid"
             />
             <button type="button" class="alternar-senha" (click)="senhaVisivel.set(!senhaVisivel())">
+              <svg class="icone icone-acao" aria-hidden="true"><use [attr.href]="'icons/bootstrap-icons.svg#' + (senhaVisivel() ? 'eye-slash' : 'eye')" /></svg>
               {{ senhaVisivel() ? 'Ocultar senha' : 'Mostrar senha' }}
             </button>
           </div>
@@ -100,7 +101,7 @@
             <span class="indicador" aria-hidden="true"></span>
             Entrando…
           } @else {
-            Entrar
+            <svg class="icone icone-acao" aria-hidden="true"><use href="icons/bootstrap-icons.svg#box-arrow-in-right" /></svg>Entrar
           }
         </button>
         @if (erroLogin()) {

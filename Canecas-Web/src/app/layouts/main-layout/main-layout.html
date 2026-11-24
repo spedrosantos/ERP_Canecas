@@ -20,7 +20,7 @@
         [title]="recolhida() ? 'Expandir menu lateral' : 'Recolher menu lateral'"
         (click)="recolhida.update((valor) => !valor)"
       >
-        <span class="icone-menu" aria-hidden="true"></span>
+        <svg class="icone" aria-hidden="true"><use href="icons/bootstrap-icons.svg#list" /></svg>
       </button>
       <button
         class="controle-menu controle-movel"
@@ -30,7 +30,7 @@
         [attr.aria-label]="menuMovelAberto() ? 'Fechar menu' : 'Abrir menu'"
         (click)="menuMovelAberto.update((valor) => !valor)"
       >
-        <span class="icone-menu" aria-hidden="true"></span>
+        <svg class="icone" aria-hidden="true"><use href="icons/bootstrap-icons.svg#list" /></svg>
       </button>
     </header>
 
@@ -44,7 +44,7 @@
           title="Início"
           (click)="menuMovelAberto.set(false)"
         >
-          <span class="icone-item" aria-hidden="true">⌂</span>
+          <svg class="icone icone-item" aria-hidden="true"><use href="icons/bootstrap-icons.svg#house" /></svg>
           <span class="rotulo-menu">Início</span>
         </a>
 
@@ -54,12 +54,16 @@
             title="Configurações"
             (click)="expandirConfiguracoes($event, configuracoes)"
           >
-            <span class="icone-item" aria-hidden="true">⚙</span>
+            <svg class="icone icone-item" aria-hidden="true"><use href="icons/bootstrap-icons.svg#gear" /></svg>
             <span class="rotulo-menu">Configurações</span>
           </summary>
           <ul class="submenu">
-            <li><button type="button" disabled>Cadastro de usuários</button></li>
-            <li><button type="button" disabled>Permissões</button></li>
+            <li>
+              <a routerLink="/usuarios" routerLinkActive="item-ativo" ariaCurrentWhenActive="page"
+                (click)="menuMovelAberto.set(false)">
+                <svg class="icone icone-acao" aria-hidden="true"><use href="icons/bootstrap-icons.svg#people" /></svg>Usuários
+              </a>
+            </li>
           </ul>
         </details>
       </nav>
@@ -72,7 +76,7 @@
           </div>
         }
         <button class="item-menu sair" type="button" title="Sair" (click)="auth.logout()">
-          <span class="icone-item" aria-hidden="true">⇥</span>
+          <svg class="icone icone-item" aria-hidden="true"><use href="icons/bootstrap-icons.svg#box-arrow-right" /></svg>
           <span class="rotulo-menu">Sair</span>
         </button>
       </div>

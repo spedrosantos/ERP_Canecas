@@ -22,6 +22,10 @@ export const routes: Routes = [
       {
         path: 'home',
         component: Home
+      },
+      {
+        path: 'usuarios',
+        loadComponent: () => import('./features/usuarios/usuarios').then((modulo) => modulo.Usuarios)
       }
     ]
   },
