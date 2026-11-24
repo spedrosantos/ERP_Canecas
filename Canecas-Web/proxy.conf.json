@@ -1,0 +1,5 @@
+{
+  "/api/empresas/**": {
+    "target": "http://localhost:5127"
+  }
+}
