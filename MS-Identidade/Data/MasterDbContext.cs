@@ -11,12 +11,14 @@ public class MasterDbContext : DbContext
     }
 
     public DbSet<Empresa> Empresas => Set<Empresa>();
+    public DbSet<EmpresaTema> EmpresasTemas => Set<EmpresaTema>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
         ConfigurarEmpresa(modelBuilder);
+        ConfigurarEmpresaTema(modelBuilder);
     }
 
     private static void ConfigurarEmpresa(ModelBuilder modelBuilder)
@@ -64,5 +66,53 @@ public class MasterDbContext : DbContext
 
         entity.HasIndex(x => x.NomeBanco)
             .IsUnique();
+    }
+    private static void ConfigurarEmpresaTema(ModelBuilder modelBuilder)
+    {
+        var entity = modelBuilder.Entity<EmpresaTema>();
+
+        entity.ToTable("empresas_temas", "public");
+
+        entity.HasKey(x => x.EmpresaId);
+
+        entity.Property(x => x.EmpresaId)
+            .HasColumnName("empresa_id")
+            .ValueGeneratedNever();
+
+        entity.Property(x => x.CorPrimaria)
+            .HasColumnName("cor_primaria")
+            .HasMaxLength(7)
+            .IsRequired();
+
+        entity.Property(x => x.CorSecundaria)
+            .HasColumnName("cor_secundaria")
+            .HasMaxLength(7)
+            .IsRequired();
+
+        entity.Property(x => x.CorFundo)
+            .HasColumnName("cor_fundo")
+            .HasMaxLength(7)
+            .IsRequired();
+
+        entity.Property(x => x.LogoUrl)
+            .HasColumnName("logo_url")
+            .HasMaxLength(500);
+
+        entity.Property(x => x.FonteTitulo)
+            .HasColumnName("fonte_titulo")
+            .HasMaxLength(100)
+            .HasDefaultValue("Inter")
+            .IsRequired();
+
+        entity.Property(x => x.FonteTexto)
+            .HasColumnName("fonte_texto")
+            .HasMaxLength(100)
+            .HasDefaultValue("Inter")
+            .IsRequired();
+
+        entity.HasOne<Empresa>()
+            .WithOne()
+            .HasForeignKey<EmpresaTema>(x => x.EmpresaId)
+            .OnDelete(DeleteBehavior.NoAction);
     }
 }
