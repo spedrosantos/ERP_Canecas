@@ -5,6 +5,8 @@ using MS_Cadastro.Data;
 using MS_Cadastro.Data.Interfaces;
 using MS_Cadastro.Authorization;
 using MS_Cadastro.Configuration;
+using MS_Cadastro.Services;
+using MS_Cadastro.Services.Interfaces;
 using FeatureAuthorization;
 using MultiTenancy.Interfaces;
 using MultiTenancy.Services;
@@ -19,6 +21,7 @@ builder.Services.AddSingleton(_ => NpgsqlDataSource.Create(masterConnection));
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITenantConnectionResolver, TenantConnectionResolver>();
 builder.Services.AddScoped<ITenantContextFactory, TenantContextFactory>();
+builder.Services.AddScoped<IClienteService, ClienteService>();
 
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("Chave JWT não configurada.");
@@ -45,13 +48,19 @@ builder.Services.AdicionarAutorizacaoPorFeatures(
     builder.Configuration.GetSection("Integracoes:Identidade"), builder.Environment.IsDevelopment());
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy(FeaturesCadastro.Consultar, policy =>
+    foreach (var codigo in new[]
     {
-        policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
-        policy.RequireAuthenticatedUser();
-        policy.AddRequirements(new FeatureRemotaRequirement(
-            FeaturesCadastro.Consultar, JwtBearerDefaults.AuthenticationScheme));
-    });
+        FeaturesCadastro.Consultar, FeaturesCadastro.Cliente,
+        FeaturesCadastro.ClienteCadastrar, FeaturesCadastro.ClienteEditar
+    })
+    {
+        options.AddPolicy(codigo, policy =>
+        {
+            policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
+            policy.RequireAuthenticatedUser();
+            policy.AddRequirements(new FeatureRemotaRequirement(codigo, JwtBearerDefaults.AuthenticationScheme));
+        });
+    }
 });
 
 // Add services to the container.
