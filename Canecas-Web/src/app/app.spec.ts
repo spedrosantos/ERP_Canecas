@@ -28,6 +28,51 @@ describe('App', () => {
     expect(app).toBeTruthy();
   });
 
+  it('restaura a sessão da aba, renova o prazo com atividade real e encerra por inatividade', () => {
+    const chave = 'canecas-erp:sessao';
+    const minuto = 60_000;
+    const http = TestBed.inject(HttpTestingController);
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    const registrar = vi.spyOn(document, 'addEventListener');
+    vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] });
+    try {
+      sessionStorage.setItem(chave, JSON.stringify({
+        usuario: {
+          empresaId: 1, usuarioId: 1, nome: 'Ana', token: 'token-restaurado',
+          expiraEm: new Date(Date.now() + 60 * minuto).toISOString(),
+        },
+        codigoEmpresa: '1',
+        ultimaInteracao: Date.now() - 20 * minuto,
+      }));
+
+      const auth = TestBed.inject(AuthService);
+      expect(auth.obterToken()).toBe('token-restaurado');
+      const tema = TestBed.inject(TemaService);
+      http.expectOne('/api/empresas/1/tema').flush({ ...tema.temaAtual(), nomeFantasia: 'Empresa' });
+
+      vi.advanceTimersByTime(5 * minuto);
+      const atividade = registrar.mock.calls.find(([evento]) => evento === 'pointerdown')?.[1];
+      expect(typeof atividade).toBe('function');
+      (atividade as EventListener)({ isTrusted: true } as Event);
+
+      vi.advanceTimersByTime(29 * minuto);
+      document.dispatchEvent(new Event('pointerdown'));
+      expect(auth.obterToken()).toBe('token-restaurado');
+      vi.advanceTimersByTime(minuto);
+      expect(auth.obterToken()).toBeNull();
+      expect(auth.sessaoExpirada()).toBe(true);
+      expect(sessionStorage.getItem(chave)).toBeNull();
+      expect(tema.temaAtual().nomeFantasia).toBe('Canecas ERP');
+      expect(navegar).toHaveBeenCalledWith('/login', { replaceUrl: true });
+      http.verify();
+    } finally {
+      registrar.mockRestore();
+      navegar.mockRestore();
+      sessionStorage.removeItem(chave);
+      vi.useRealTimers();
+    }
+  });
+
   it('encerra por expiração ou logout e restaura o tema padrão', () => {
     const auth = TestBed.inject(AuthService);
     const tema = TestBed.inject(TemaService);
@@ -123,6 +168,20 @@ describe('App', () => {
       });
       await fixture.whenStable();
       expect(router.url).toBe('/home');
+      vi.advanceTimersByTime(1);
+      const minhasFeatures = http.expectOne('/api/usuarios/me/features');
+      expect(minhasFeatures.request.headers.get('Authorization')).toBe('Bearer token-teste');
+      minhasFeatures.flush([{ id: 10, idFeaturePai: null, codigo: 'USUARIO' }]);
+      fixture.detectChanges();
+      expect(tela.querySelector('.configuracoes')).toBeNull();
+      window.dispatchEvent(new Event('focus'));
+      http.expectOne('/api/usuarios/me/features').flush([
+        { id: 10, idFeaturePai: null, codigo: 'USUARIO' },
+        { id: 11, idFeaturePai: 10, codigo: 'USUARIO_EDITAR' },
+      ]);
+      fixture.detectChanges();
+      expect(tela.querySelector('a[href="/usuarios"]')).not.toBeNull();
+      expect(tela.querySelector('a[href="/permissoes"]')).toBeNull();
       expect(tela.querySelector('h1')?.textContent).toContain('Ana');
       expect(tema.temaAtual().nomeFantasia).toBe('Empresa Exemplo');
       expect(tela.querySelector('aside header .marca-nome')?.textContent).toBe('Empresa Exemplo');
@@ -141,6 +200,45 @@ describe('App', () => {
       fixture.detectChanges();
       expect(controleMovel.getAttribute('aria-expanded')).toBe('true');
       expect(tela.querySelector('aside')?.classList.contains('menu-movel-aberto')).toBe(true);
+
+      const acessoNegado = router.navigateByUrl('/permissoes');
+      const consultarNegado = await vi.waitFor(() => http.expectOne('/api/usuarios/me/features'));
+      const featuresDeUsuarios = [
+        { id: 10, idFeaturePai: null, codigo: 'USUARIO' },
+        { id: 11, idFeaturePai: 10, codigo: 'USUARIO_EDITAR' },
+      ];
+      consultarNegado.flush(featuresDeUsuarios);
+      await acessoNegado;
+      expect(router.url).toBe('/home');
+      http.expectNone('/api/usuarios/permissoes/lote');
+
+      const apenasGerenciamento = [
+        { id: 10, idFeaturePai: null, codigo: 'USUARIO' },
+        { id: 12, idFeaturePai: 10, codigo: 'USUARIO_PERMISSOES' },
+      ];
+      const acessoSemCadastroOuEdicao = router.navigateByUrl('/usuarios');
+      const consultarRestricao = await vi.waitFor(() => http.expectOne('/api/usuarios/me/features'));
+      consultarRestricao.flush(apenasGerenciamento);
+      await acessoSemCadastroOuEdicao;
+      expect(router.url).toBe('/home');
+      http.expectNone({ method: 'GET', url: '/api/usuarios' });
+      fixture.detectChanges();
+      expect(tela.querySelector('a[href="/usuarios"]')).toBeNull();
+      expect(tela.querySelector('a[href="/permissoes"]')).not.toBeNull();
+
+      const acessoUsuarios = router.navigateByUrl('/usuarios');
+      const consultarUsuarios = await vi.waitFor(() => http.expectOne('/api/usuarios/me/features'));
+      consultarUsuarios.flush(featuresDeUsuarios);
+      await acessoUsuarios;
+      http.expectOne({ method: 'GET', url: '/api/usuarios' }).flush([]);
+      expect(router.url).toBe('/usuarios');
+
+      vi.advanceTimersByTime(30_000);
+      http.expectOne('/api/usuarios/me/features').flush(apenasGerenciamento);
+      await fixture.whenStable();
+      expect(router.url).toBe('/home');
+      expect(tela.querySelector('a[href="/usuarios"]')).toBeNull();
+      expect(tela.querySelector('a[href="/permissoes"]')).not.toBeNull();
 
       client.get('/api/empresas/1/tema').subscribe();
       const temaPublico = http.expectOne('/api/empresas/1/tema');

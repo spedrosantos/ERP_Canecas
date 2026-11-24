@@ -7,7 +7,15 @@ import { AuthService } from '../services/auth.service';
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
   // Somente rotas protegidas conhecidas, usando URLs relativas da aplicação.
   const caminho = request.url.split('?', 1)[0];
-  if (request.method !== 'POST' || !/^\/api\/usuarios\/?$/i.test(caminho)) {
+  const protegido =
+    ((request.method === 'GET' || request.method === 'POST') && /^\/api\/usuarios\/?$/i.test(caminho)) ||
+    ((request.method === 'GET' || request.method === 'PUT') &&
+      /^\/api\/usuarios\/permissoes\/lote\/?$/i.test(caminho)) ||
+    (request.method === 'GET' && /^\/api\/usuarios\/me\/features\/?$/i.test(caminho)) ||
+    (request.method === 'PUT' && /^\/api\/usuarios\/\d+\/?$/i.test(caminho)) ||
+    (request.method === 'PATCH' && /^\/api\/usuarios\/\d+\/(?:situacao|senha)\/?$/i.test(caminho));
+
+  if (!protegido) {
     return next(request);
   }
 

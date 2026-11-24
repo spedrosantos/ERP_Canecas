@@ -77,6 +77,23 @@ builder.Services
 
             ClockSkew = TimeSpan.Zero
         };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async context =>
+            {
+                var principal = context.Principal;
+                if (!long.TryParse(principal?.FindFirst("empresa_id")?.Value, out var empresaId)
+                    || empresaId <= 0
+                    || !long.TryParse(principal?.FindFirst("usuario_id")?.Value, out var usuarioId)
+                    || usuarioId <= 0
+                    || !await context.HttpContext.RequestServices.GetRequiredService<IAuthService>()
+                        .UsuarioAtivoAsync(empresaId, usuarioId))
+                {
+                    context.Fail("Usuário ou empresa indisponível.");
+                }
+            }
+        };
     });
 
 builder.Services.AddScoped<
@@ -89,6 +106,8 @@ builder.Services.AddAuthorization(options =>
     {
         "USUARIO",
         "USUARIO_CADASTRAR",
+        "USUARIO_EDITAR",
+        "USUARIO_ALTERAR_SENHA",
         "USUARIO_PERMISSOES"
     })
     {
@@ -100,6 +119,13 @@ builder.Services.AddAuthorization(options =>
                 new FeatureRequirement(codigo));
         });
     }
+
+    options.AddPolicy("USUARIO_ACESSAR", policy =>
+    {
+        policy.RequireAuthenticatedUser();
+        policy.AddRequirements(
+            new FeatureRequirement("USUARIO", "USUARIO_CADASTRAR", "USUARIO_EDITAR", "USUARIO_ALTERAR_SENHA"));
+    });
 });
 
 builder.Services.AddScoped<IPermissaoService, PermissaoService>();

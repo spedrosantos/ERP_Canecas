@@ -30,11 +30,37 @@ public class UsuarioRepository : IUsuarioRepository
             .FirstOrDefaultAsync(x => x.Id == id);
     }
 
+    public Task<Usuario?> ObterParaAtualizacaoAsync(long id)
+    {
+        return _context.Usuarios.FirstOrDefaultAsync(x => x.Id == id);
+    }
+
+    public async Task SalvarAlteracoesAsync()
+    {
+        await _context.SaveChangesAsync();
+    }
+
     public async Task<List<Usuario>> ListarAsync()
     {
         return await _context.Usuarios
             .AsNoTracking()
             .OrderBy(x => x.Nome)
             .ToListAsync();
+    }
+
+    public Task<List<Usuario>> ListarAtivosAsync()
+    {
+        return _context.Usuarios.AsNoTracking()
+            .Where(usuario => usuario.Ativo)
+            .OrderBy(usuario => usuario.Nome)
+            .ToListAsync();
+    }
+
+    public Task<Dictionary<long, bool>> ListarSituacoesAsync(IReadOnlyCollection<long> ids)
+    {
+        return _context.Usuarios.AsNoTracking()
+            .Where(usuario => ids.Contains(usuario.Id))
+            .Select(usuario => new { usuario.Id, usuario.Ativo })
+            .ToDictionaryAsync(usuario => usuario.Id, usuario => usuario.Ativo);
     }
 }

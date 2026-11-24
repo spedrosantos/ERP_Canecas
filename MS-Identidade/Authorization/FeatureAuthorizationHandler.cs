@@ -35,11 +35,20 @@ public class FeatureAuthorizationHandler
             || usuarioId <= 0)
             return;
 
-        var permitido = await _permissaoService
-            .PossuiPermissaoAsync(
-                empresaId,
-                usuarioId,
-                requirement.CodigoFeature);
+        bool permitido;
+        if (requirement.Alternativas.Count == 0)
+        {
+            permitido = await _permissaoService.PossuiPermissaoAsync(
+                empresaId, usuarioId, requirement.CodigoFeature);
+        }
+        else
+        {
+            var efetivas = await _permissaoService.ListarEfetivasAsync(empresaId, usuarioId);
+            var codigos = efetivas?.Select(feature => feature.Codigo).ToHashSet();
+            permitido = codigos is not null
+                && codigos.Contains(requirement.CodigoFeature)
+                && requirement.Alternativas.Any(codigos.Contains);
+        }
 
         if (permitido)
             context.Succeed(requirement);
