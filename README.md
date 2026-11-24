@@ -1,26 +1,32 @@
 <div align="center">
 
-# ERP Canecas
+<h1>ERP Canecas</h1>
 
-**Enterprise Resource Planning Platform**
+<p><strong>Enterprise Resource Planning Platform</strong></p>
 
-Plataforma ERP modular desenvolvida com C# e .NET, organizada em serviços independentes e preparada para isolamento de dados por empresa.
+<p>Plataforma ERP modular desenvolvida com C# e .NET, organizada em serviços independentes e preparada para isolamento de dados por empresa.</p>
 
-[![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?style=flat-square&logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
-[![C#](https://img.shields.io/badge/C%23-Backend-239120?style=flat-square&logo=csharp&logoColor=white)](https://learn.microsoft.com/dotnet/csharp/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-4169E1?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-[![Architecture](https://img.shields.io/badge/Architecture-Microservices-2563EB?style=flat-square)]()
-[![Status](https://img.shields.io/badge/Status-In%20Development-D97706?style=flat-square)]()
+<p>
+  <img src="https://img.shields.io/badge/.NET-10.0-512BD4?style=flat-square&logo=dotnet&logoColor=white" alt=".NET 10" />
+  <img src="https://img.shields.io/badge/C%23-Backend-239120?style=flat-square&logo=csharp&logoColor=white" alt="C sharp" />
+  <img src="https://img.shields.io/badge/PostgreSQL-Database-4169E1?style=flat-square&logo=postgresql&logoColor=white" alt="PostgreSQL" />
+  <img src="https://img.shields.io/badge/Architecture-Microservices-2563EB?style=flat-square" alt="Microservices architecture" />
+  <img src="https://img.shields.io/badge/Status-In%20Development-D97706?style=flat-square" alt="In development" />
+</p>
 
-[Português](#português) · [English](#english)
+<p>
+  <a href="#português">Português</a>
+  &nbsp;|&nbsp;
+  <a href="#english">English</a>
+</p>
 
 </div>
 
 ---
 
-# Português
+## Português
 
-## Visão geral
+### Visão geral
 
 O **ERP Canecas** é uma plataforma de gestão empresarial desenvolvida com foco em modularidade, segurança, escalabilidade e separação de responsabilidades.
 
@@ -28,7 +34,7 @@ A solução adota uma arquitetura baseada em microserviços, organizando os dom�
 
 O projeto está em desenvolvimento. Esta documentação descreve a estrutura e os recursos presentes no repositório no estágio atual.
 
-## Arquitetura
+### Arquitetura
 
 A solução é composta por serviços ASP.NET Core e uma biblioteca compartilhada para a infraestrutura de Multi-Tenancy.
 
@@ -59,9 +65,9 @@ flowchart TB
 
 *O diagrama apresenta a visão conceitual da solução. O MS-Cadastro está em estágio inicial e suas integrações ainda não estão implementadas.*
 
-## Serviços e componentes
+### Serviços e componentes
 
-### MS-Identidade
+#### MS-Identidade
 
 Responsável pela autenticação, gerenciamento de usuários e autorização de acesso à plataforma.
 
@@ -76,13 +82,13 @@ Responsável pela autenticação, gerenciamento de usuários e autorização de 
 - Repositórios e serviços para organização das regras de acesso.
 - Contextos de dados separados para informações centrais e dados do tenant.
 
-### MS-Cadastro
+#### MS-Cadastro
 
 Serviço destinado à centralização das operações de cadastro e gerenciamento de informações utilizadas pelos módulos do ERP.
 
 Atualmente em fase inicial de desenvolvimento.
 
-### Shared.MultiTenancy
+#### Shared.MultiTenancy
 
 Biblioteca compartilhada responsável por componentes de infraestrutura relacionados à resolução de conexões por empresa.
 
@@ -92,7 +98,7 @@ Biblioteca compartilhada responsável por componentes de infraestrutura relacion
 - Integração com PostgreSQL por meio de Npgsql.
 - Compartilhamento de componentes de infraestrutura entre serviços.
 
-## Autenticação e autorização
+### Autenticação e autorização
 
 A autenticação utiliza JWT. A validação dos tokens contempla assinatura, emissor, audiência e período de validade.
 
@@ -104,7 +110,7 @@ O controle de acesso utiliza autorização baseada em funcionalidades. Cada func
 | \`USUARIO_CADASTRAR\` | Permissão para cadastrar usuários |
 | \`USUARIO_PERMISSOES\` | Gerenciamento de permissões |
 
-## Multi-Tenancy e persistência
+### Multi-Tenancy e persistência
 
 A estratégia de persistência utiliza PostgreSQL e separa as informações centrais das empresas dos dados operacionais de cada tenant.
 
@@ -115,7 +121,7 @@ A estratégia de persistência utiliza PostgreSQL e separa as informações cent
 
 A resolução da conexão do tenant é realizada pela biblioteca compartilhada \`Shared.MultiTenancy\`. O acesso aos dados utiliza Entity Framework Core e Npgsql.
 
-## Tecnologias
+### Tecnologias
 
 | Tecnologia | Aplicação |
 |---|---|
@@ -128,7 +134,7 @@ A resolução da conexão do tenant é realizada pela biblioteca compartilhada \
 | JWT | Autenticação baseada em tokens |
 | Git e GitHub | Versionamento e hospedagem do código |
 
-## Estrutura do repositório
+### Estrutura do repositório
 
 \`\`\`text
 ERP_Canecas/
@@ -154,28 +160,28 @@ ERP_Canecas/
 └── ERP_Canecas.sln
 \`\`\`
 
-## Execução local
+### Execução local
 
-### Pré-requisitos
+#### Pré-requisitos
 
 - .NET 10 SDK
 - PostgreSQL
 - Git
 
-### Clonar o repositório
+#### Clonar o repositório
 
 \`\`\`bash
 git clone https://github.com/spedrosantos/ERP_Canecas.git
 cd ERP_Canecas
 \`\`\`
 
-### Configuração
+#### Configuração
 
 Antes de executar o serviço, configure os parâmetros necessários para conexão com o PostgreSQL e autenticação JWT. As configurações devem ser fornecidas por arquivos locais não versionados, User Secrets ou variáveis de ambiente.
 
 Não armazene credenciais, strings de conexão com senhas ou chaves JWT diretamente no repositório.
 
-### Executar o serviço de identidade
+#### Executar o serviço de identidade
 
 \`\`\`bash
 dotnet run --project MS-Identidade
@@ -183,15 +189,15 @@ dotnet run --project MS-Identidade
 
 O serviço depende das configurações de banco de dados e JWT para inicialização.
 
-## Estado do projeto
+### Estado do projeto
 
 O ERP Canecas está em desenvolvimento. Os serviços possuem diferentes níveis de implementação; portanto, nem todos os componentes descritos na arquitetura conceitual estão disponíveis para execução ou integração nesta etapa.
 
 ---
 
-# English
+## English
 
-## Overview
+### Overview
 
 **ERP Canecas** is an Enterprise Resource Planning platform developed with a focus on modularity, security, scalability, and separation of concerns.
 
@@ -199,7 +205,7 @@ The solution follows a microservices-based approach, organizing system domains i
 
 The project is currently under development. This documentation describes the repository structure and capabilities available at its current stage.
 
-## Architecture
+### Architecture
 
 The solution consists of ASP.NET Core services and a shared library for Multi-Tenancy infrastructure.
 
@@ -230,9 +236,9 @@ flowchart TB
 
 *The diagram represents the conceptual solution architecture. MS-Cadastro is at an early development stage, and its integrations have not yet been implemented.*
 
-## Services and components
+### Services and components
 
-### MS-Identidade
+#### MS-Identidade
 
 Responsible for authentication, user management, and platform access authorization.
 
@@ -247,13 +253,13 @@ Responsible for authentication, user management, and platform access authorizati
 - Repositories and services for access-rule organization.
 - Separate data contexts for central information and tenant data.
 
-### MS-Cadastro
+#### MS-Cadastro
 
 Service intended to centralize registration operations and information management used by ERP modules.
 
 Currently in its initial development stage.
 
-### Shared.MultiTenancy
+#### Shared.MultiTenancy
 
 Shared library responsible for infrastructure components related to company-specific database connection resolution.
 
@@ -263,7 +269,7 @@ Shared library responsible for infrastructure components related to company-spec
 - PostgreSQL integration through Npgsql.
 - Shared infrastructure components across services.
 
-## Authentication and authorization
+### Authentication and authorization
 
 Authentication is implemented using JWT. Token validation includes signature, issuer, audience, and expiration checks.
 
@@ -275,7 +281,7 @@ Access control follows a feature-based authorization model. Each feature has a u
 | \`USUARIO_CADASTRAR\` | Permission to register users |
 | \`USUARIO_PERMISSOES\` | Permission management |
 
-## Multi-Tenancy and data persistence
+### Multi-Tenancy and data persistence
 
 The persistence strategy uses PostgreSQL and separates central company information from each tenant's operational data.
 
@@ -286,7 +292,7 @@ The persistence strategy uses PostgreSQL and separates central company informati
 
 Tenant connection resolution is handled by the shared \`Shared.MultiTenancy\` library. Data access uses Entity Framework Core and Npgsql.
 
-## Technology stack
+### Technology stack
 
 | Technology | Purpose |
 |---|---|
@@ -299,7 +305,7 @@ Tenant connection resolution is handled by the shared \`Shared.MultiTenancy\` li
 | JWT | Token-based authentication |
 | Git and GitHub | Version control and source code hosting |
 
-## Repository structure
+### Repository structure
 
 \`\`\`text
 ERP_Canecas/
@@ -325,28 +331,28 @@ ERP_Canecas/
 └── ERP_Canecas.sln
 \`\`\`
 
-## Local setup
+### Local setup
 
-### Prerequisites
+#### Prerequisites
 
 - .NET 10 SDK
 - PostgreSQL
 - Git
 
-### Clone the repository
+#### Clone the repository
 
 \`\`\`bash
 git clone https://github.com/spedrosantos/ERP_Canecas.git
 cd ERP_Canecas
 \`\`\`
 
-### Configuration
+#### Configuration
 
 Before running the service, configure the required PostgreSQL connection and JWT authentication settings. Supply configuration through local untracked files, User Secrets, or environment variables.
 
 Do not commit credentials, connection strings containing passwords, or JWT signing keys to the repository.
 
-### Run the identity service
+#### Run the identity service
 
 \`\`\`bash
 dotnet run --project MS-Identidade
@@ -354,7 +360,7 @@ dotnet run --project MS-Identidade
 
 The service requires database and JWT configuration to start.
 
-## Project status
+### Project status
 
 ERP Canecas is under development. Services are at different implementation stages; therefore, not every component shown in the conceptual architecture is currently available for execution or integration.
 
@@ -362,10 +368,8 @@ ERP Canecas is under development. Services are at different implementation stage
 
 <div align="center">
 
-**ERP Canecas**
-
-C# · .NET 10 · PostgreSQL
-
-[Pedro Santos](https://github.com/spedrosantos)
+<p><strong>ERP Canecas</strong></p>
+<p>C# · .NET 10 · PostgreSQL</p>
+<p><a href="https://github.com/spedrosantos">Pedro Santos</a></p>
 
 </div>
