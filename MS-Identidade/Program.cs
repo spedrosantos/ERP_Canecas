@@ -37,6 +37,8 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 builder.Services.AddScoped<IEmpresaRepository, EmpresaRepository>();
+builder.Services.AddScoped<IEmpresaTemaRepository, EmpresaTemaRepository>();
+builder.Services.AddScoped<IEmpresaTemaService, EmpresaTemaService>();
 
 builder.Services.AddScoped<
     ITenantContextFactory,
