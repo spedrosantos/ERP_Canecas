@@ -4,6 +4,7 @@ using MultiTenancy.Interfaces;
 using MultiTenancy.Services;
 using MS_Identidade.Repositories;
 using MS_Identidade.Repositories.Interfaces;
+using MS_Identidade.Data.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +28,10 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 builder.Services.AddScoped<IEmpresaRepository, EmpresaRepository>();
+
+builder.Services.AddScoped<
+    ITenantContextFactory,
+    TenantContextFactory>();
 
 var app = builder.Build();
 
