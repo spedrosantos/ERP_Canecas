@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MS_Identidade.DTOs.Usuarios;
@@ -32,6 +33,21 @@ public class UsuariosController : ControllerBase
         var features = await _permissaoService.ListarEfetivasAsync(empresaId, usuarioId);
 
         return features is null ? Unauthorized() : Ok(features);
+    }
+
+    [HttpGet("me/features/verificar")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+    public async Task<IActionResult> VerificarMinhaFeature(
+        [FromQuery, Required, StringLength(100)] string codigo)
+    {
+        if (!TentarObterEmpresaId(out var empresaId)
+            || !TentarObterId("usuario_id", out var usuarioId))
+            return Unauthorized();
+
+        return await _permissaoService.PossuiPermissaoAsync(empresaId, usuarioId, codigo)
+            ? NoContent()
+            : Forbid();
     }
 
     [HttpGet]

@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Shared\FeatureAuthorization\FeatureAuthorization.csproj" />
     <ProjectReference Include="..\Shared\MultiTenancy\MultiTenancy.csproj" />
   </ItemGroup>
 </Project>

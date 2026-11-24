@@ -1,11 +1,11 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using MS_Cadastro.Data;
 using MS_Cadastro.Data.Interfaces;
 using MS_Cadastro.Authorization;
 using MS_Cadastro.Configuration;
+using FeatureAuthorization;
 using MultiTenancy.Interfaces;
 using MultiTenancy.Services;
 using Npgsql;
@@ -40,15 +40,17 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-builder.Services.AdicionarIntegracoesHttp(builder.Configuration, builder.Environment.IsDevelopment());
-builder.Services.AddScoped<IAuthorizationHandler, ConsultaCadastralAuthorizationHandler>();
+builder.Services.AdicionarIntegracoesHttp(builder.Configuration);
+builder.Services.AdicionarAutorizacaoPorFeatures(
+    builder.Configuration.GetSection("Integracoes:Identidade"), builder.Environment.IsDevelopment());
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy(ConsultaCadastralRequirement.CodigoFeature, policy =>
+    options.AddPolicy(FeaturesCadastro.Consultar, policy =>
     {
         policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
         policy.RequireAuthenticatedUser();
-        policy.AddRequirements(new ConsultaCadastralRequirement());
+        policy.AddRequirements(new FeatureRemotaRequirement(
+            FeaturesCadastro.Consultar, JwtBearerDefaults.AuthenticationScheme));
     });
 });
 
