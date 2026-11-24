@@ -5,6 +5,10 @@ using MultiTenancy.Services;
 using MS_Identidade.Repositories;
 using MS_Identidade.Repositories.Interfaces;
 using MS_Identidade.Data.Interfaces;
+using Microsoft.AspNetCore.Identity;
+using MS_Identidade.Entities;
+using MS_Identidade.Services;
+using MS_Identidade.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,6 +36,12 @@ builder.Services.AddScoped<IEmpresaRepository, EmpresaRepository>();
 builder.Services.AddScoped<
     ITenantContextFactory,
     TenantContextFactory>();
+
+builder.Services.AddScoped<IUsuarioService, UsuarioService>();
+
+builder.Services.AddScoped<
+    IPasswordHasher<Usuario>,
+    PasswordHasher<Usuario>>();
 
 var app = builder.Build();
 
