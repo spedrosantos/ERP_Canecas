@@ -77,6 +77,8 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
+builder.Services.AddScoped<IPermissaoService, PermissaoService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
