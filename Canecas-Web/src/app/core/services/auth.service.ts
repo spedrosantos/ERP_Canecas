@@ -9,7 +9,7 @@ import { LoginResponse } from '../models/login-response';
 import { TemaService } from './tema.service';
 
 const CHAVE_SESSAO = 'canecas-erp:sessao';
-const LIMITE_INATIVIDADE = 1 * 60_000;
+const LIMITE_INATIVIDADE = 30 * 60_000;
 const EVENTOS_ATIVIDADE = ['pointerdown', 'keydown', 'wheel'];
 
 interface SessaoPersistida {

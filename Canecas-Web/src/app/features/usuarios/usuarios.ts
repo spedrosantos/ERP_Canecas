@@ -1,9 +1,10 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectorRef, Component, computed, DestroyRef, inject, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, computed, DestroyRef, effect, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize, Observable } from 'rxjs';
 
+import { FEATURES, FeatureService } from '../../core/services/feature.service';
 import { Usuario } from './usuario';
 import { UsuariosService } from './usuarios.service';
 
@@ -43,11 +44,17 @@ function mensagemDeErro(erro: unknown, padrao: string): string {
 })
 export class Usuarios {
   private readonly api = inject(UsuariosService);
+  private readonly features = inject(FeatureService);
   private readonly detector = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder).nonNullable;
   private readonly usuarios = signal<Usuario[]>([]);
   private readonly compararNomes = new Intl.Collator('pt-BR');
+  private readonly editor = viewChild<ElementRef<HTMLDialogElement>>('editor');
+  private readonly confirmacao = viewChild<ElementRef<HTMLDialogElement>>('confirmacao');
+
+  protected readonly podeCadastrar = computed(() => this.features.tem(FEATURES.cadastrarUsuario));
+  protected readonly podeEditar = computed(() => this.features.tem(FEATURES.editarUsuario));
 
   protected readonly busca = this.fb.control('');
   protected readonly situacao = this.fb.control<FiltroSituacao>('todos');
@@ -100,6 +107,17 @@ export class Usuarios {
 
   constructor() {
     this.carregar();
+    effect(() => {
+      const editor = this.editor()?.nativeElement;
+      const confirmacao = this.confirmacao()?.nativeElement;
+      const podeSalvar = this.usuarioEmEdicao() ? this.podeEditar() : this.podeCadastrar();
+      if (!podeSalvar && editor?.open) {
+        editor.close();
+      }
+      if (!this.podeEditar() && confirmacao?.open) {
+        confirmacao.close();
+      }
+    });
   }
 
   protected carregar(): void {
@@ -119,6 +137,10 @@ export class Usuarios {
   }
 
   protected abrirEditor(dialogo: HTMLDialogElement, usuario: Usuario | null = null): void {
+    if (!(usuario ? this.podeEditar() : this.podeCadastrar())) {
+      return;
+    }
+
     if (usuario && !this.validarCodigo(usuario.id)) {
       return;
     }
@@ -139,7 +161,8 @@ export class Usuarios {
   }
 
   protected salvarEditor(dialogo: HTMLDialogElement): void {
-    if (this.salvando()) {
+    const usuario = this.usuarioEmEdicao();
+    if (this.salvando() || !(usuario ? this.podeEditar() : this.podeCadastrar())) {
       return;
     }
 
@@ -149,7 +172,6 @@ export class Usuarios {
     }
 
     const { nome, senha } = this.formulario.getRawValue();
-    const usuario = this.usuarioEmEdicao();
     const dados = { nome: nome.trim() };
     if (usuario) {
       const edicao = senha ? { ...dados, senha } : dados;
@@ -160,7 +182,7 @@ export class Usuarios {
   }
 
   protected abrirConfirmacao(dialogo: HTMLDialogElement, usuario: Usuario): void {
-    if (!this.validarCodigo(usuario.id)) {
+    if (!this.podeEditar() || !this.validarCodigo(usuario.id)) {
       return;
     }
 
@@ -172,7 +194,7 @@ export class Usuarios {
 
   protected confirmarSituacao(dialogo: HTMLDialogElement): void {
     const usuario = this.alvoSituacao();
-    if (!usuario || this.salvando()) {
+    if (!usuario || this.salvando() || !this.podeEditar()) {
       return;
     }
 

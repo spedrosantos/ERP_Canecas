@@ -21,8 +21,21 @@ public class UsuariosController : ControllerBase
         _permissaoService = permissaoService;
     }
 
+    [HttpGet("me/features")]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+    public async Task<ActionResult<List<FeatureResponseDTO>>> ListarMinhasFeatures()
+    {
+        if (!TentarObterEmpresaId(out var empresaId)
+            || !TentarObterId("usuario_id", out var usuarioId))
+            return Unauthorized();
+
+        var features = await _permissaoService.ListarEfetivasAsync(empresaId, usuarioId);
+
+        return features is null ? Unauthorized() : Ok(features);
+    }
+
     [HttpGet]
-    [Authorize(Policy = "USUARIO")]
+    [Authorize(Policy = "USUARIO_ACESSAR")]
     public async Task<ActionResult<List<UsuarioResponseDTO>>> Listar()
     {
         if (!TentarObterEmpresaId(out var empresaId))
@@ -120,13 +133,45 @@ public class UsuariosController : ControllerBase
         var resultado = await _permissaoService.AtualizarAsync(
             empresaId, operadorId, id, dto.FeatureIds);
 
+        return ResponderAtualizacaoDePermissoes(resultado);
+    }
+
+    [HttpGet("permissoes/lote")]
+    [Authorize(Policy = "USUARIO_PERMISSOES")]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+    public async Task<ActionResult<PermissoesEmLoteResponseDTO>> ConsultarPermissoesEmLote()
+    {
+        if (!TentarObterEmpresaId(out var empresaId)
+            || !TentarObterId("usuario_id", out var operadorId))
+            return Unauthorized();
+
+        var dados = await _permissaoService.ConsultarLoteAsync(empresaId, operadorId);
+
+        return dados is null ? Forbid() : Ok(dados);
+    }
+
+    [HttpPut("permissoes/lote")]
+    [Authorize(Policy = "USUARIO_PERMISSOES")]
+    public async Task<IActionResult> AtualizarPermissoesEmLote(AtualizarPermissoesEmLoteDTO dto)
+    {
+        if (!TentarObterEmpresaId(out var empresaId)
+            || !TentarObterId("usuario_id", out var operadorId))
+            return Unauthorized();
+
+        var resultado = await _permissaoService.AtualizarEmLoteAsync(empresaId, operadorId, dto);
+
+        return ResponderAtualizacaoDePermissoes(resultado);
+    }
+
+    private IActionResult ResponderAtualizacaoDePermissoes(ResultadoAtualizacaoPermissoes resultado)
+    {
         return resultado switch
         {
             ResultadoAtualizacaoPermissoes.Atualizado => NoContent(),
             ResultadoAtualizacaoPermissoes.UsuarioInexistente => NotFound(),
-            ResultadoAtualizacaoPermissoes.AlteracaoPropria =>
-                Conflict(new { mensagem = "Você não pode alterar as próprias permissões." }),
             ResultadoAtualizacaoPermissoes.SemAutoridade => Forbid(),
+            ResultadoAtualizacaoPermissoes.UsuariosInvalidos =>
+                BadRequest(new { mensagem = "Informe IDs distintos de usuários." }),
             ResultadoAtualizacaoPermissoes.FeaturesInvalidas =>
                 BadRequest(new { mensagem = "Informe IDs distintos de features ativas." }),
             ResultadoAtualizacaoPermissoes.HierarquiaInvalida =>

@@ -1,10 +1,12 @@
 <section class="pagina" aria-labelledby="titulo-usuarios">
   <header class="cabecalho">
     <h1 id="titulo-usuarios">Usuários</h1>
+    @if (podeCadastrar()) {
     <button type="button" class="primario" [disabled]="carregando() || !!erroLista()"
       (click)="abrirEditor(editor)">
       <svg class="icone icone-acao" aria-hidden="true"><use href="icons/bootstrap-icons.svg#plus-lg" /></svg>Novo usuário
     </button>
+    }
   </header>
 
   <p class="aviso" role="status">{{ aviso() }}</p>
@@ -42,7 +44,9 @@
               <th scope="col" class="codigo">Código</th>
               <th scope="col">Nome</th>
               <th scope="col" class="coluna-situacao">Situação</th>
-              <th scope="col" class="coluna-acoes">Ações</th>
+              @if (podeEditar()) {
+                <th scope="col" class="coluna-acoes">Ações</th>
+              }
             </tr>
           </thead>
           <tbody>
@@ -55,6 +59,7 @@
                     {{ usuario.ativo ? 'Ativo' : 'Inativo' }}
                   </span>
                 </td>
+                @if (podeEditar()) {
                 <td class="coluna-acoes">
                   <div class="acoes">
                     <button type="button" (click)="abrirEditor(editor, usuario)">
@@ -64,14 +69,12 @@
                       <svg class="icone icone-acao" aria-hidden="true"><use [attr.href]="'icons/bootstrap-icons.svg#' + (usuario.ativo ? 'dash-circle' : 'plus-circle')" /></svg>
                       {{ usuario.ativo ? 'Desativar' : 'Ativar' }}
                     </button>
-                    <button type="button" disabled title="Gerenciamento de permissões em uma próxima etapa">
-                      <svg class="icone icone-acao" aria-hidden="true"><use href="icons/bootstrap-icons.svg#key" /></svg>Permissões
-                    </button>
                   </div>
                 </td>
+                }
               </tr>
             } @empty {
-              <tr><td colspan="4" class="estado">Nenhum usuário encontrado.</td></tr>
+              <tr><td [attr.colspan]="podeEditar() ? 4 : 3" class="estado">Nenhum usuário encontrado.</td></tr>
             }
           </tbody>
         </table>

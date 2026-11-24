@@ -1,20 +1,24 @@
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
 import { authInterceptor } from '../../core/interceptors/auth.interceptor';
 import { AuthService } from '../../core/services/auth.service';
+import { FEATURES, FeatureService } from '../../core/services/feature.service';
 import { Usuarios } from './usuarios';
 
 describe('Usuários', () => {
   it('filtra a lista, envia alterações autenticadas e exibe erros da API', () => {
+    const acesso = signal(new Set<string>([FEATURES.usuarios]));
     TestBed.configureTestingModule({
       imports: [Usuarios],
       providers: [
         provideRouter([]),
         provideHttpClient(withInterceptors([authInterceptor])),
         provideHttpClientTesting(),
+        { provide: FeatureService, useValue: { tem: (codigo: string) => acesso().has(codigo) } },
       ],
     });
     const http = TestBed.inject(HttpTestingController);
@@ -36,6 +40,10 @@ describe('Usuários', () => {
       { id: 23, nome: 'Álvaro', ativo: true, criadoEm: '2026-01-01' },
       { id: 78, nome: 'Beatriz', ativo: false, criadoEm: '2026-01-01' },
     ]);
+    fixture.detectChanges();
+    expect(tela.querySelector('.cabecalho button')).toBeNull();
+    expect(tela.querySelector('.coluna-acoes')).toBeNull();
+    acesso.set(new Set([FEATURES.usuarios, FEATURES.cadastrarUsuario, FEATURES.editarUsuario]));
     fixture.detectChanges();
 
     function preencher(seletor: string, valor: string): void {

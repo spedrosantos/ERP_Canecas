@@ -101,6 +101,13 @@ builder.Services.AddAuthorization(options =>
                 new FeatureRequirement(codigo));
         });
     }
+
+    options.AddPolicy("USUARIO_ACESSAR", policy =>
+    {
+        policy.RequireAuthenticatedUser();
+        policy.AddRequirements(
+            new FeatureRequirement("USUARIO", "USUARIO_CADASTRAR", "USUARIO_EDITAR"));
+    });
 });
 
 builder.Services.AddScoped<IPermissaoService, PermissaoService>();

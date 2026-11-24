@@ -47,4 +47,12 @@ public class UsuarioRepository : IUsuarioRepository
             .OrderBy(x => x.Nome)
             .ToListAsync();
     }
+
+    public Task<Dictionary<long, bool>> ListarSituacoesAsync(IReadOnlyCollection<long> ids)
+    {
+        return _context.Usuarios.AsNoTracking()
+            .Where(usuario => ids.Contains(usuario.Id))
+            .Select(usuario => new { usuario.Id, usuario.Ativo })
+            .ToDictionaryAsync(usuario => usuario.Id, usuario => usuario.Ativo);
+    }
 }

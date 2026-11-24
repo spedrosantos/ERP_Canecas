@@ -4,8 +4,8 @@ public enum ResultadoAtualizacaoPermissoes
 {
     Atualizado,
     UsuarioInexistente,
-    AlteracaoPropria,
     SemAutoridade,
+    UsuariosInvalidos,
     FeaturesInvalidas,
     HierarquiaInvalida,
     UltimoGerenciador,

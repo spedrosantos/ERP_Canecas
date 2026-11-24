@@ -20,8 +20,8 @@ public class PermissaoRepository : IPermissaoRepository
             from uf in _context.UsuariosFeatures
             join f in _context.Features
                 on uf.FeatureId equals f.Id
-            where uf.UsuarioId == usuarioId
-                && f.Ativo
+            join usuario in _context.Usuarios on uf.UsuarioId equals usuario.Id
+            where uf.UsuarioId == usuarioId && usuario.Ativo && f.Ativo
             select f
         )
         .AsNoTracking()
@@ -63,19 +63,36 @@ public class PermissaoRepository : IPermissaoRepository
         ).AsNoTracking().ToListAsync();
     }
 
-    public async Task AtualizarVinculosAsync(
+    public Task<List<Feature>> ListarCatalogoAsync()
+    {
+        return _context.Features.AsNoTracking().ToListAsync();
+    }
+
+    public async Task<ILookup<long, Feature>> ListarAtribuidasAsync(IReadOnlyCollection<long> usuarioIds)
+    {
+        var permissoes = await (
+            from vinculo in _context.UsuariosFeatures
+            join feature in _context.Features on vinculo.FeatureId equals feature.Id
+            where usuarioIds.Contains(vinculo.UsuarioId)
+            select new { vinculo.UsuarioId, Feature = feature }
+        ).AsNoTracking().ToListAsync();
+
+        return permissoes.ToLookup(x => x.UsuarioId, x => x.Feature);
+    }
+
+    public Task AtualizarVinculosAsync(
         long usuarioId, IEnumerable<long> incluir, IEnumerable<long> remover)
     {
-        _context.UsuariosFeatures.RemoveRange(remover.Select(id => new UsuarioFeature
-        {
-            UsuarioId = usuarioId,
-            FeatureId = id
-        }));
-        _context.UsuariosFeatures.AddRange(incluir.Select(id => new UsuarioFeature
-        {
-            UsuarioId = usuarioId,
-            FeatureId = id
-        }));
+        return AtualizarVinculosAsync(
+            incluir.Select(id => new UsuarioFeature { UsuarioId = usuarioId, FeatureId = id }),
+            remover.Select(id => new UsuarioFeature { UsuarioId = usuarioId, FeatureId = id }));
+    }
+
+    public async Task AtualizarVinculosAsync(
+        IEnumerable<UsuarioFeature> incluir, IEnumerable<UsuarioFeature> remover)
+    {
+        _context.UsuariosFeatures.RemoveRange(remover);
+        _context.UsuariosFeatures.AddRange(incluir);
 
         await _context.SaveChangesAsync();
     }

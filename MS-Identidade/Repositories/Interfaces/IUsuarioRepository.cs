@@ -13,4 +13,6 @@ public interface IUsuarioRepository
     Task SalvarAlteracoesAsync();
 
     Task<List<Usuario>> ListarAsync();
+
+    Task<Dictionary<long, bool>> ListarSituacoesAsync(IReadOnlyCollection<long> ids);
 }
