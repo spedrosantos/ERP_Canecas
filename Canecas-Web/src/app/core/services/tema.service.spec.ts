@@ -5,6 +5,29 @@ import { TestBed } from '@angular/core/testing';
 import { TemaService } from './tema.service';
 
 describe('TemaService', () => {
+  it('usa a logo local da empresa 1 quando a API não informa uma URL', () => {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    const service = TestBed.inject(TemaService);
+    const http = TestBed.inject(HttpTestingController);
+    const tema = { ...service.temaAtual(), nomeFantasia: 'Boracup' };
+
+    service.carregarTema('1');
+    expect(service.temaAtual().logoUrl).toBeNull();
+    http.expectOne('/api/empresas/1/tema').flush(tema);
+    expect(service.temaAtual().logoUrl).toBe('logos/boracup.jpeg');
+
+    service.carregarTema(1);
+    http.expectOne('/api/empresas/1/tema').flush({ ...tema, logoUrl: '/logo-api.png' });
+    expect(service.temaAtual().logoUrl).toBe('/logo-api.png');
+
+    service.carregarTema(2);
+    http.expectOne('/api/empresas/2/tema').flush(tema);
+    expect(service.temaAtual().logoUrl).toBeNull();
+    http.verify();
+  });
+
   it('restaura o tema ao trocar de empresa e cancela a consulta anterior', () => {
     TestBed.configureTestingModule({
       providers: [provideHttpClient(), provideHttpClientTesting()],

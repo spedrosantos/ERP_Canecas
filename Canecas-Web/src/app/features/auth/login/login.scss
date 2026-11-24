@@ -1,0 +1,255 @@
+:host {
+  --tinta: #19212e;
+  --texto-suave: #505b6a;
+  --superficie: #fff;
+  --borda: #a4adba;
+  --erro: #a11c2d;
+  --destaque: color-mix(in srgb, var(--cor-primaria) 65%, #101723);
+  --painel: color-mix(in srgb, var(--cor-secundaria) 42%, var(--destaque));
+}
+
+.login {
+  display: grid;
+  min-height: 100dvh;
+  place-items: center;
+  padding: clamp(1rem, 5vw, 4rem);
+  box-sizing: border-box;
+  background-color: var(--cor-fundo);
+  transition: background-color 250ms ease;
+}
+
+.cartao {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  width: min(100%, 56rem);
+  overflow: hidden;
+  border: 1px solid #19212e1a;
+  border-radius: 1.5rem;
+  background: var(--superficie);
+  color: var(--tinta);
+  box-shadow: 0 1.25rem 4rem #19212e14;
+}
+
+.marca {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  padding: clamp(1.5rem, 5vw, 3rem);
+  background-color: var(--painel);
+  color: #fff;
+  transition: background-color 250ms ease;
+
+  &::before,
+  &::after {
+    position: absolute;
+    z-index: -1;
+    top: -8rem;
+    right: -10rem;
+    width: 25rem;
+    aspect-ratio: 1;
+    border: 1px solid #ffffff29;
+    border-radius: 50%;
+    content: '';
+  }
+
+  &::after {
+    top: -5rem;
+    right: -7rem;
+  }
+}
+
+.marca-conteudo {
+  display: grid;
+  min-width: 0;
+  gap: 1.25rem;
+}
+
+.marca-logo,
+.marca-simbolo {
+  width: 4rem;
+  height: 4rem;
+  box-sizing: border-box;
+  padding: 0.5rem;
+  border-radius: 1rem;
+  background: #fff;
+  color: var(--destaque);
+  transition: color 250ms ease;
+}
+
+.marca-logo {
+  width: auto;
+  max-width: min(100%, 10rem);
+  height: 7rem;
+  object-fit: contain;
+}
+
+.marca-simbolo {
+  display: grid;
+  place-items: center;
+  font: 700 1.75rem var(--fonte-titulo);
+}
+
+.marca-nome {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font: 700 clamp(1.6rem, 4vw, 2.75rem) / 1.08 var(--fonte-titulo);
+  text-shadow: 0 1px 4px #101723b3;
+}
+
+.acesso {
+  padding: clamp(1.5rem, 6vw, 3.75rem);
+
+  h1 {
+    margin: 0;
+    font-size: clamp(1.7rem, 3vw, 2.25rem);
+    letter-spacing: -0.035em;
+  }
+
+  header p {
+    margin: 0.5rem 0 1.75rem;
+    color: var(--texto-suave);
+    line-height: 1.5;
+  }
+}
+
+.campo {
+  display: grid;
+  gap: 0.375rem;
+  margin-bottom: 0.5rem;
+
+  label {
+    font-size: 0.875rem;
+    font-weight: 650;
+  }
+
+  input {
+    width: 100%;
+    min-height: 3rem;
+    box-sizing: border-box;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid var(--borda);
+    border-radius: 0.625rem;
+    background-color: var(--superficie);
+    color: var(--tinta);
+    transition: border-color 250ms ease;
+
+    &[aria-invalid='true'] {
+      border-color: var(--erro);
+    }
+  }
+}
+
+.campo-senha {
+  position: relative;
+
+  input {
+    padding-right: 8.5rem;
+  }
+}
+
+.alternar-senha {
+  position: absolute;
+  inset: 0.125rem 0.25rem 0.125rem auto;
+  padding: 0 0.5rem;
+  border: 0;
+  border-radius: 0.375rem;
+  background: transparent;
+  color: var(--destaque);
+  font-size: 0.8125rem;
+  font-weight: 650;
+  transition: color 250ms ease;
+}
+
+.feedback {
+  min-height: 1.15rem;
+  color: var(--texto-suave);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+input[aria-invalid='true'] + .feedback,
+.campo-senha:has(input[aria-invalid='true']) + .feedback {
+  color: var(--erro);
+}
+
+.indicador {
+  display: inline-block;
+  width: 0.65rem;
+  height: 0.65rem;
+  margin-right: 0.25rem;
+  border: 1px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: girar 700ms linear infinite;
+}
+
+button {
+  cursor: pointer;
+}
+
+input:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--destaque);
+  outline-offset: 2px;
+}
+
+.entrar {
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.625rem 1rem;
+  border: 0;
+  border-radius: 0.625rem;
+  background-color: var(--destaque);
+  color: #fff;
+  font-weight: 700;
+  transition: background-color 250ms ease;
+
+  &:hover {
+    background-color: color-mix(in srgb, var(--destaque) 82%, #101723);
+  }
+}
+
+.envio {
+  margin: 0.75rem 0 0;
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@media (max-width: 42rem) {
+  .cartao {
+    grid-template-columns: 1fr;
+    max-width: 27rem;
+  }
+
+  .marca-conteudo {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+  }
+
+  .marca-logo {
+    max-width: 40%;
+    height: 4rem;
+  }
+
+  .marca-simbolo {
+    width: 3rem;
+    height: 3rem;
+    flex-shrink: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

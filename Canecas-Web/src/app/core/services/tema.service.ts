@@ -1,8 +1,8 @@
 import { DOCUMENT } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
-import { inject, Injectable } from '@angular/core';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { computed, inject, Injectable } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { catchError, of, startWith, Subject, switchMap, tap } from 'rxjs';
+import { catchError, map, of, startWith, Subject, switchMap, tap } from 'rxjs';
 
 import { EmpresaTema } from '../models/empresa-tema';
 
@@ -22,27 +22,55 @@ const FONTES_SUPORTADAS = new Map([
   ['nunito', 'Nunito'],
 ]);
 
+type EstadoTema = {
+  tema: Readonly<EmpresaTema>;
+  status: 'padrao' | 'carregando' | 'aplicado' | 'empresa-invalida' | 'erro';
+};
+
+const ESTADO_PADRAO: EstadoTema = { tema: TEMA_PADRAO, status: 'padrao' };
+const LOGOS_LOCAIS = new Map([['1', 'logos/boracup.jpeg']]);
+
 @Injectable({ providedIn: 'root' })
 export class TemaService {
   private readonly http = inject(HttpClient);
   private readonly documento = inject(DOCUMENT);
   private readonly empresaSelecionada = new Subject<number | string | null>();
 
-  readonly temaAtual = toSignal(
+  private readonly estado = toSignal(
     this.empresaSelecionada.pipe(
       switchMap((empresaId) => {
         if (empresaId === null) {
-          return of(TEMA_PADRAO);
+          return of(ESTADO_PADRAO);
         }
 
         return this.http
           .get<EmpresaTema>(`/api/empresas/${encodeURIComponent(empresaId)}/tema`)
-          .pipe(startWith(TEMA_PADRAO), catchError(() => of(TEMA_PADRAO)));
+          .pipe(
+            map((tema): EstadoTema => ({
+              tema: {
+                ...tema,
+                logoUrl: tema.logoUrl?.trim() || LOGOS_LOCAIS.get(String(empresaId)) || null,
+              },
+              status: 'aplicado',
+            })),
+            startWith({ tema: TEMA_PADRAO, status: 'carregando' } satisfies EstadoTema),
+            catchError((erro: unknown) =>
+              of<EstadoTema>({
+                tema: TEMA_PADRAO,
+                status: erro instanceof HttpErrorResponse && erro.status === 404
+                  ? 'empresa-invalida'
+                  : 'erro',
+              }),
+            ),
+          );
       }),
-      tap((tema) => this.aplicarTema(tema)),
+      tap(({ tema }) => this.aplicarTema(tema)),
     ),
-    { initialValue: TEMA_PADRAO },
+    { initialValue: ESTADO_PADRAO },
   );
+
+  readonly temaAtual = computed(() => this.estado().tema);
+  readonly status = computed(() => this.estado().status);
 
   carregarTema(empresaId: number | string): void {
     this.empresaSelecionada.next(empresaId);
