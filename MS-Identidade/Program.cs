@@ -43,6 +43,8 @@ builder.Services.AddScoped<
     IPasswordHasher<Usuario>,
     PasswordHasher<Usuario>>();
 
+builder.Services.AddScoped<IAuthService, AuthService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
