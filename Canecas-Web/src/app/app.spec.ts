@@ -28,6 +28,51 @@ describe('App', () => {
     expect(app).toBeTruthy();
   });
 
+  it('restaura a sessão da aba, renova o prazo com atividade real e encerra por inatividade', () => {
+    const chave = 'canecas-erp:sessao';
+    const minuto = 60_000;
+    const http = TestBed.inject(HttpTestingController);
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    const registrar = vi.spyOn(document, 'addEventListener');
+    vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] });
+    try {
+      sessionStorage.setItem(chave, JSON.stringify({
+        usuario: {
+          empresaId: 1, usuarioId: 1, nome: 'Ana', token: 'token-restaurado',
+          expiraEm: new Date(Date.now() + 60 * minuto).toISOString(),
+        },
+        codigoEmpresa: '1',
+        ultimaInteracao: Date.now() - 20 * minuto,
+      }));
+
+      const auth = TestBed.inject(AuthService);
+      expect(auth.obterToken()).toBe('token-restaurado');
+      const tema = TestBed.inject(TemaService);
+      http.expectOne('/api/empresas/1/tema').flush({ ...tema.temaAtual(), nomeFantasia: 'Empresa' });
+
+      vi.advanceTimersByTime(5 * minuto);
+      const atividade = registrar.mock.calls.find(([evento]) => evento === 'pointerdown')?.[1];
+      expect(typeof atividade).toBe('function');
+      (atividade as EventListener)({ isTrusted: true } as Event);
+
+      vi.advanceTimersByTime(29 * minuto);
+      document.dispatchEvent(new Event('pointerdown'));
+      expect(auth.obterToken()).toBe('token-restaurado');
+      vi.advanceTimersByTime(minuto);
+      expect(auth.obterToken()).toBeNull();
+      expect(auth.sessaoExpirada()).toBe(true);
+      expect(sessionStorage.getItem(chave)).toBeNull();
+      expect(tema.temaAtual().nomeFantasia).toBe('Canecas ERP');
+      expect(navegar).toHaveBeenCalledWith('/login', { replaceUrl: true });
+      http.verify();
+    } finally {
+      registrar.mockRestore();
+      navegar.mockRestore();
+      sessionStorage.removeItem(chave);
+      vi.useRealTimers();
+    }
+  });
+
   it('encerra por expiração ou logout e restaura o tema padrão', () => {
     const auth = TestBed.inject(AuthService);
     const tema = TestBed.inject(TemaService);
