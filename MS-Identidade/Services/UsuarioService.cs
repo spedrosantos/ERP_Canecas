@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using MS_Identidade.Data;
 using MS_Identidade.Data.Interfaces;
 using MS_Identidade.DTOs.Usuarios;
 using MS_Identidade.Entities;
@@ -24,22 +25,21 @@ public class UsuarioService : IUsuarioService
         _passwordHasher = passwordHasher;
     }
 
+    public async Task<List<UsuarioResponseDTO>> ListarAsync(long empresaId)
+    {
+        await using var context = await CriarContextoAsync(empresaId);
+        var repository = new UsuarioRepository(context);
+
+        var usuarios = await repository.ListarAsync();
+
+        return usuarios.ConvertAll(MapearUsuario);
+    }
+
     public async Task<UsuarioResponseDTO> CadastrarAsync(
         long empresaId,
         CadastrarUsuarioDTO dto)
     {
-        var empresa = await _empresaRepository
-            .ObterPorIdAsync(empresaId);
-
-        if (empresa is null || !empresa.Ativo)
-        {
-            throw new InvalidOperationException(
-                "Empresa inexistente ou inativa.");
-        }
-
-        await using var context = _contextFactory
-            .Criar(empresa.NomeBanco);
-
+        await using var context = await CriarContextoAsync(empresaId);
         var repository = new UsuarioRepository(context);
 
         var usuario = new Usuario
@@ -54,6 +54,24 @@ public class UsuarioService : IUsuarioService
 
         await repository.CadastrarAsync(usuario);
 
+        return MapearUsuario(usuario);
+    }
+
+    private async Task<TenantDbContext> CriarContextoAsync(long empresaId)
+    {
+        var empresa = await _empresaRepository.ObterPorIdAsync(empresaId);
+
+        if (empresa is null || !empresa.Ativo)
+        {
+            throw new InvalidOperationException(
+                "Empresa inexistente ou inativa.");
+        }
+
+        return _contextFactory.Criar(empresa.NomeBanco);
+    }
+
+    private static UsuarioResponseDTO MapearUsuario(Usuario usuario)
+    {
         return new UsuarioResponseDTO
         {
             Id = usuario.Id,

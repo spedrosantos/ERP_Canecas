@@ -17,15 +17,26 @@ public class UsuariosController : ControllerBase
         _usuarioService = usuarioService;
     }
 
+    [HttpGet]
+    [Authorize(Policy = "USUARIO")]
+    public async Task<ActionResult<List<UsuarioResponseDTO>>> Listar()
+    {
+        if (!TentarObterEmpresaId(out var empresaId))
+        {
+            return Unauthorized();
+        }
+
+        var usuarios = await _usuarioService.ListarAsync(empresaId);
+
+        return Ok(usuarios);
+    }
+
     [HttpPost]
     [Authorize(Policy = "USUARIO_CADASTRAR")]
     public async Task<IActionResult> Cadastrar(
         CadastrarUsuarioDTO dto)
     {
-        var empresaIdClaim = User.FindFirst("empresa_id")?.Value;
-
-        if (!long.TryParse(empresaIdClaim, out var empresaId)
-            || empresaId <= 0)
+        if (!TentarObterEmpresaId(out var empresaId))
         {
             return Unauthorized();
         }
@@ -34,5 +45,12 @@ public class UsuariosController : ControllerBase
             .CadastrarAsync(empresaId, dto);
 
         return StatusCode(StatusCodes.Status201Created, usuario);
+    }
+
+    private bool TentarObterEmpresaId(out long empresaId)
+    {
+        var empresaIdClaim = User.FindFirst("empresa_id")?.Value;
+
+        return long.TryParse(empresaIdClaim, out empresaId) && empresaId > 0;
     }
 }
