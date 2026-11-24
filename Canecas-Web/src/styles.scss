@@ -1,0 +1,36 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400..700&family=Inter:wght@400..700&family=Nunito:wght@400..700&display=swap');
+
+:root {
+  --cor-primaria: #1f2937;
+  --cor-secundaria: #4b5563;
+  --cor-fundo: #f9fafb;
+  --fonte-titulo: 'Inter', system-ui, sans-serif;
+  --fonte-texto: 'Inter', system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  background-color: var(--cor-fundo);
+  color: var(--cor-primaria);
+  font-family: var(--fonte-texto);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--fonte-titulo);
+}
+
+a {
+  color: var(--cor-secundaria);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}

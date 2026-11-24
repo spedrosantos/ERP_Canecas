@@ -1,0 +1,114 @@
+<main class="login">
+  <section class="cartao" aria-labelledby="titulo-login">
+    <div class="marca">
+      <div class="marca-conteudo">
+        @let logoUrl = tema().logoUrl;
+        @if (logoUrl && logoComErro() !== logoUrl) {
+          <img class="marca-logo" [src]="logoUrl" alt="" (error)="logoComErro.set(logoUrl)" />
+        } @else {
+          <span class="marca-simbolo" aria-hidden="true">{{ tema().nomeFantasia.charAt(0) }}</span>
+        }
+        <p class="marca-nome">{{ tema().nomeFantasia }}</p>
+      </div>
+    </div>
+
+    <div class="acesso">
+      <header>
+        <h1 id="titulo-login">Acesse sua conta</h1>
+        <p>Informe os dados da sua empresa e suas credenciais.</p>
+      </header>
+
+      <form [formGroup]="formulario" (ngSubmit)="enviar()" novalidate>
+        <div class="campo">
+          <label for="empresa">Código da empresa</label>
+          <input
+            id="empresa"
+            type="text"
+            inputmode="numeric"
+            autocomplete="off"
+            formControlName="empresa"
+            [readOnly]="enviando()"
+            aria-describedby="estado-empresa"
+            [attr.aria-invalid]="(controles.empresa.touched && controles.empresa.invalid) || estadoTema() === 'empresa-invalida'"
+          />
+          <div class="feedback" id="estado-empresa" role="status">
+            @if (estadoTema() === 'carregando') {
+              <span class="indicador" aria-hidden="true"></span>
+              Consultando empresa…
+            } @else if (estadoTema() === 'empresa-invalida') {
+              Empresa não encontrada ou inativa.
+            } @else if (estadoTema() === 'erro') {
+              Não foi possível consultar a empresa. Confira sua conexão.
+            } @else if (controles.empresa.touched && controles.empresa.invalid) {
+              @if (controles.empresa.hasError('required')) {
+                Informe o código da empresa.
+              } @else {
+                Informe um código de empresa válido.
+              }
+            }
+          </div>
+        </div>
+
+        <div class="campo">
+          <label for="usuario">Código do usuário</label>
+          <input
+            id="usuario"
+            type="text"
+            inputmode="numeric"
+            autocomplete="username"
+            formControlName="usuario"
+            [readOnly]="enviando()"
+            aria-describedby="estado-usuario"
+            [attr.aria-invalid]="controles.usuario.touched && controles.usuario.invalid"
+          />
+          <div class="feedback" id="estado-usuario" role="status">
+            @if (controles.usuario.touched && controles.usuario.invalid) {
+              @if (controles.usuario.hasError('required')) {
+                Informe o código do usuário.
+              } @else {
+                Informe um código de usuário válido.
+              }
+            }
+          </div>
+        </div>
+
+        <div class="campo">
+          <label for="senha">Senha</label>
+          <div class="campo-senha">
+            <input
+              id="senha"
+              [type]="senhaVisivel() ? 'text' : 'password'"
+              autocomplete="current-password"
+              formControlName="senha"
+              [readOnly]="enviando()"
+              aria-describedby="estado-senha"
+              [attr.aria-invalid]="controles.senha.touched && controles.senha.invalid"
+            />
+            <button type="button" class="alternar-senha" (click)="senhaVisivel.set(!senhaVisivel())">
+              {{ senhaVisivel() ? 'Ocultar senha' : 'Mostrar senha' }}
+            </button>
+          </div>
+          <div class="feedback" id="estado-senha" role="status">
+            @if (controles.senha.touched && controles.senha.invalid) {
+              Informe a senha.
+            }
+          </div>
+        </div>
+
+        <button class="entrar" type="submit" [disabled]="enviando()" [attr.aria-busy]="enviando()">
+          @if (enviando()) {
+            <span class="indicador" aria-hidden="true"></span>
+            Entrando…
+          } @else {
+            Entrar
+          }
+        </button>
+        @if (erroLogin()) {
+          <p class="feedback envio" role="alert">{{ erroLogin() }}</p>
+        } @else if (sessaoExpirada()) {
+          <p class="feedback envio" role="status">Sua sessão expirou. Entre novamente.</p>
+        }
+      </form>
+    </div>
+  </section>
+</main>
