@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using MS_Identidade.Data;
 using MultiTenancy.Interfaces;
 using MultiTenancy.Services;
+using MS_Identidade.Repositories;
+using MS_Identidade.Repositories.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +25,8 @@ TenantConnectionResolver>();
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+builder.Services.AddScoped<IEmpresaRepository, EmpresaRepository>();
 
 var app = builder.Build();
 
