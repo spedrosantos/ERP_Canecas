@@ -21,6 +21,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITenantConnectionResolver, TenantConnectionResolver>();
 builder.Services.AddScoped<ITenantContextFactory, TenantContextFactory>();
 builder.Services.AddScoped<ISaldoService, SaldoService>();
+builder.Services.AddScoped<IMovimentacaoService, MovimentacaoService>();
 
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("Chave JWT não configurada.");
