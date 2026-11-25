@@ -66,9 +66,20 @@
               <a routerLink="/fornecedores" routerLinkActive="item-ativo" ariaCurrentWhenActive="page"
                 (click)="menuMovelAberto.set(false)">
                 <svg class="icone icone-acao" aria-hidden="true">
-                  <use href="icons/bootstrap-icons.svg#people" />
+                  <use href="icons/bootstrap-icons.svg#truck" />
                 </svg>
                 Fornecedores
+              </a>
+            </li>
+            }
+            @if (mostrarProdutos()) {
+            <li>
+              <a routerLink="/produtos" routerLinkActive="item-ativo" ariaCurrentWhenActive="page"
+                (click)="menuMovelAberto.set(false)">
+                <svg class="icone icone-acao" aria-hidden="true">
+                  <use href="icons/bootstrap-icons.svg#box-seam" />
+                </svg>
+                Produtos
               </a>
             </li>
             }
@@ -89,7 +100,7 @@
               <a routerLink="/usuarios" routerLinkActive="item-ativo" ariaCurrentWhenActive="page"
                 (click)="menuMovelAberto.set(false)">
                 <svg class="icone icone-acao" aria-hidden="true">
-                  <use href="icons/bootstrap-icons.svg#people" />
+                  <use href="icons/bootstrap-icons.svg#person-badge" />
                 </svg>Usuários
               </a>
             </li>
