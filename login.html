@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | Boracup ERP</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="pagina-login">
+  <main class="login-card">
+    <div class="login-lado">
+      <img src="img/logo.png" alt="Boracup">
+    </div>
+
+    <div class="login-form">
+      <h1>Acesse sua conta</h1>
+      <p class="sub-login">Informe os dados da empresa e suas credenciais.</p>
+
+      <form id="formLogin">
+        <div class="campo">
+          <label for="empresa">Código da empresa</label>
+          <input type="text" id="empresa" placeholder="Digite o código da empresa" autocomplete="off" required>
+        </div>
+
+        <div class="campo">
+          <label for="usuario">Código do usuário</label>
+          <input type="text" id="usuario" placeholder="Digite o código do usuário" autocomplete="off" required>
+        </div>
+
+        <div class="campo">
+          <label for="senha">Senha</label>
+          <div class="senha-wrap">
+            <input type="password" id="senha" placeholder="Digite sua senha" autocomplete="current-password" required>
+            <button type="button" class="olho" id="olho" aria-label="Mostrar senha"><i class="ti ti-eye"></i></button>
+          </div>
+        </div>
+
+        <button type="submit" class="botao login-botao">Entrar</button>
+      </form>
+    </div>
+  </main>
+
+  <script>
+    const senha = document.getElementById("senha");
+    const olho = document.getElementById("olho");
+
+    olho.addEventListener("click", () => {
+      const mostrar = senha.type === "password";
+      senha.type = mostrar ? "text" : "password";
+      olho.innerHTML = `<i class="ti ti-${mostrar ? "eye-off" : "eye"}"></i>`;
+      olho.setAttribute("aria-label", mostrar ? "Ocultar senha" : "Mostrar senha");
+    });
+
+    document.getElementById("formLogin").addEventListener("submit", e => {
+      e.preventDefault();
+      window.location.href = "index.html";
+    });
+  </script>
+</body>
+</html>

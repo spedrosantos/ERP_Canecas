@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Boracup ERP</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-pagina="dashboard">
+  <main class="conteudo">
+    <header class="topo">
+      <h1>Olá, Jana</h1>
+      <button class="botao"><i class="ti ti-plus"></i> Novo pedido</button>
+    </header>
+
+    <section class="cards">
+      <div class="card"><span>Pedidos hoje</span><strong>12</strong></div>
+      <div class="card"><span>Em produção</span><strong>8</strong></div>
+      <div class="card"><span>Faturamento do mês</span><strong>R$ 4.870</strong></div>
+      <div class="card"><span>Estoque baixo</span><strong class="alerta">3</strong></div>
+    </section>
+
+    <section class="tabela">
+      <h2>Pedidos recentes</h2>
+      <table>
+        <tr><th>Nº</th><th>Cliente</th><th>Valor</th><th>Status</th></tr>
+        <tr><td>#1042</td><td>Ana Souza</td><td>R$ 59,90</td><td><span class="tag producao">Produção</span></td></tr>
+        <tr><td>#1041</td><td>Bruno Lima</td><td>R$ 89,00</td><td><span class="tag enviado">Enviado</span></td></tr>
+        <tr><td>#1040</td><td>Carla Dias</td><td>R$ 45,00</td><td><span class="tag pendente">Pendente</span></td></tr>
+      </table>
+    </section>
+  </main>
+
+  <script src="menu.js"></script>
+
+  <script src="ajuda.js"></script>
+  
+</body>
+</html>
