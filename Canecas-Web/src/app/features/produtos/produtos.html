@@ -252,3 +252,36 @@
         </div>
     </form>
 </dialog>
+<dialog #confirmacao aria-labelledby="titulo-confirmacao-produto" (cancel)="cancelarConfirmacao($event)">
+
+    @if (produtoSelecionado(); as produto) {
+    <h2 id="titulo-confirmacao-produto">
+        {{ produto.ativo ? 'Inativar produto' : 'Ativar produto' }}
+    </h2>
+
+    <p>
+        {{ produto.ativo ? 'Inativar' : 'Ativar' }}
+        <strong>{{ produto.nome }}</strong>?
+    </p>
+    }
+
+    @if (erroConfirmacao()) {
+    <p class="erro" role="alert">{{ erroConfirmacao() }}</p>
+    }
+
+    <div class="acoes-modal">
+        <button autofocus type="button" [disabled]="salvando()" (click)="fecharConfirmacao()">
+            <svg class="icone icone-acao" aria-hidden="true">
+                <use href="icons/bootstrap-icons.svg#x-lg" />
+            </svg>
+            Cancelar
+        </button>
+
+        <button class="primario" type="button" [disabled]="salvando()" (click)="confirmarSituacao()">
+            <svg class="icone icone-acao" aria-hidden="true">
+                <use href="icons/bootstrap-icons.svg#check-lg" />
+            </svg>
+            {{ salvando() ? 'Salvando…' : 'Confirmar' }}
+        </button>
+    </div>
+</dialog>

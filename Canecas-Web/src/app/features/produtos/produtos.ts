@@ -167,6 +167,12 @@ export class Produtos implements OnInit {
     this.erro.set('');
   }
 
+  @ViewChild('confirmacao')
+  private confirmacao!: ElementRef<HTMLDialogElement>;
+
+  readonly produtoSelecionado = signal<Produto | null>(null);
+  readonly erroConfirmacao = signal('');
+
   cancelarDialogo(event: Event): void {
     event.preventDefault();
     this.fecharModal();
@@ -217,16 +223,48 @@ export class Produtos implements OnInit {
   }
 
   alterarSituacao(produto: Produto): void {
+    this.produtoSelecionado.set(produto);
+    this.erroConfirmacao.set('');
+    this.confirmacao.nativeElement.showModal();
+  }
+
+  confirmarSituacao(): void {
+    const produto = this.produtoSelecionado();
+
+    if (!produto || this.salvando()) return;
+
+    this.salvando.set(true);
+    this.erroConfirmacao.set('');
+
     this.service.alterarSituacao(
       produto.id,
       !produto.ativo
     ).subscribe({
-      next: () => this.listar(),
+      next: () => {
+        this.salvando.set(false);
+        this.fecharConfirmacao();
+        this.listar();
+      },
       error: resposta => {
-        this.erro.set(
-          resposta.error?.mensagem || 'Erro ao alterar situação.'
+        this.salvando.set(false);
+        this.erroConfirmacao.set(
+          resposta.error?.mensagem ||
+          'Erro ao alterar situação.'
         );
       }
     });
+  }
+
+  fecharConfirmacao(): void {
+    if (this.salvando()) return;
+
+    this.confirmacao.nativeElement.close();
+    this.produtoSelecionado.set(null);
+    this.erroConfirmacao.set('');
+  }
+
+  cancelarConfirmacao(event: Event): void {
+    event.preventDefault();
+    this.fecharConfirmacao();
   }
 }
