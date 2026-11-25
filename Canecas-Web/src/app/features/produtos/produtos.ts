@@ -1,4 +1,7 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import {
+  Component, OnInit, inject, signal,
+  ViewChild, ElementRef
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 
@@ -34,6 +37,9 @@ export class Produtos implements OnInit {
   readonly pagina = signal(1);
   readonly total = signal(0);
   readonly tamanhoPagina = 20;
+
+  @ViewChild('editor')
+  private editor!: ElementRef<HTMLDialogElement>;
 
   readonly tipos = [
     { valor: 'ACABADO', nome: 'Produto acabado' },
@@ -137,6 +143,7 @@ export class Produtos implements OnInit {
     });
 
     this.modalAberto.set(true);
+    this.editor.nativeElement.showModal();
   }
 
   editar(produto: Produto): void {
@@ -149,13 +156,20 @@ export class Produtos implements OnInit {
     });
 
     this.modalAberto.set(true);
+    this.editor.nativeElement.showModal();
   }
 
   fecharModal(): void {
     if (this.salvando()) return;
 
+    this.editor.nativeElement.close();
     this.modalAberto.set(false);
     this.erro.set('');
+  }
+
+  cancelarDialogo(event: Event): void {
+    event.preventDefault();
+    this.fecharModal();
   }
 
   salvar(): void {
