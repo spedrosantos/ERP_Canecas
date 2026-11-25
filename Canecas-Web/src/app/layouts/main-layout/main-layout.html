@@ -39,7 +39,7 @@
           <span class="rotulo-menu">Início</span>
         </a>
 
-        @if (mostrarClientes() || mostrarFornecedores()) {
+        @if (mostrarClientes() || mostrarFornecedores() || mostrarProdutos()) {
         <details class="configuracoes" #cadastros>
           <summary class="item-menu" title="Cadastros" (click)="expandirMenu($event, cadastros)">
             <svg class="icone icone-item" aria-hidden="true">
