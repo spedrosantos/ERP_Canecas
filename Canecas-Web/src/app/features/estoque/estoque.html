@@ -1,0 +1,226 @@
+<section class="pagina" aria-labelledby="titulo-estoque">
+  <header class="cabecalho">
+    <h1 id="titulo-estoque">Estoque</h1>
+  </header>
+
+  <div class="abas">
+    <button type="button"
+      [class.ativa]="aba() === 'saldos'"
+      (click)="trocarAba('saldos')">
+      Posição de estoque
+    </button>
+
+    <button type="button"
+      [class.ativa]="aba() === 'movimentacoes'"
+      (click)="trocarAba('movimentacoes')">
+      Movimentações
+    </button>
+  </div>
+
+  <p class="aviso" role="status">{{ aviso() }}</p>
+
+  <div class="painel" [attr.aria-busy]="carregando()">
+
+    @if (aba() === 'saldos') {
+      <form class="filtros"
+        [formGroup]="filtrosSaldos"
+        (ngSubmit)="carregar()">
+
+        <label>
+          Buscar produto
+          <span class="busca-com-icone">
+            <svg class="icone" aria-hidden="true">
+              <use href="icons/bootstrap-icons.svg#search" />
+            </svg>
+            <input type="search" formControlName="busca"
+              maxlength="150" placeholder="Código ou nome" />
+          </span>
+        </label>
+
+        <label>
+          Situação do estoque
+          <select formControlName="abaixoDoMinimo">
+            <option value="">Todos</option>
+            <option value="true">Abaixo do mínimo</option>
+            <option value="false">Normal</option>
+          </select>
+        </label>
+
+        <button type="submit">Pesquisar</button>
+      </form>
+    } @else {
+      <form class="filtros"
+        [formGroup]="filtrosMovimentacoes"
+        (ngSubmit)="carregar()">
+
+        <label>
+          Código do produto
+          <input type="number" min="1"
+            formControlName="produtoId" />
+        </label>
+
+        <label>
+          Tipo
+          <select formControlName="tipo">
+            <option value="">Todos</option>
+            <option value="ENTRADA">Entrada</option>
+            <option value="SAIDA">Saída</option>
+          </select>
+        </label>
+
+        <label>
+          Origem
+          <select formControlName="origem">
+            <option value="">Todas</option>
+            <option value="COMPRA">Compra</option>
+            <option value="VENDA">Venda</option>
+            <option value="AJUSTE">Ajuste</option>
+            <option value="ESTORNO">Estorno</option>
+          </select>
+        </label>
+
+        <label>
+          Data inicial
+          <input type="date" formControlName="dataInicio" />
+        </label>
+
+        <label>
+          Data final
+          <input type="date" formControlName="dataFim" />
+        </label>
+
+        <button type="submit">Pesquisar</button>
+      </form>
+    }
+
+    @if (carregando()) {
+      <p class="estado" role="status">Carregando…</p>
+    } @else if (erro()) {
+      <div class="estado">
+        <p class="erro" role="alert">{{ erro() }}</p>
+        <button type="button" (click)="carregar(pagina())">
+          Tentar novamente
+        </button>
+      </div>
+    } @else {
+
+      @if (aba() === 'saldos') {
+        <div class="rolagem" role="region"
+          aria-label="Posição de estoque" tabindex="0">
+
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Código</th>
+                <th scope="col">Produto</th>
+                <th scope="col">Unidade</th>
+                <th scope="col">Saldo</th>
+                <th scope="col">Estoque mínimo</th>
+                <th scope="col">Custo médio</th>
+                <th scope="col">Situação</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              @for (saldo of saldos(); track saldo.produtoId) {
+                <tr>
+                  <td class="codigo">{{ saldo.produtoId }}</td>
+                  <th scope="row">{{ saldo.nomeProduto }}</th>
+                  <td>{{ saldo.unidadeMedida }}</td>
+                  <td>{{ saldo.quantidade | number:'1.0-3' }}</td>
+                  <td>{{ saldo.estoqueMinimo | number:'1.0-3' }}</td>
+                  <td>{{ saldo.custoMedio | currency:'BRL':'symbol':'1.2-4' }}</td>
+                  <td>
+                    <span class="situacao"
+                      [class.ativa]="saldo.quantidade >= saldo.estoqueMinimo">
+                      {{ saldo.quantidade < saldo.estoqueMinimo
+                        ? 'Abaixo do mínimo' : 'Normal' }}
+                    </span>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td class="estado" colspan="7">
+                    Nenhum produto encontrado.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+      } @else {
+        <div class="rolagem" role="region"
+          aria-label="Histórico de movimentações" tabindex="0">
+
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Código</th>
+                <th scope="col">Produto</th>
+                <th scope="col">Data</th>
+                <th scope="col">Tipo</th>
+                <th scope="col">Quantidade</th>
+                <th scope="col">Custo unitário</th>
+                <th scope="col">Origem</th>
+                <th scope="col">Justificativa</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              @for (mov of movimentacoes(); track mov.id) {
+                <tr>
+                  <td class="codigo">{{ mov.id }}</td>
+                  <td>{{ mov.produtoId }}</td>
+                  <td>{{ mov.criadoEm | date:'dd/MM/yyyy HH:mm' }}</td>
+                  <td>
+                    <span class="situacao"
+                      [class.ativa]="mov.tipo === 'ENTRADA'">
+                      {{ mov.tipo === 'ENTRADA' ? 'Entrada' : 'Saída' }}
+                    </span>
+                  </td>
+                  <td>{{ mov.quantidade | number:'1.0-3' }}</td>
+                  <td>{{ mov.custoUnitario | currency:'BRL':'symbol':'1.2-4' }}</td>
+                  <td>{{ mov.origem }}</td>
+                  <td>{{ mov.justificativa || '—' }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td class="estado" colspan="8">
+                    Nenhuma movimentação encontrada.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      <nav class="paginacao" aria-label="Paginação">
+        <span>{{ total() }} registro(s)</span>
+
+        <div class="acoes">
+          <button type="button"
+            aria-label="Página anterior"
+            [disabled]="pagina() <= 1"
+            (click)="mudarPagina(pagina() - 1)">
+            <svg class="icone" aria-hidden="true">
+              <use href="icons/bootstrap-icons.svg#chevron-left" />
+            </svg>
+          </button>
+
+          <span>Página {{ pagina() }} de {{ ultimaPagina() }}</span>
+
+          <button type="button"
+            aria-label="Próxima página"
+            [disabled]="pagina() >= ultimaPagina()"
+            (click)="mudarPagina(pagina() + 1)">
+            <svg class="icone" aria-hidden="true">
+              <use href="icons/bootstrap-icons.svg#chevron-right" />
+            </svg>
+          </button>
+        </div>
+      </nav>
+    }
+  </div>
+</section>
