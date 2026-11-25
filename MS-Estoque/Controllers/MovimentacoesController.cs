@@ -52,4 +52,27 @@ public class MovimentacoesController(
             return BadRequest(new { mensagem = ex.Message });
         }
     }
+    [HttpPost("{id:long}/estorno")]
+    public async Task<ActionResult<MovimentacaoResponseDTO>> Estornar(
+    long id,
+    EstornarMovimentacaoDTO dto,
+    CancellationToken cancellationToken)
+    {
+        try
+        {
+            var estorno = await movimentacaoService.EstornarAsync(
+                id, dto, cancellationToken);
+
+            return StatusCode(
+                StatusCodes.Status201Created, estorno);
+        }
+        catch (ValidationException ex)
+        {
+            return BadRequest(new { mensagem = ex.Message });
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Unauthorized();
+        }
+    }
 }

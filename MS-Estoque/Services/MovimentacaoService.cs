@@ -90,6 +90,74 @@ public class MovimentacaoService(
         return Mapear(movimentacao);
     }
 
+    public async Task<MovimentacaoResponseDTO> EstornarAsync(
+    long movimentacaoId,
+    EstornarMovimentacaoDTO dto,
+    CancellationToken cancellationToken = default)
+    {
+        var usuarioId = ObterUsuarioId();
+
+        if (string.IsNullOrWhiteSpace(dto.Justificativa))
+            throw new ValidationException(
+                "Informe a justificativa do estorno.");
+
+        await using var context =
+            await contextFactory.CriarAsync(cancellationToken);
+
+        await using var transacao =
+            await context.Database.BeginTransactionAsync(
+                cancellationToken);
+
+        var repository = new MovimentacaoRepository(context);
+
+        var original = await repository.ObterPorIdAsync(
+            movimentacaoId, cancellationToken);
+
+        if (original is null)
+            throw new ValidationException(
+                "Movimentação não encontrada.");
+
+        if (original.Origem != "AJUSTE")
+            throw new ValidationException(
+                "Somente ajustes manuais podem ser estornados.");
+
+        var saldo = await repository.BloquearSaldoAsync(
+            original.ProdutoId, cancellationToken);
+
+        if (await repository.PossuiEstornoAsync(
+            original.Id, cancellationToken))
+        {
+            throw new ValidationException(
+                "Esta movimentação já foi estornada.");
+        }
+
+        var custoUnitario = CalculoEstoque.RegistrarEstorno(
+            saldo, original);
+
+        var estorno = new MovimentacaoEstoque
+        {
+            ProdutoId = original.ProdutoId,
+            Tipo = original.Tipo == "ENTRADA"
+                ? "SAIDA"
+                : "ENTRADA",
+            Quantidade = original.Quantidade,
+            CustoUnitario = custoUnitario,
+            Origem = "ESTORNO",
+            MovimentacaoOriginalId = original.Id,
+            UsuarioId = usuarioId,
+            Justificativa = dto.Justificativa.Trim(),
+            CriadoEm = DateTime.UtcNow
+        };
+
+        repository.Adicionar(estorno);
+
+        await repository.SalvarAsync(cancellationToken);
+
+        await transacao.CommitAsync(cancellationToken);
+
+        return Mapear(estorno);
+    }
+
     private long ObterUsuarioId()
     {
         var valor = httpContextAccessor.HttpContext?

@@ -11,4 +11,9 @@ public interface IMovimentacaoService
     Task<MovimentacaoResponseDTO> AjustarAsync(
         AjustarEstoqueDTO dto,
         CancellationToken cancellationToken = default);
+
+    Task<MovimentacaoResponseDTO> EstornarAsync(
+        long movimentacaoId,
+        EstornarMovimentacaoDTO dto,
+        CancellationToken cancellationToken = default);
 }
