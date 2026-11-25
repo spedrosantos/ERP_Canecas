@@ -5,6 +5,7 @@ import {
   SalvarProduto,
   FiltroProdutos,
   ProdutosPaginados,
+  CadastroAuxiliar,
   Categoria,
   UnidadeMedida
 } from './produto';
@@ -56,15 +57,29 @@ export class ProdutosService {
     );
   }
 
-  listarCategorias() {
-    return this.http.get<Categoria[]>(
-      '/api/categorias?ativo=true'
-    );
+  listarCategorias(somenteAtivas = true) {
+    return this.listarCadastro<Categoria>('categorias', somenteAtivas);
   }
 
-  listarUnidades() {
-    return this.http.get<UnidadeMedida[]>(
-      '/api/unidades-medida?ativo=true'
-    );
+  listarUnidades(somenteAtivas = true) {
+    return this.listarCadastro<UnidadeMedida>('unidades-medida', somenteAtivas);
+  }
+
+  private listarCadastro<T>(cadastro: CadastroAuxiliar, somenteAtivas: boolean) {
+    const params = somenteAtivas ? { ativo: 'true' } : undefined;
+    return this.http.get<T[]>(`/api/${cadastro}`, { params });
+  }
+
+  salvarCadastro(cadastro: CadastroAuxiliar, id: number | null, descricao: string, sigla: string) {
+    const dados = cadastro === 'categorias' ? { nome: descricao } : { descricao, sigla };
+    const url = `/api/${cadastro}`;
+
+    return id === null
+      ? this.http.post(url, dados)
+      : this.http.put(`${url}/${id}`, dados);
+  }
+
+  alterarSituacaoCadastro(cadastro: CadastroAuxiliar, id: number, ativo: boolean) {
+    return this.http.patch<void>(`/api/${cadastro}/${id}/situacao`, { ativo });
   }
 }

@@ -1,4 +1,5 @@
 export type TipoProduto = 'ACABADO' | 'MATERIA_PRIMA' | 'REVENDA';
+export type CadastroAuxiliar = 'categorias' | 'unidades-medida';
 
 export interface Categoria {
   id: number;

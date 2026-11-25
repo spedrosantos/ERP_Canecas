@@ -2,12 +2,16 @@
     <header class="cabecalho">
         <h1 id="titulo-produtos">Produtos</h1>
 
-        <button class="primario" type="button" (click)="novo()">
-            <svg class="icone icone-acao" aria-hidden="true">
-                <use href="icons/bootstrap-icons.svg#plus-lg" />
-            </svg>
-            Novo produto
-        </button>
+        <div class="acoes acoes-cabecalho">
+            <button type="button" (click)="cadastros.abrir('categorias')">Categorias</button>
+            <button type="button" (click)="cadastros.abrir('unidades-medida')">Unidades de medida</button>
+            <button class="primario" type="button" (click)="novo()">
+                <svg class="icone icone-acao" aria-hidden="true">
+                    <use href="icons/bootstrap-icons.svg#plus-lg" />
+                </svg>
+                Novo produto
+            </button>
+        </div>
     </header>
 
     <div class="painel" [attr.aria-busy]="carregando()">
@@ -151,6 +155,8 @@
         }
     </div>
 </section>
+
+<app-cadastros-auxiliares #cadastros (alterado)="atualizarCadastrosAuxiliares()" />
 
 <dialog #editor class="editor" aria-labelledby="titulo-editor-produto" (cancel)="cancelarDialogo($event)">
 

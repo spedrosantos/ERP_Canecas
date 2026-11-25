@@ -5,6 +5,7 @@ import {
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { ProdutosService } from './produtos.service';
+import { CadastrosAuxiliares } from './cadastros-auxiliares';
 import {
   Produto,
   Categoria,
@@ -15,7 +16,7 @@ import {
 
 @Component({
   selector: 'app-produtos',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, CadastrosAuxiliares],
   templateUrl: './produtos.html',
   styleUrl: './produtos.scss'
 })
@@ -76,6 +77,11 @@ export class Produtos implements OnInit {
       next: unidades => this.unidades.set(unidades),
       error: () => this.erro.set('Erro ao carregar unidades.')
     });
+  }
+
+  atualizarCadastrosAuxiliares(): void {
+    this.listar();
+    this.carregarAuxiliares();
   }
 
   listar(): void {
