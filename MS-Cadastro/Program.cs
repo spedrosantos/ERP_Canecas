@@ -22,6 +22,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITenantConnectionResolver, TenantConnectionResolver>();
 builder.Services.AddScoped<ITenantContextFactory, TenantContextFactory>();
 builder.Services.AddScoped<IClienteService, ClienteService>();
+builder.Services.AddScoped<IFornecedorService, FornecedorService>();
 
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("Chave JWT não configurada.");
@@ -55,13 +56,20 @@ builder.Services.AddAuthorization(options =>
         policy.AddRequirements(new SessaoRemotaRequirement(JwtBearerDefaults.AuthenticationScheme));
     });
 
-    options.AddPolicy(FeaturesCadastro.Cliente, policy =>
+    foreach (var codigo in new[]
+{
+    FeaturesCadastro.Cliente,
+    FeaturesCadastro.Fornecedor
+})
     {
-        policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
-        policy.RequireAuthenticatedUser();
-        policy.AddRequirements(new FeatureRemotaRequirement(
-            FeaturesCadastro.Cliente, JwtBearerDefaults.AuthenticationScheme));
-    });
+        options.AddPolicy(codigo, policy =>
+        {
+            policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
+            policy.RequireAuthenticatedUser();
+            policy.AddRequirements(new FeatureRemotaRequirement(
+                codigo, JwtBearerDefaults.AuthenticationScheme));
+        });
+    }
 });
 
 // Add services to the container.
