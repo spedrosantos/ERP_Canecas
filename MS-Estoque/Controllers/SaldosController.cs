@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MS_Estoque.Authorization;
@@ -20,5 +21,24 @@ public class SaldosController(
     {
         return Ok(await saldoService.ListarAsync(
             filtro, cancellationToken));
+    }
+
+    [HttpPatch("{produtoId:long}/minimo")]
+    public async Task<IActionResult> ConfigurarMinimo(
+        long produtoId,
+        ConfigurarEstoqueMinimoDTO dto,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await saldoService.ConfigurarMinimoAsync(
+                produtoId, dto, cancellationToken);
+
+            return NoContent();
+        }
+        catch (ValidationException ex)
+        {
+            return BadRequest(new { mensagem = ex.Message });
+        }
     }
 }
