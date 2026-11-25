@@ -3,6 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectorRef, Component, computed, DestroyRef, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
+import { FEATURE_GRUPOS } from '../../core/config/feature-grupos';
 
 import { FEATURES, FeatureService } from '../../core/services/feature.service';
 import {
@@ -104,9 +105,60 @@ export class Permissoes {
     ) ?? [];
   });
   private readonly arvore = computed(() => montarArvore(this.dados()?.features ?? []));
-  protected readonly arvoreFiltrada = computed(() => {
+
+  protected readonly featuresAgrupadas = computed(() => {
+    const arvore = this.arvore();
     const termo = normalizar(this.termoFeature());
-    return termo ? filtrarArvore(this.arvore(), termo) : this.arvore();
+
+    const grupos = FEATURE_GRUPOS.map(grupo => ({
+      nome: grupo.nome,
+      modulos: grupo.modulos.flatMap(modulo => {
+        const no = arvore.find(n => n.codigo === modulo.codigo);
+
+        if (!no) {
+          return [];
+        }
+
+        const permissoes = no.filhos.length
+          ? no.filhos
+          : [no];
+
+        return [{
+          id: no.id,
+          nome: modulo.nome,
+          permissoes
+        }];
+      })
+    }));
+
+    const outros = arvore.filter(no =>
+      !FEATURE_GRUPOS.some(grupo =>
+        grupo.modulos.some(modulo => modulo.codigo === no.codigo)
+      )
+    );
+
+    if (outros.length) {
+      grupos.push({
+        nome: 'Outros',
+        modulos: outros.map(no => ({
+          id: no.id,
+          nome: no.nome,
+          permissoes: no.filhos.length ? no.filhos : [no]
+        }))
+      });
+    }
+
+    return grupos.map(grupo => ({
+      ...grupo,
+      modulos: grupo.modulos.map(modulo => ({
+        ...modulo,
+        permissoes: !termo ||
+          normalizar(grupo.nome).includes(termo) ||
+          normalizar(modulo.nome).includes(termo)
+          ? modulo.permissoes
+          : filtrarArvore(modulo.permissoes, termo)
+      })).filter(modulo => modulo.permissoes.length > 0)
+    })).filter(grupo => grupo.modulos.length > 0);
   });
   private readonly catalogo = computed(() => new Map(
     this.dados()?.features.map(feature => [feature.id, feature]),
