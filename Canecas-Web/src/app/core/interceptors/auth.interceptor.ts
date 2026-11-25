@@ -14,9 +14,9 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
     (request.method === 'GET' && /^\/api\/usuarios\/me\/features\/?$/i.test(caminho)) ||
     (request.method === 'PUT' && /^\/api\/usuarios\/\d+\/?$/i.test(caminho)) ||
     (request.method === 'PATCH' && /^\/api\/usuarios\/\d+\/(?:situacao|senha)\/?$/i.test(caminho)) ||
-    ((request.method === 'GET' || request.method === 'POST') && /^\/api\/(?:clientes|fornecedores)\/?$/i.test(caminho)) ||
-    ((request.method === 'GET' || request.method === 'PUT') && /^\/api\/(?:clientes|fornecedores)\/\d+\/?$/i.test(caminho)) ||
-    (request.method === 'PATCH' && /^\/api\/(?:clientes|fornecedores)\/\d+\/situacao\/?$/i.test(caminho)) ||
+    ((request.method === 'GET' || request.method === 'POST') && /^\/api\/(?:clientes|fornecedores|produtos|categorias|unidades-medida)\/?$/i.test(caminho)) ||
+    ((request.method === 'GET' || request.method === 'PUT') && /^\/api\/(?:clientes|fornecedores|produtos|categorias|unidades-medida)\/\d+\/?$/i.test(caminho)) ||
+    (request.method === 'PATCH' && /^\/api\/(?:clientes|fornecedores|produtos|categorias|unidades-medida)\/\d+\/situacao\/?$/i.test(caminho)) ||
     (request.method === 'GET' && /^\/api\/consultas\/(?:cep|cnpj)\/?$/i.test(caminho));
 
   if (!protegido) {

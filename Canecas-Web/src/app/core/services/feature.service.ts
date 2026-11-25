@@ -13,6 +13,7 @@ export const FEATURES = {
   permissoes: 'USUARIO_PERMISSOES',
   clientes: 'CLIENTE',
   fornecedores: 'FORNECEDOR',
+  produtos: 'PRODUTO',
 } as const;
 
 interface FeatureEfetiva {

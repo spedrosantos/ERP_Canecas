@@ -25,5 +25,29 @@
   },
   "/api/consultas/**": {
     "target": "http://localhost:5259"
+  },
+  "/api/produtos": {
+    "target": "http://localhost:5259",
+    "secure": false
+  },
+  "/api/produtos/**": {
+    "target": "http://localhost:5259",
+    "secure": false
+  },
+  "/api/categorias": {
+    "target": "http://localhost:5259",
+    "secure": false
+  },
+  "/api/categorias/**": {
+    "target": "http://localhost:5259",
+    "secure": false
+  },
+  "/api/unidades-medida": {
+    "target": "http://localhost:5259",
+    "secure": false
+  },
+  "/api/unidades-medida/**": {
+    "target": "http://localhost:5259",
+    "secure": false
   }
 }
