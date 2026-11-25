@@ -16,6 +16,9 @@ public class TenantDbContext : DbContext
 
     public DbSet<Cliente> Clientes => Set<Cliente>();
     public DbSet<Fornecedor> Fornecedores => Set<Fornecedor>();
+    public DbSet<Categoria> Categorias => Set<Categoria>();
+    public DbSet<UnidadeMedida> UnidadesMedida => Set<UnidadeMedida>();
+    public DbSet<Produto> Produtos => Set<Produto>();
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
@@ -60,6 +63,9 @@ public class TenantDbContext : DbContext
 
         ConfigurarPessoa(modelBuilder.Entity<Cliente>(), "clientes", "cliente");
         ConfigurarPessoa(modelBuilder.Entity<Fornecedor>(), "fornecedores", "fornecedor");
+        ConfigurarCategoria(modelBuilder.Entity<Categoria>());
+        ConfigurarUnidadeMedida(modelBuilder.Entity<UnidadeMedida>());
+        ConfigurarProduto(modelBuilder.Entity<Produto>());
     }
 
     private static void ConfigurarPessoa<T>(
@@ -113,5 +119,110 @@ public class TenantDbContext : DbContext
 
         entity.Property(x => x.AtualizadoEm).HasColumnName("atualizado_em")
             .HasColumnType("timestamp with time zone");
+    }
+    private static void ConfigurarCategoria(EntityTypeBuilder<Categoria> entity)
+    {
+        entity.ToTable("categorias", "cadastro");
+
+        entity.HasKey(x => x.Id);
+
+        entity.HasIndex(x => x.Nome).IsUnique();
+
+        entity.Property(x => x.Id)
+            .HasColumnName("id")
+            .UseIdentityAlwaysColumn();
+
+        entity.Property(x => x.Nome)
+            .HasColumnName("nome")
+            .HasMaxLength(100)
+            .IsRequired();
+
+        entity.Property(x => x.Ativo)
+            .HasColumnName("ativo")
+            .HasDefaultValue(true);
+
+        entity.Property(x => x.CriadoEm)
+            .HasColumnName("criado_em")
+            .HasDefaultValueSql("now()");
+    }
+    private static void ConfigurarUnidadeMedida(
+        EntityTypeBuilder<UnidadeMedida> entity)
+    {
+        entity.ToTable("unidades_medida", "cadastro");
+
+        entity.HasKey(x => x.Id);
+
+        entity.HasIndex(x => x.Sigla).IsUnique();
+
+        entity.Property(x => x.Id)
+            .HasColumnName("id")
+            .UseIdentityAlwaysColumn();
+
+        entity.Property(x => x.Sigla)
+            .HasColumnName("sigla")
+            .HasMaxLength(10)
+            .IsRequired();
+
+        entity.Property(x => x.Descricao)
+            .HasColumnName("descricao")
+            .HasMaxLength(100)
+            .IsRequired();
+
+        entity.Property(x => x.Ativo)
+            .HasColumnName("ativo")
+            .HasDefaultValue(true);
+    }
+    private static void ConfigurarProduto(EntityTypeBuilder<Produto> entity)
+    {
+        entity.ToTable("produtos", "cadastro");
+
+        entity.HasKey(x => x.Id);
+
+        entity.Property(x => x.Id)
+            .HasColumnName("id")
+            .UseIdentityAlwaysColumn();
+
+        entity.Property(x => x.CategoriaId)
+            .HasColumnName("categoria_id");
+
+        entity.Property(x => x.UnidadeMedidaId)
+            .HasColumnName("unidade_medida_id");
+
+        entity.Property(x => x.Nome)
+            .HasColumnName("nome")
+            .HasMaxLength(150)
+            .IsRequired();
+
+        entity.Property(x => x.Descricao)
+            .HasColumnName("descricao")
+            .HasMaxLength(500);
+
+        entity.Property(x => x.Tipo)
+            .HasColumnName("tipo")
+            .HasMaxLength(20)
+            .IsRequired();
+
+        entity.Property(x => x.Ativo)
+            .HasColumnName("ativo")
+            .HasDefaultValue(true);
+
+        entity.Property(x => x.CriadoEm)
+            .HasColumnName("criado_em")
+            .HasDefaultValueSql("now()");
+
+        entity.Property(x => x.AtualizadoEm)
+            .HasColumnName("atualizado_em");
+
+        entity.HasOne(x => x.Categoria)
+            .WithMany()
+            .HasForeignKey(x => x.CategoriaId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .HasConstraintName("fk_produto_categoria");
+
+        entity.HasOne(x => x.UnidadeMedida)
+            .WithMany()
+            .HasForeignKey(x => x.UnidadeMedidaId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .HasConstraintName("fk_produto_unidade");
     }
 }

@@ -39,7 +39,7 @@ public class FornecedorRepository(TenantDbContext context) : IFornecedorReposito
         if (deslocamento >= total)
             return ([], total);
 
-        var itens = await consulta.OrderBy(fornecedor => fornecedor.Nome).ThenBy(fornecedor => fornecedor.Id)
+        var itens = await consulta.OrderBy(fornecedor => fornecedor.Id)
             .Skip(checked((int)deslocamento))
             .Take(filtro.TamanhoPagina)
             .ToListAsync(cancellationToken);

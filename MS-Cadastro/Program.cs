@@ -23,6 +23,9 @@ builder.Services.AddScoped<ITenantConnectionResolver, TenantConnectionResolver>(
 builder.Services.AddScoped<ITenantContextFactory, TenantContextFactory>();
 builder.Services.AddScoped<IClienteService, ClienteService>();
 builder.Services.AddScoped<IFornecedorService, FornecedorService>();
+builder.Services.AddScoped<IProdutoService, ProdutoService>();
+builder.Services.AddScoped<ICategoriaService, CategoriaService>();
+builder.Services.AddScoped<IUnidadeMedidaService, UnidadeMedidaService>();
 
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("Chave JWT não configurada.");
@@ -59,7 +62,8 @@ builder.Services.AddAuthorization(options =>
     foreach (var codigo in new[]
 {
     FeaturesCadastro.Cliente,
-    FeaturesCadastro.Fornecedor
+    FeaturesCadastro.Fornecedor,
+    FeaturesCadastro.Produto
 })
     {
         options.AddPolicy(codigo, policy =>

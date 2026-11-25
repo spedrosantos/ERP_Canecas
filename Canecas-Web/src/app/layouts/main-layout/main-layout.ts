@@ -38,6 +38,9 @@ export class MainLayout {
   protected readonly mostrarFornecedores = computed(() =>
     this.features.permiteRota(FEATURES.fornecedores)
   );
+  readonly mostrarProdutos = computed(() =>
+    this.features.permiteRota(FEATURES.produtos)
+  );
 
   constructor() {
     effect(() => {

@@ -1,0 +1,264 @@
+<section class="pagina" aria-labelledby="titulo-produtos">
+    <header class="cabecalho">
+        <h1 id="titulo-produtos">Produtos</h1>
+
+        <div class="acoes acoes-cabecalho">
+            <button type="button" (click)="cadastros.abrir('categorias')">Categorias</button>
+            <button type="button" (click)="cadastros.abrir('unidades-medida')">Unidades de medida</button>
+            <button class="primario" type="button" (click)="novo()">
+                <svg class="icone icone-acao" aria-hidden="true">
+                    <use href="icons/bootstrap-icons.svg#plus-lg" />
+                </svg>
+                Novo produto
+            </button>
+        </div>
+    </header>
+
+    <div class="painel" [attr.aria-busy]="carregando()">
+        <form class="filtros" [formGroup]="filtros" (ngSubmit)="pesquisar()">
+
+            <label>
+                Buscar por código ou nome
+                <span class="busca-com-icone">
+                    <svg class="icone" aria-hidden="true">
+                        <use href="icons/bootstrap-icons.svg#search" />
+                    </svg>
+                    <input type="search" formControlName="busca" maxlength="150" placeholder="Código ou nome" />
+                </span>
+            </label>
+
+            <label>
+                Categoria
+                <select formControlName="categoriaId">
+                    <option value="">Todas</option>
+                    @for (categoria of categorias(); track categoria.id) {
+                    <option [value]="categoria.id">
+                        {{ categoria.nome }}
+                    </option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                Tipo
+                <select formControlName="tipo">
+                    <option value="">Todos</option>
+                    @for (tipo of tipos; track tipo.valor) {
+                    <option [value]="tipo.valor">{{ tipo.nome }}</option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                Situação
+                <select formControlName="ativo">
+                    <option value="">Todas</option>
+                    <option value="true">Ativos</option>
+                    <option value="false">Inativos</option>
+                </select>
+            </label>
+
+            <button type="submit">
+                <svg class="icone icone-acao" aria-hidden="true">
+                    <use href="icons/bootstrap-icons.svg#search" />
+                </svg>
+                Pesquisar
+            </button>
+        </form>
+
+        @if (erro() && !modalAberto()) {
+        <p class="erro erro-lista" role="alert">{{ erro() }}</p>
+        }
+
+        @if (carregando()) {
+        <p class="estado" role="status">Carregando produtos…</p>
+        } @else {
+        <div class="rolagem" role="region" aria-label="Tabela de produtos" tabindex="0">
+
+            <table>
+                <thead>
+                    <tr>
+                        <th scope="col" class="codigo">Código</th>
+                        <th scope="col">Produto</th>
+                        <th scope="col">Categoria</th>
+                        <th scope="col">Unidade</th>
+                        <th scope="col" class="coluna-situacao">Situação</th>
+                        <th scope="col" class="coluna-acoes">Ações</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @for (produto of produtos(); track produto.id) {
+                    <tr>
+                        <td class="codigo">{{ produto.id }}</td>
+                        <th scope="row">{{ produto.nome }}</th>
+                        <td>{{ produto.categoria }}</td>
+                        <td>{{ produto.unidadeMedida }}</td>
+
+                        <td class="coluna-situacao">
+                            <span class="situacao" [class.ativa]="produto.ativo">
+                                {{ produto.ativo ? 'Ativo' : 'Inativo' }}
+                            </span>
+                        </td>
+
+                        <td class="coluna-acoes">
+                            <div class="acoes">
+                                <button type="button" (click)="editar(produto)">
+                                    <svg class="icone icone-acao" aria-hidden="true">
+                                        <use href="icons/bootstrap-icons.svg#pencil" />
+                                    </svg>
+                                    Editar
+                                </button>
+
+                                <button type="button" (click)="alterarSituacao(produto)">
+                                    <svg class="icone icone-acao" aria-hidden="true">
+                                        <use [attr.href]="'icons/bootstrap-icons.svg#' +
+                          (produto.ativo ? 'dash-circle' : 'plus-circle')" />
+                                    </svg>
+                                    {{ produto.ativo ? 'Inativar' : 'Ativar' }}
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    } @empty {
+                    <tr>
+                        <td class="estado" colspan="6">
+                            Nenhum produto encontrado.
+                        </td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <nav class="paginacao" aria-label="Paginação de produtos">
+            <span>{{ total() }} produto(s)</span>
+
+            <div class="acoes">
+                <button type="button" aria-label="Página anterior" [disabled]="pagina() <= 1"
+                    (click)="mudarPagina(pagina() - 1)">
+                    <svg class="icone" aria-hidden="true">
+                        <use href="icons/bootstrap-icons.svg#chevron-left" />
+                    </svg>
+                </button>
+
+                <span>Página {{ pagina() }}</span>
+
+                <button type="button" aria-label="Próxima página" [disabled]="pagina() * tamanhoPagina >= total()"
+                    (click)="mudarPagina(pagina() + 1)">
+                    <svg class="icone" aria-hidden="true">
+                        <use href="icons/bootstrap-icons.svg#chevron-right" />
+                    </svg>
+                </button>
+            </div>
+        </nav>
+        }
+    </div>
+</section>
+
+<app-cadastros-auxiliares #cadastros (alterado)="atualizarCadastrosAuxiliares()" />
+
+<dialog #editor class="editor" aria-labelledby="titulo-editor-produto" (cancel)="cancelarDialogo($event)">
+
+    <form [formGroup]="formulario" (ngSubmit)="salvar()" novalidate>
+        <h2 id="titulo-editor-produto">
+            {{ editandoId() ? 'Editar produto' : 'Novo produto' }}
+        </h2>
+
+        <fieldset class="campos" [disabled]="salvando()">
+            <label>
+                Nome
+                <input type="text" formControlName="nome" maxlength="150" required />
+            </label>
+
+            <label>
+                Categoria
+                <select formControlName="categoriaId">
+                    <option [ngValue]="0">Selecione</option>
+                    @for (categoria of categorias(); track categoria.id) {
+                    <option [ngValue]="categoria.id">{{ categoria.nome }}</option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                Unidade de medida
+                <select formControlName="unidadeMedidaId">
+                    <option [ngValue]="0">Selecione</option>
+                    @for (unidade of unidades(); track unidade.id) {
+                    <option [ngValue]="unidade.id">
+                        {{ unidade.sigla }} - {{ unidade.descricao }}
+                    </option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                Tipo de produto
+                <select formControlName="tipo">
+                    @for (tipo of tipos; track tipo.valor) {
+                    <option [value]="tipo.valor">{{ tipo.nome }}</option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                Descrição
+                <input type="text" formControlName="descricao" maxlength="500" />
+            </label>
+        </fieldset>
+
+        @if (erro()) {
+        <p class="erro" role="alert">{{ erro() }}</p>
+        }
+
+        <div class="acoes-modal">
+            <button type="button" [disabled]="salvando()" (click)="fecharModal()">
+                <svg class="icone icone-acao" aria-hidden="true">
+                    <use href="icons/bootstrap-icons.svg#x-lg" />
+                </svg>
+                Cancelar
+            </button>
+
+            <button class="primario" type="submit" [disabled]="salvando()">
+                <svg class="icone icone-acao" aria-hidden="true">
+                    <use href="icons/bootstrap-icons.svg#check-lg" />
+                </svg>
+                {{ salvando() ? 'Salvando…' : 'Salvar' }}
+            </button>
+        </div>
+    </form>
+</dialog>
+<dialog #confirmacao aria-labelledby="titulo-confirmacao-produto" (cancel)="cancelarConfirmacao($event)">
+
+    @if (produtoSelecionado(); as produto) {
+    <h2 id="titulo-confirmacao-produto">
+        {{ produto.ativo ? 'Inativar produto' : 'Ativar produto' }}
+    </h2>
+
+    <p>
+        {{ produto.ativo ? 'Inativar' : 'Ativar' }}
+        <strong>{{ produto.nome }}</strong>?
+    </p>
+    }
+
+    @if (erroConfirmacao()) {
+    <p class="erro" role="alert">{{ erroConfirmacao() }}</p>
+    }
+
+    <div class="acoes-modal">
+        <button autofocus type="button" [disabled]="salvando()" (click)="fecharConfirmacao()">
+            <svg class="icone icone-acao" aria-hidden="true">
+                <use href="icons/bootstrap-icons.svg#x-lg" />
+            </svg>
+            Cancelar
+        </button>
+
+        <button class="primario" type="button" [disabled]="salvando()" (click)="confirmarSituacao()">
+            <svg class="icone icone-acao" aria-hidden="true">
+                <use href="icons/bootstrap-icons.svg#check-lg" />
+            </svg>
+            {{ salvando() ? 'Salvando…' : 'Confirmar' }}
+        </button>
+    </div>
+</dialog>

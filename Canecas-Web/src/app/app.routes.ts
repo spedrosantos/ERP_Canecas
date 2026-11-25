@@ -40,6 +40,14 @@ export const routes: Routes = [
             .then(modulo => modulo.Fornecedores)
       },
       {
+        path: 'produtos',
+        canActivate: [featureGuard],
+        data: { feature: FEATURES.produtos },
+        loadComponent: () =>
+          import('./features/produtos/produtos')
+            .then(modulo => modulo.Produtos)
+      },
+      {
         path: 'usuarios',
         canActivate: [featureGuard],
         data: { feature: FEATURES.usuarios },

@@ -1,0 +1,114 @@
+<dialog #dialogo class="editor" aria-labelledby="titulo-cadastro-auxiliar" (cancel)="voltar($event)">
+  @let atual = tela();
+  @let categorias = cadastro() === 'categorias';
+  <h2 id="titulo-cadastro-auxiliar">{{ categorias ? 'Categorias' : 'Unidades de medida' }}</h2>
+
+  @if (erro()) {
+    <p class="erro" role="alert">{{ erro() }}</p>
+  }
+
+  @switch (atual.tipo) {
+    @case ('lista') {
+      @if (carregando()) {
+        <p class="estado" role="status">Carregando registros…</p>
+      } @else if (erro()) {
+        <button type="button" (click)="carregar()">Tentar novamente</button>
+      } @else {
+        <div class="painel">
+          <div class="rolagem" role="region" [attr.aria-label]="categorias ? 'Tabela de categorias' : 'Tabela de unidades de medida'" tabindex="0">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col" class="codigo">Código</th>
+                  <th scope="col">{{ categorias ? 'Nome' : 'Unidade' }}</th>
+                  <th scope="col" class="coluna-situacao">Situação</th>
+                  <th scope="col" class="coluna-acoes">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (registro of registros(); track registro.id) {
+                  <tr>
+                    <td class="codigo">{{ registro.id }}</td>
+                    <th scope="row">
+                      @if ('sigla' in registro) { {{ registro.sigla }} – }
+                      {{ descricao(registro) }}
+                    </th>
+                    <td class="coluna-situacao">
+                      <span class="situacao" [class.ativa]="registro.ativo">
+                        {{ registro.ativo ? 'Ativo' : 'Inativo' }}
+                      </span>
+                    </td>
+                    <td class="coluna-acoes">
+                      <div class="acoes">
+                        <button type="button" (click)="editar(registro)">
+                          <svg class="icone icone-acao" aria-hidden="true"><use href="icons/bootstrap-icons.svg#pencil" /></svg>
+                          Editar
+                        </button>
+                        <button type="button" (click)="pedirConfirmacao(registro)">
+                          <svg class="icone icone-acao" aria-hidden="true">
+                            <use [attr.href]="'icons/bootstrap-icons.svg#' + (registro.ativo ? 'dash-circle' : 'plus-circle')" />
+                          </svg>
+                          {{ registro.ativo ? 'Inativar' : 'Ativar' }}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr><td class="estado" colspan="4">Nenhum registro encontrado.</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+      <div class="acoes-modal">
+        <button type="button" autofocus (click)="voltar()">Fechar</button>
+        <button class="primario" type="button" [disabled]="carregando()" (click)="editar()">
+          <svg class="icone icone-acao" aria-hidden="true"><use href="icons/bootstrap-icons.svg#plus-lg" /></svg>
+          {{ categorias ? 'Nova categoria' : 'Nova unidade' }}
+        </button>
+      </div>
+    }
+    @case ('editor') {
+      <h3>{{ atual.registro ? (categorias ? 'Editar categoria' : 'Editar unidade') : (categorias ? 'Nova categoria' : 'Nova unidade') }}</h3>
+      <form [formGroup]="formulario" (ngSubmit)="salvar()" novalidate>
+        <fieldset class="campos" [disabled]="salvando()">
+          @if (!categorias) {
+            <label>
+              Sigla
+              <input type="text" formControlName="sigla" maxlength="10" required
+                [attr.aria-invalid]="formulario.controls.sigla.touched && formulario.controls.sigla.invalid" />
+              @if (formulario.controls.sigla.touched && formulario.controls.sigla.invalid) {
+                <span class="erro">Informe a sigla.</span>
+              }
+            </label>
+          }
+          <label>
+            {{ categorias ? 'Nome' : 'Descrição' }}
+            <input type="text" formControlName="descricao" maxlength="100" required
+              [attr.aria-invalid]="formulario.controls.descricao.touched && formulario.controls.descricao.invalid" />
+            @if (formulario.controls.descricao.touched && formulario.controls.descricao.invalid) {
+              <span class="erro">{{ categorias ? 'Informe o nome.' : 'Informe a descrição.' }}</span>
+            }
+          </label>
+        </fieldset>
+        <div class="acoes-modal">
+          <button type="button" [disabled]="salvando()" (click)="voltar()">Cancelar</button>
+          <button class="primario" type="submit" [disabled]="salvando()">
+            <svg class="icone icone-acao" aria-hidden="true"><use href="icons/bootstrap-icons.svg#check-lg" /></svg>
+            {{ salvando() ? 'Salvando…' : 'Salvar' }}
+          </button>
+        </div>
+      </form>
+    }
+    @case ('confirmacao') {
+      <p>{{ atual.registro.ativo ? 'Inativar' : 'Ativar' }} <strong>{{ descricao(atual.registro) }}</strong>?</p>
+      <div class="acoes-modal">
+        <button type="button" [disabled]="salvando()" (click)="voltar()">Cancelar</button>
+        <button class="primario" type="button" [disabled]="salvando()" (click)="confirmar()">
+          {{ salvando() ? 'Salvando…' : 'Confirmar' }}
+        </button>
+      </div>
+    }
+  }
+</dialog>
