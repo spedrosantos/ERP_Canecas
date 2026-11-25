@@ -23,7 +23,7 @@ public class UnidadeMedidaRepository : IUnidadeMedidaRepository
             query = query.Where(x => x.Ativo == ativo.Value);
 
         return await query
-            .OrderBy(x => x.Sigla)
+            .OrderBy(x => x.Id)
             .ToListAsync();
     }
 

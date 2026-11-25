@@ -22,7 +22,7 @@ public class CategoriaRepository : ICategoriaRepository
             query = query.Where(x => x.Ativo == ativo.Value);
 
         return await query
-            .OrderBy(x => x.Nome)
+            .OrderBy(x => x.Id)
             .ToListAsync();
     }
 

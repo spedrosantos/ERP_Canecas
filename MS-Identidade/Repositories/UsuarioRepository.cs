@@ -44,7 +44,7 @@ public class UsuarioRepository : IUsuarioRepository
     {
         return await _context.Usuarios
             .AsNoTracking()
-            .OrderBy(x => x.Nome)
+            .OrderBy(x => x.Id)
             .ToListAsync();
     }
 
@@ -52,7 +52,7 @@ public class UsuarioRepository : IUsuarioRepository
     {
         return _context.Usuarios.AsNoTracking()
             .Where(usuario => usuario.Ativo)
-            .OrderBy(usuario => usuario.Nome)
+            .OrderBy(usuario => usuario.Id)
             .ToListAsync();
     }
 

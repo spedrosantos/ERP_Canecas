@@ -39,7 +39,7 @@ public class ClienteRepository(TenantDbContext context) : IClienteRepository
         if (deslocamento >= total)
             return ([], total);
 
-        var itens = await consulta.OrderBy(cliente => cliente.Nome).ThenBy(cliente => cliente.Id)
+        var itens = await consulta.OrderBy(cliente => cliente.Id)
             .Skip(checked((int)deslocamento))
             .Take(filtro.TamanhoPagina)
             .ToListAsync(cancellationToken);

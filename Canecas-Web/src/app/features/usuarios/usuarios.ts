@@ -49,7 +49,6 @@ export class Usuarios {
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder).nonNullable;
   private readonly usuarios = signal<Usuario[]>([]);
-  private readonly compararNomes = new Intl.Collator('pt-BR');
   private readonly editor = viewChild<ElementRef<HTMLDialogElement>>('editor');
   private readonly confirmacao = viewChild<ElementRef<HTMLDialogElement>>('confirmacao');
 
@@ -252,9 +251,7 @@ export class Usuarios {
       .subscribe({
         next: (usuario) => {
           this.usuarios.update((atuais) =>
-            [...atuais.filter((atual) => atual.id !== usuario.id), usuario].sort((a, b) =>
-              this.compararNomes.compare(a.nome, b.nome),
-            ),
+            [...atuais.filter((atual) => atual.id !== usuario.id), usuario].sort((a, b) => a.id - b.id),
           );
           dialogo.close();
           this.aviso.set(mensagem);

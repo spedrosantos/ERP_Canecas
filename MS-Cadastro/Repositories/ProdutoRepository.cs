@@ -60,8 +60,7 @@ public class ProdutoRepository : IProdutoRepository
             return (new List<Produto>(), total);
 
         var itens = await query
-            .OrderBy(x => x.Nome)
-            .ThenBy(x => x.Id)
+            .OrderBy(x => x.Id)
             .Skip((int)deslocamento)
             .Take(filtro.TamanhoPagina)
             .ToListAsync();
