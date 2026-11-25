@@ -8,6 +8,8 @@ using FeatureAuthorization;
 using MultiTenancy.Interfaces;
 using MultiTenancy.Services;
 using Npgsql;
+using MS_Estoque.Services;
+using MS_Estoque.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +20,7 @@ builder.Services.AddSingleton(_ => NpgsqlDataSource.Create(masterConnection));
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITenantConnectionResolver, TenantConnectionResolver>();
 builder.Services.AddScoped<ITenantContextFactory, TenantContextFactory>();
+builder.Services.AddScoped<ISaldoService, SaldoService>();
 
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("Chave JWT não configurada.");
