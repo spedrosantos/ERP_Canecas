@@ -12,6 +12,7 @@ export const FEATURES = {
   alterarSenhaUsuario: 'USUARIO_ALTERAR_SENHA',
   permissoes: 'USUARIO_PERMISSOES',
   clientes: 'CLIENTE',
+  fornecedores: 'FORNECEDOR',
 } as const;
 
 interface FeatureEfetiva {

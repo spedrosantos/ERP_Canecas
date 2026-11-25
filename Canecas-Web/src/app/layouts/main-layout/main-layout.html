@@ -4,74 +4,83 @@
       <a class="marca" routerLink="/home" [title]="empresa()" (click)="menuMovelAberto.set(false)">
         @let logoUrl = tema().logoUrl;
         @if (logoUrl && logoComErro() !== logoUrl) {
-          <img class="marca-logo" [src]="logoUrl" alt="" (error)="logoComErro.set(logoUrl)" />
+        <img class="marca-logo" [src]="logoUrl" alt="" (error)="logoComErro.set(logoUrl)" />
         } @else {
-          <span class="marca-simbolo" aria-hidden="true">{{ empresa().charAt(0) }}</span>
+        <span class="marca-simbolo" aria-hidden="true">{{ empresa().charAt(0) }}</span>
         }
         <span class="marca-nome rotulo-menu">{{ empresa() }}</span>
       </a>
 
-      <button
-        class="controle-menu controle-desktop"
-        type="button"
-        aria-controls="navegacao-principal"
+      <button class="controle-menu controle-desktop" type="button" aria-controls="navegacao-principal"
         [attr.aria-expanded]="!recolhida()"
         [attr.aria-label]="recolhida() ? 'Expandir menu lateral' : 'Recolher menu lateral'"
         [title]="recolhida() ? 'Expandir menu lateral' : 'Recolher menu lateral'"
-        (click)="recolhida.update((valor) => !valor)"
-      >
-        <svg class="icone" aria-hidden="true"><use href="icons/bootstrap-icons.svg#list" /></svg>
+        (click)="recolhida.update((valor) => !valor)">
+        <svg class="icone" aria-hidden="true">
+          <use href="icons/bootstrap-icons.svg#list" />
+        </svg>
       </button>
-      <button
-        class="controle-menu controle-movel"
-        type="button"
-        aria-controls="navegacao-principal"
-        [attr.aria-expanded]="menuMovelAberto()"
-        [attr.aria-label]="menuMovelAberto() ? 'Fechar menu' : 'Abrir menu'"
-        (click)="menuMovelAberto.update((valor) => !valor)"
-      >
-        <svg class="icone" aria-hidden="true"><use href="icons/bootstrap-icons.svg#list" /></svg>
+      <button class="controle-menu controle-movel" type="button" aria-controls="navegacao-principal"
+        [attr.aria-expanded]="menuMovelAberto()" [attr.aria-label]="menuMovelAberto() ? 'Fechar menu' : 'Abrir menu'"
+        (click)="menuMovelAberto.update((valor) => !valor)">
+        <svg class="icone" aria-hidden="true">
+          <use href="icons/bootstrap-icons.svg#list" />
+        </svg>
       </button>
     </header>
 
     <div id="navegacao-principal" class="navegacao">
       <nav aria-label="Menu principal">
-        <a
-          class="item-menu"
-          routerLink="/home"
-          routerLinkActive="item-ativo"
-          ariaCurrentWhenActive="page"
-          title="Início"
-          (click)="menuMovelAberto.set(false)"
-        >
-          <svg class="icone icone-item" aria-hidden="true"><use href="icons/bootstrap-icons.svg#house" /></svg>
+        <a class="item-menu" routerLink="/home" routerLinkActive="item-ativo" ariaCurrentWhenActive="page"
+          title="Início" (click)="menuMovelAberto.set(false)">
+          <svg class="icone icone-item" aria-hidden="true">
+            <use href="icons/bootstrap-icons.svg#house" />
+          </svg>
           <span class="rotulo-menu">Início</span>
         </a>
 
-        @if (mostrarClientes()) {
-          <details class="configuracoes" #cadastros>
-            <summary class="item-menu" title="Cadastros" (click)="expandirMenu($event, cadastros)">
-              <svg class="icone icone-item" aria-hidden="true"><use href="icons/bootstrap-icons.svg#collection" /></svg>
-              <span class="rotulo-menu">Cadastros</span>
-            </summary>
-            <ul class="submenu">
-              <li>
-                <a routerLink="/clientes" routerLinkActive="item-ativo" ariaCurrentWhenActive="page"
-                  (click)="menuMovelAberto.set(false)">
-                  <svg class="icone icone-acao" aria-hidden="true"><use href="icons/bootstrap-icons.svg#people" /></svg>Clientes
-                </a>
-              </li>
-            </ul>
-          </details>
+        @if (mostrarClientes() || mostrarFornecedores()) {
+        <details class="configuracoes" #cadastros>
+          <summary class="item-menu" title="Cadastros" (click)="expandirMenu($event, cadastros)">
+            <svg class="icone icone-item" aria-hidden="true">
+              <use href="icons/bootstrap-icons.svg#collection" />
+            </svg>
+            <span class="rotulo-menu">Cadastros</span>
+          </summary>
+
+          <ul class="submenu">
+            @if (mostrarClientes()) {
+            <li>
+              <a routerLink="/clientes" routerLinkActive="item-ativo" ariaCurrentWhenActive="page"
+                (click)="menuMovelAberto.set(false)">
+                <svg class="icone icone-acao" aria-hidden="true">
+                  <use href="icons/bootstrap-icons.svg#people" />
+                </svg>
+                Clientes
+              </a>
+            </li>
+            }
+
+            @if (mostrarFornecedores()) {
+            <li>
+              <a routerLink="/fornecedores" routerLinkActive="item-ativo" ariaCurrentWhenActive="page"
+                (click)="menuMovelAberto.set(false)">
+                <svg class="icone icone-acao" aria-hidden="true">
+                  <use href="icons/bootstrap-icons.svg#people" />
+                </svg>
+                Fornecedores
+              </a>
+            </li>
+            }
+          </ul>
+        </details>
         }
         @if (mostrarUsuarios() || mostrarPermissoes()) {
         <details class="configuracoes" #configuracoes>
-          <summary
-            class="item-menu"
-            title="Configurações"
-            (click)="expandirMenu($event, configuracoes)"
-          >
-            <svg class="icone icone-item" aria-hidden="true"><use href="icons/bootstrap-icons.svg#gear" /></svg>
+          <summary class="item-menu" title="Configurações" (click)="expandirMenu($event, configuracoes)">
+            <svg class="icone icone-item" aria-hidden="true">
+              <use href="icons/bootstrap-icons.svg#gear" />
+            </svg>
             <span class="rotulo-menu">Configurações</span>
           </summary>
           <ul class="submenu">
@@ -79,7 +88,9 @@
             <li>
               <a routerLink="/usuarios" routerLinkActive="item-ativo" ariaCurrentWhenActive="page"
                 (click)="menuMovelAberto.set(false)">
-                <svg class="icone icone-acao" aria-hidden="true"><use href="icons/bootstrap-icons.svg#people" /></svg>Usuários
+                <svg class="icone icone-acao" aria-hidden="true">
+                  <use href="icons/bootstrap-icons.svg#people" />
+                </svg>Usuários
               </a>
             </li>
             }
@@ -87,7 +98,9 @@
             <li>
               <a routerLink="/permissoes" routerLinkActive="item-ativo" ariaCurrentWhenActive="page"
                 (click)="menuMovelAberto.set(false)">
-                <svg class="icone icone-acao" aria-hidden="true"><use href="icons/bootstrap-icons.svg#key" /></svg>Permissões
+                <svg class="icone icone-acao" aria-hidden="true">
+                  <use href="icons/bootstrap-icons.svg#key" />
+                </svg>Permissões
               </a>
             </li>
             }
@@ -98,13 +111,15 @@
 
       <div class="conta">
         @if (auth.usuario(); as usuario) {
-          <div class="usuario" [title]="usuario.nome">
-            <span class="usuario-inicial" aria-hidden="true">{{ usuario.nome.charAt(0) }}</span>
-            <span class="usuario-nome rotulo-menu">{{ usuario.nome }}</span>
-          </div>
+        <div class="usuario" [title]="usuario.nome">
+          <span class="usuario-inicial" aria-hidden="true">{{ usuario.nome.charAt(0) }}</span>
+          <span class="usuario-nome rotulo-menu">{{ usuario.nome }}</span>
+        </div>
         }
         <button class="item-menu sair" type="button" title="Sair" (click)="auth.logout()">
-          <svg class="icone icone-item" aria-hidden="true"><use href="icons/bootstrap-icons.svg#box-arrow-right" /></svg>
+          <svg class="icone icone-item" aria-hidden="true">
+            <use href="icons/bootstrap-icons.svg#box-arrow-right" />
+          </svg>
           <span class="rotulo-menu">Sair</span>
         </button>
       </div>

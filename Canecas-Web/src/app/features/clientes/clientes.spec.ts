@@ -5,7 +5,7 @@ import { vi } from 'vitest';
 
 import { FEATURES, FeatureService } from '../../core/services/feature.service';
 import { Clientes } from './clientes';
-import { documentoValido, formatarDocumento } from './documentos';
+import { documentoValido, formatarDocumento } from '../../shared/validations/documentos';
 
 describe('Clientes', () => {
   afterEach(() => vi.useRealTimers());

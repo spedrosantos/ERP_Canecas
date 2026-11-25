@@ -1,4 +1,4 @@
-import { TipoPessoa } from './cliente';
+export type TipoPessoa = 'F' | 'J';
 
 export function normalizarDocumento(valor: string): string {
   return valor.replace(/[.\/-]/g, '').trim().toUpperCase();

@@ -2,7 +2,8 @@ export const FEATURE_GRUPOS = [
   {
     nome: 'Cadastros',
     modulos: [
-      { codigo: 'CLIENTE', nome: 'Clientes' }
+      { codigo: 'CLIENTE', nome: 'Clientes' },
+      { codigo: 'FORNECEDOR', nome: 'Fornecedores' }
     ]
   },
   {
