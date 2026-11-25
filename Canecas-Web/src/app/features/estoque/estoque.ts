@@ -1,6 +1,6 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { EstoqueService } from './estoque.service';
 import {
@@ -48,6 +48,166 @@ export class Estoque implements OnInit {
     origem: '',
     dataInicio: '',
     dataFim: ''
+  });
+
+  @ViewChild('editorAjuste')
+  private editorAjuste!: ElementRef<HTMLDialogElement>;
+
+  @ViewChild('editorMinimo')
+  private editorMinimo!: ElementRef<HTMLDialogElement>;
+
+  readonly saldoSelecionado = signal<SaldoEstoque | null>(null);
+  readonly salvando = signal(false);
+  readonly erroEditor = signal('');
+
+  readonly formularioAjuste = this.fb.group({
+    tipo: ['ENTRADA' as TipoMovimentacao, Validators.required],
+    quantidade: [1, [Validators.required, Validators.min(0.001)]],
+    custoUnitario: [0, [Validators.min(0)]],
+    justificativa: ['', [
+      Validators.required,
+      Validators.maxLength(500)
+    ]]
+  });
+
+  abrirAjuste(saldo: SaldoEstoque): void {
+    this.saldoSelecionado.set(saldo);
+    this.erroEditor.set('');
+
+    this.formularioAjuste.reset({
+      tipo: 'ENTRADA',
+      quantidade: 1,
+      custoUnitario: saldo.custoMedio,
+      justificativa: ''
+    });
+
+    this.editorAjuste.nativeElement.showModal();
+  }
+
+  fecharAjuste(): void {
+    if (this.salvando()) return;
+
+    this.editorAjuste.nativeElement.close();
+    this.saldoSelecionado.set(null);
+    this.erroEditor.set('');
+  }
+
+  cancelarAjuste(event: Event): void {
+    event.preventDefault();
+    this.fecharAjuste();
+  }
+
+  salvarAjuste(): void {
+    const saldo = this.saldoSelecionado();
+
+    if (!saldo || this.salvando()) return;
+
+    if (this.formularioAjuste.invalid) {
+      this.formularioAjuste.markAllAsTouched();
+      return;
+    }
+
+    const valores = this.formularioAjuste.getRawValue();
+
+    if (!valores.justificativa.trim()) {
+      this.erroEditor.set('Informe a justificativa.');
+      return;
+    }
+
+    this.salvando.set(true);
+    this.erroEditor.set('');
+
+    this.service.ajustar({
+      produtoId: saldo.produtoId,
+      tipo: valores.tipo,
+      quantidade: valores.quantidade,
+      custoUnitario: valores.tipo === 'ENTRADA'
+        ? valores.custoUnitario
+        : null,
+      justificativa: valores.justificativa.trim()
+    }).subscribe({
+      next: () => {
+        this.salvando.set(false);
+        this.fecharAjuste();
+        this.aviso.set('Estoque ajustado com sucesso.');
+        this.carregar(this.pagina());
+      },
+      error: resposta => {
+        this.salvando.set(false);
+        this.erroEditor.set(
+          resposta.error?.mensagem ||
+          'Erro ao ajustar estoque.'
+        );
+      }
+    });
+  }
+
+  abrirMinimo(saldo: SaldoEstoque): void {
+    this.saldoSelecionado.set(saldo);
+    this.erroEditor.set('');
+
+    this.formularioMinimo.reset({
+      estoqueMinimo: saldo.estoqueMinimo
+    });
+
+    this.editorMinimo.nativeElement.showModal();
+  }
+
+  fecharMinimo(): void {
+    if (this.salvando()) return;
+
+    this.editorMinimo.nativeElement.close();
+    this.saldoSelecionado.set(null);
+    this.erroEditor.set('');
+  }
+
+  cancelarMinimo(event: Event): void {
+    event.preventDefault();
+    this.fecharMinimo();
+  }
+
+  salvarMinimo(): void {
+    const saldo = this.saldoSelecionado();
+
+    if (!saldo || this.salvando()) return;
+
+    if (this.formularioMinimo.invalid) {
+      this.formularioMinimo.markAllAsTouched();
+      return;
+    }
+
+    const { estoqueMinimo } =
+      this.formularioMinimo.getRawValue();
+
+    this.salvando.set(true);
+    this.erroEditor.set('');
+
+    this.service.configurarMinimo(
+      saldo.produtoId,
+      estoqueMinimo
+    ).subscribe({
+      next: () => {
+        this.salvando.set(false);
+        this.fecharMinimo();
+        this.aviso.set('Estoque mínimo atualizado.');
+        this.carregar(this.pagina());
+      },
+      error: resposta => {
+        this.salvando.set(false);
+        this.erroEditor.set(
+          resposta.error?.mensagem ||
+          'Erro ao configurar estoque mínimo.'
+        );
+      }
+    });
+  }
+
+  readonly formularioMinimo = this.fb.group({
+    estoqueMinimo: [0, [
+      Validators.required,
+      Validators.min(0),
+      Validators.max(999999999999.999)
+    ]]
   });
 
   ngOnInit(): void {
