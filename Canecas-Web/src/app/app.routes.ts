@@ -32,6 +32,14 @@ export const routes: Routes = [
         loadComponent: () => import('./features/clientes/clientes').then((modulo) => modulo.Clientes)
       },
       {
+        path: 'fornecedores',
+        canActivate: [featureGuard],
+        data: { feature: FEATURES.fornecedores },
+        loadComponent: () =>
+          import('./features/fornecedores/fornecedores')
+            .then(modulo => modulo.Fornecedores)
+      },
+      {
         path: 'usuarios',
         canActivate: [featureGuard],
         data: { feature: FEATURES.usuarios },

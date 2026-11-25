@@ -1,6 +1,7 @@
 namespace MS_Cadastro.Entities;
+using MS_Cadastro.Entities.Interfaces;
 
-public class Cliente
+public class Cliente : IPessoaCadastro
 {
     public long Id { get; set; }
     public string TipoPessoa { get; set; } = string.Empty;

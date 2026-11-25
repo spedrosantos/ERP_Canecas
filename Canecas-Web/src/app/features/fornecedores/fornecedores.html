@@ -1,0 +1,220 @@
+<section class="pagina" aria-labelledby="titulo-fornecedores">
+  <header class="cabecalho">
+    <h1 id="titulo-fornecedores">Fornecedores</h1>
+    @if (podeGerenciar()) {
+      <button class="primario" type="button" (click)="abrirEditor()">
+        <svg class="icone icone-acao" aria-hidden="true"><use href="icons/bootstrap-icons.svg#plus-lg" /></svg>
+        Novo fornecedor
+      </button>
+    }
+  </header>
+
+  <p class="aviso" role="status">{{ aviso() }}</p>
+
+  <div class="painel" [attr.aria-busy]="carregando()">
+    <div class="filtros" [formGroup]="filtros">
+      <label>
+        Buscar por nome ou documento
+        <span class="busca-com-icone">
+          <svg class="icone" aria-hidden="true"><use href="icons/bootstrap-icons.svg#search" /></svg>
+          <input type="search" maxlength="150" formControlName="busca" placeholder="Nome ou CPF/CNPJ" />
+        </span>
+      </label>
+      <label>
+        Tipo de pessoa
+        <select formControlName="tipoPessoa">
+          <option value="">Todos</option>
+          <option value="F">Física</option>
+          <option value="J">Jurídica</option>
+        </select>
+      </label>
+      <label>
+        Situação
+        <select formControlName="situacao">
+          <option value="todos">Todas</option>
+          <option value="ativos">Ativos</option>
+          <option value="inativos">Inativos</option>
+        </select>
+      </label>
+    </div>
+
+    @if (carregando()) {
+      <p class="estado" role="status">Carregando fornecedores…</p>
+    } @else if (erroLista()) {
+      <div class="estado">
+        <p class="erro" role="alert">{{ erroLista() }}</p>
+        <button type="button" (click)="carregar()">
+          <svg class="icone icone-acao" aria-hidden="true"><use href="icons/bootstrap-icons.svg#arrow-clockwise" /></svg>
+          Tentar novamente
+        </button>
+      </div>
+    } @else if (resultados(); as dados) {
+      <div class="rolagem" role="region" aria-label="Tabela de fornecedores" tabindex="0">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col" class="codigo">Código</th>
+              <th scope="col">Nome</th>
+              <th scope="col">CPF/CNPJ</th>
+              <th scope="col" class="coluna-situacao">Situação</th>
+              @if (podeGerenciar()) { <th scope="col" class="coluna-acoes">Ações</th> }
+            </tr>
+          </thead>
+          <tbody>
+            @for (fornecedor of dados.itens; track fornecedor.id) {
+              <tr>
+                <td class="codigo">{{ fornecedor.id }}</td>
+                <th scope="row">
+                  {{ fornecedor.nome }}
+                  @if (fornecedor.nomeFantasia && fornecedor.nomeFantasia !== fornecedor.nome) {
+                    <span class="fantasia">{{ fornecedor.nomeFantasia }}</span>
+                  }
+                </th>
+                <td class="documento">{{ formatarDocumento(fornecedor.cpfCnpj, fornecedor.tipoPessoa) }}</td>
+                <td class="coluna-situacao">
+                  <span class="situacao" [class.ativa]="fornecedor.ativo">{{ fornecedor.ativo ? 'Ativo' : 'Inativo' }}</span>
+                </td>
+                @if (podeGerenciar()) {
+                  <td class="coluna-acoes">
+                    <div class="acoes">
+                      <button type="button" (click)="abrirEditor(fornecedor)">
+                        <svg class="icone icone-acao" aria-hidden="true"><use href="icons/bootstrap-icons.svg#pencil" /></svg>
+                        Editar
+                      </button>
+                      <button type="button" (click)="confirmarSituacao(fornecedor)">
+                        <svg class="icone icone-acao" aria-hidden="true">
+                          <use [attr.href]="'icons/bootstrap-icons.svg#' + (fornecedor.ativo ? 'dash-circle' : 'plus-circle')" />
+                        </svg>
+                        {{ fornecedor.ativo ? 'Inativar' : 'Ativar' }}
+                      </button>
+                    </div>
+                  </td>
+                }
+              </tr>
+            } @empty {
+              <tr><td class="estado" [attr.colspan]="podeGerenciar() ? 5 : 4">Nenhum fornecedor encontrado.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <nav class="paginacao" aria-label="Paginação de fornecedores">
+        <label>
+          Por página
+          <select [formControl]="filtros.controls.tamanhoPagina">
+            <option [ngValue]="20">20</option>
+            <option [ngValue]="50">50</option>
+            <option [ngValue]="100">100</option>
+          </select>
+        </label>
+        <div class="acoes">
+          <button type="button" aria-label="Página anterior" title="Página anterior"
+            [disabled]="pagina() <= 1" (click)="carregar(pagina() - 1)">
+            <svg class="icone" aria-hidden="true"><use href="icons/bootstrap-icons.svg#chevron-left" /></svg>
+          </button>
+          <span>Página {{ pagina() }} de {{ ultimaPagina() }}</span>
+          <button type="button" aria-label="Próxima página" title="Próxima página"
+            [disabled]="pagina() >= ultimaPagina()" (click)="carregar(pagina() + 1)">
+            <svg class="icone" aria-hidden="true"><use href="icons/bootstrap-icons.svg#chevron-right" /></svg>
+          </button>
+        </div>
+      </nav>
+    }
+  </div>
+</section>
+
+<dialog #editor class="editor" aria-labelledby="titulo-editor-fornecedor" (close)="fecharEditor()"
+  (cancel)="cancelarDialogo($event)">
+  <form [formGroup]="formulario" (ngSubmit)="salvarEditor()" novalidate>
+    <h2 id="titulo-editor-fornecedor">{{ fornecedorEdicao() ? 'Editar fornecedor' : 'Novo fornecedor' }}</h2>
+    <fieldset class="campos" [disabled]="salvando()">
+      <label>
+        Tipo de pessoa
+        <select #tipo [value]="formulario.controls.tipoPessoa.value" (change)="trocarTipo(tipo.value)">
+          <option value="F">Pessoa física</option>
+          <option value="J">Pessoa jurídica</option>
+        </select>
+      </label>
+      <div class="campo">
+        @let fisica = formulario.controls.tipoPessoa.value === 'F';
+        @let doc = formulario.controls.cpfCnpj;
+        <label for="fornecedor-documento">{{ fisica ? 'CPF' : 'CNPJ' }}</label>
+        <input #documento id="fornecedor-documento" type="text" [inputMode]="fisica ? 'numeric' : 'text'"
+          [value]="doc.value" (input)="digitarDocumento(documento)" (blur)="doc.markAsTouched()"
+          [attr.aria-invalid]="doc.touched && doc.invalid" aria-describedby="erro-documento-fornecedor"
+          autocomplete="off" required />
+        <span id="erro-documento-fornecedor" class="erro">
+          @if (doc.touched && doc.invalid) { Informe um {{ fisica ? 'CPF' : 'CNPJ' }} válido. }
+        </span>
+      </div>
+      <label>
+        Nome / Razão social
+        <input type="text" formControlName="nome" maxlength="150" required autofocus />
+        @if (formulario.controls.nome.touched && formulario.controls.nome.invalid) {
+          <span class="erro">Informe o nome.</span>
+        }
+      </label>
+      <label>Nome fantasia <input type="text" formControlName="nomeFantasia" maxlength="150" /></label>
+      <label>Telefone <input type="tel" formControlName="telefone" maxlength="20" /></label>
+      <label>E-mail <input type="email" formControlName="email" maxlength="150" /></label>
+
+      <h3 class="secao-campos">Endereço</h3>
+      <div class="campo">
+        <label for="fornecedor-cep">CEP</label>
+        <div class="com-consulta">
+          <input id="fornecedor-cep" type="text" inputmode="numeric" formControlName="cep" maxlength="9"
+            aria-describedby="erro-cep-fornecedor" />
+          <button type="button" [disabled]="!!consultando()" (click)="consultar('cep')">
+            <svg class="icone icone-acao" aria-hidden="true"><use href="icons/bootstrap-icons.svg#search" /></svg>
+            {{ consultando() === 'cep' ? 'Consultando…' : 'Consultar CEP' }}
+          </button>
+        </div>
+        <span id="erro-cep-fornecedor" class="erro">
+          @if (formulario.controls.cep.touched && formulario.controls.cep.invalid) { Informe um CEP válido. }
+        </span>
+      </div>
+      @for (item of camposEndereco; track item.campo) {
+        <label>
+          {{ item.rotulo }}
+          <input type="text" [formControlName]="item.campo" [maxLength]="item.limite" />
+        </label>
+      }
+    </fieldset>
+    @if (consultando() === 'cnpj') { <p role="status">Consultando CNPJ…</p> }
+    @if (avisoConsulta()) { <p role="status">{{ avisoConsulta() }}</p> }
+    @if (erroEditor()) { <p class="erro" role="alert">{{ erroEditor() }}</p> }
+    <div class="acoes-modal">
+      <button type="button" [disabled]="salvando()" (click)="editor.close()">
+        <svg class="icone icone-acao" aria-hidden="true"><use href="icons/bootstrap-icons.svg#x-lg" /></svg>
+        Cancelar
+      </button>
+      <button class="primario" type="submit" [disabled]="salvando()">
+        <svg class="icone icone-acao" aria-hidden="true"><use href="icons/bootstrap-icons.svg#check-lg" /></svg>
+        {{ salvando() ? 'Salvando…' : 'Salvar' }}
+      </button>
+    </div>
+  </form>
+</dialog>
+
+<dialog #confirmacao aria-labelledby="titulo-confirmacao-fornecedor" (cancel)="cancelarDialogo($event)"
+  (close)="retomarConsultaCnpj()">
+  @if (pedido(); as atual) {
+    @if (atual.tipo === 'situacao') {
+      <h2 id="titulo-confirmacao-fornecedor">{{ atual.fornecedor.ativo ? 'Inativar fornecedor' : 'Ativar fornecedor' }}</h2>
+      <p>{{ atual.fornecedor.ativo ? 'Inativar' : 'Ativar' }} <strong>{{ atual.fornecedor.nome }}</strong>?</p>
+    } @else {
+      <h2 id="titulo-confirmacao-fornecedor">Substituir dados preenchidos?</h2>
+      <p>Confirmar a substituição pelos dados da consulta?</p>
+    }
+  }
+  @if (erroConfirmacao()) { <p class="erro" role="alert">{{ erroConfirmacao() }}</p> }
+  <div class="acoes-modal">
+    <button autofocus type="button" [disabled]="salvando()" (click)="confirmacao.close()">
+      <svg class="icone icone-acao" aria-hidden="true"><use href="icons/bootstrap-icons.svg#x-lg" /></svg>
+      Cancelar
+    </button>
+    <button class="primario" type="button" [disabled]="salvando()" (click)="confirmarAcao()">
+      <svg class="icone icone-acao" aria-hidden="true"><use href="icons/bootstrap-icons.svg#check-lg" /></svg>
+      {{ salvando() ? 'Salvando…' : 'Confirmar' }}
+    </button>
+  </div>
+</dialog>

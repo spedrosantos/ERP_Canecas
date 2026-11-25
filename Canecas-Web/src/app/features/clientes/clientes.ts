@@ -7,7 +7,7 @@ import { catchError, debounceTime, distinctUntilChanged, finalize, map, Observab
 import { FEATURES, FeatureService } from '../../core/services/feature.service';
 import { Cliente, ClientesPaginados, DadosCliente, EnderecoConsulta, FiltroClientes, TipoPessoa } from './cliente';
 import { ClientesService } from './clientes.service';
-import { documentoValido, formatarDocumento, normalizarDocumento } from './documentos';
+import { documentoValido, formatarDocumento, normalizarDocumento } from '../../shared/validations/documentos';
 
 type CampoConsulta = keyof (EnderecoConsulta & Pick<DadosCliente, 'nome' | 'nomeFantasia'>);
 type Sugestao = Partial<Record<CampoConsulta, string | null>>;
