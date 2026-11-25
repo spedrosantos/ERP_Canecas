@@ -48,19 +48,20 @@ builder.Services.AdicionarAutorizacaoPorFeatures(
     builder.Configuration.GetSection("Integracoes:Identidade"), builder.Environment.IsDevelopment());
 builder.Services.AddAuthorization(options =>
 {
-    foreach (var codigo in new[]
+    options.AddPolicy(FeaturesCadastro.SessaoAtiva, policy =>
     {
-        FeaturesCadastro.Consultar, FeaturesCadastro.Cliente,
-        FeaturesCadastro.ClienteCadastrar, FeaturesCadastro.ClienteEditar
-    })
+        policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
+        policy.RequireAuthenticatedUser();
+        policy.AddRequirements(new SessaoRemotaRequirement(JwtBearerDefaults.AuthenticationScheme));
+    });
+
+    options.AddPolicy(FeaturesCadastro.Cliente, policy =>
     {
-        options.AddPolicy(codigo, policy =>
-        {
-            policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
-            policy.RequireAuthenticatedUser();
-            policy.AddRequirements(new FeatureRemotaRequirement(codigo, JwtBearerDefaults.AuthenticationScheme));
-        });
-    }
+        policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
+        policy.RequireAuthenticatedUser();
+        policy.AddRequirements(new FeatureRemotaRequirement(
+            FeaturesCadastro.Cliente, JwtBearerDefaults.AuthenticationScheme));
+    });
 });
 
 // Add services to the container.

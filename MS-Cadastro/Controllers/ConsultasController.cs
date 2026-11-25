@@ -9,7 +9,7 @@ namespace MS_Cadastro.Controllers;
 
 [ApiController]
 [Route("api/consultas")]
-[Authorize(Policy = FeaturesCadastro.Consultar)]
+[Authorize(Policy = FeaturesCadastro.SessaoAtiva)]
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public class ConsultasController(IConsultaCepService cepService, IConsultaCnpjService cnpjService)
     : ControllerBase

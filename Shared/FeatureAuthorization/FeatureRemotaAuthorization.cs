@@ -5,27 +5,38 @@ using Microsoft.AspNetCore.Http;
 
 namespace FeatureAuthorization;
 
-public sealed record FeatureRemotaRequirement(string Codigo, string Esquema = "Bearer")
+public abstract record AutorizacaoRemotaRequirement(string Esquema)
     : IAuthorizationRequirement;
+
+public sealed record FeatureRemotaRequirement(string Codigo, string Esquema = "Bearer")
+    : AutorizacaoRemotaRequirement(Esquema);
+
+public sealed record SessaoRemotaRequirement(string Esquema = "Bearer")
+    : AutorizacaoRemotaRequirement(Esquema);
 
 internal sealed class FeatureRemotaHandler(
     IConsultaAutorizacaoFeature cliente, IHttpContextAccessor accessor)
-    : AuthorizationHandler<FeatureRemotaRequirement>
+    : AuthorizationHandler<AutorizacaoRemotaRequirement>
 {
     internal const string TokenInvalido = nameof(ResultadoAutorizacaoFeature.TokenInvalido);
     internal const string Indisponivel = nameof(ResultadoAutorizacaoFeature.Indisponivel);
 
     protected override async Task HandleRequirementAsync(
-        AuthorizationHandlerContext context, FeatureRemotaRequirement requirement)
+        AuthorizationHandlerContext context, AutorizacaoRemotaRequirement requirement)
     {
         var http = context.Resource as HttpContext ?? accessor.HttpContext;
         if (http is null || context.User.Identity?.IsAuthenticated != true)
             return;
 
         var token = await http.GetTokenAsync(requirement.Esquema, "access_token");
-        var resultado = token is null
-            ? ResultadoAutorizacaoFeature.TokenInvalido
-            : await cliente.VerificarAsync(token, requirement.Codigo, http.RequestAborted);
+        var resultado = (token, requirement) switch
+        {
+            (null, _) => ResultadoAutorizacaoFeature.TokenInvalido,
+            (_, FeatureRemotaRequirement feature) =>
+                await cliente.VerificarAsync(token, feature.Codigo, http.RequestAborted),
+            (_, SessaoRemotaRequirement) => await cliente.VerificarSessaoAsync(token, http.RequestAborted),
+            _ => ResultadoAutorizacaoFeature.Negado
+        };
 
         switch (resultado)
         {

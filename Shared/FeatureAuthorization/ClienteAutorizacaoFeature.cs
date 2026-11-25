@@ -8,21 +8,33 @@ internal sealed class ClienteAutorizacaoFeature(IHttpClientFactory httpClientFac
 {
     internal const string NomeCliente = "Autorizacao.MS-Identidade";
 
-    public async Task<ResultadoAutorizacaoFeature> VerificarAsync(
+    public Task<ResultadoAutorizacaoFeature> VerificarAsync(
         string token, string codigoFeature, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(codigoFeature) || codigoFeature.Length > 100)
+            return Task.FromResult(ResultadoAutorizacaoFeature.Negado);
+
+        return EnviarAsync(token, $"api/usuarios/me/features/verificar?codigo={Uri.EscapeDataString(codigoFeature)}",
+            HttpStatusCode.NoContent, cancellationToken);
+    }
+
+    public Task<ResultadoAutorizacaoFeature> VerificarSessaoAsync(
+        string token, CancellationToken cancellationToken = default)
+    {
+        return EnviarAsync(token, "api/usuarios/me/features", HttpStatusCode.OK, cancellationToken);
+    }
+
+    private async Task<ResultadoAutorizacaoFeature> EnviarAsync(
+        string token, string caminho, HttpStatusCode sucesso, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(token))
             return ResultadoAutorizacaoFeature.TokenInvalido;
-
-        if (string.IsNullOrWhiteSpace(codigoFeature) || codigoFeature.Length > 100)
-            return ResultadoAutorizacaoFeature.Negado;
 
         using var cliente = httpClientFactory.CreateClient(NomeCliente);
         if (cliente.BaseAddress is null)
             return ResultadoAutorizacaoFeature.Indisponivel;
 
-        using var requisicao = new HttpRequestMessage(HttpMethod.Get,
-            $"api/usuarios/me/features/verificar?codigo={Uri.EscapeDataString(codigoFeature)}");
+        using var requisicao = new HttpRequestMessage(HttpMethod.Get, caminho);
         requisicao.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         try
@@ -32,7 +44,7 @@ internal sealed class ClienteAutorizacaoFeature(IHttpClientFactory httpClientFac
 
             return resposta.StatusCode switch
             {
-                HttpStatusCode.NoContent => ResultadoAutorizacaoFeature.Permitido,
+                var status when status == sucesso => ResultadoAutorizacaoFeature.Permitido,
                 HttpStatusCode.Unauthorized => ResultadoAutorizacaoFeature.TokenInvalido,
                 HttpStatusCode.Forbidden => ResultadoAutorizacaoFeature.Negado,
                 _ => ResultadoAutorizacaoFeature.Indisponivel

@@ -10,11 +10,11 @@ namespace MS_Cadastro.Controllers;
 
 [ApiController]
 [Route("api/clientes")]
+[Authorize(Policy = FeaturesCadastro.Cliente)]
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public class ClientesController(IClienteService clienteService) : ControllerBase
 {
     [HttpGet]
-    [Authorize(Policy = FeaturesCadastro.Cliente)]
     public async Task<ActionResult<ClientesPaginadosResponseDTO>> Listar(
         [FromQuery] ListarClientesDTO filtro, CancellationToken cancellationToken)
     {
@@ -22,7 +22,6 @@ public class ClientesController(IClienteService clienteService) : ControllerBase
     }
 
     [HttpGet("{id:long}")]
-    [Authorize(Policy = FeaturesCadastro.Cliente)]
     public async Task<ActionResult<ClienteResponseDTO>> Obter(
         [Range(1, long.MaxValue)] long id, CancellationToken cancellationToken)
     {
@@ -32,7 +31,6 @@ public class ClientesController(IClienteService clienteService) : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Policy = FeaturesCadastro.ClienteCadastrar)]
     public async Task<ActionResult<ClienteResponseDTO>> Cadastrar(
         SalvarClienteDTO dto, CancellationToken cancellationToken)
     {
@@ -48,7 +46,6 @@ public class ClientesController(IClienteService clienteService) : ControllerBase
     }
 
     [HttpPut("{id:long}")]
-    [Authorize(Policy = FeaturesCadastro.ClienteEditar)]
     public async Task<ActionResult<ClienteResponseDTO>> Editar(
         [Range(1, long.MaxValue)] long id, SalvarClienteDTO dto, CancellationToken cancellationToken)
     {
@@ -64,7 +61,6 @@ public class ClientesController(IClienteService clienteService) : ControllerBase
     }
 
     [HttpPatch("{id:long}/situacao")]
-    [Authorize(Policy = FeaturesCadastro.ClienteEditar)]
     public async Task<ActionResult<ClienteResponseDTO>> AlterarSituacao(
         [Range(1, long.MaxValue)] long id, AlterarSituacaoClienteDTO dto, CancellationToken cancellationToken)
     {
