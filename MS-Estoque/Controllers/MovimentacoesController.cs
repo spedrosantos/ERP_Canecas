@@ -37,4 +37,19 @@ public class MovimentacoesController(
             return Unauthorized();
         }
     }
+    [HttpGet]
+    public async Task<ActionResult<MovimentacoesPaginadasResponseDTO>> Listar(
+    [FromQuery] ListarMovimentacoesDTO filtro,
+    CancellationToken cancellationToken)
+    {
+        try
+        {
+            return Ok(await movimentacaoService.ListarAsync(
+                filtro, cancellationToken));
+        }
+        catch (ValidationException ex)
+        {
+            return BadRequest(new { mensagem = ex.Message });
+        }
+    }
 }

@@ -119,4 +119,34 @@ public class MovimentacaoService(
             movimentacao.CriadoEm
         );
     }
+    public async Task<MovimentacoesPaginadasResponseDTO> ListarAsync(
+    ListarMovimentacoesDTO filtro,
+    CancellationToken cancellationToken = default)
+    {
+        if (filtro.DataInicio.HasValue &&
+            filtro.DataFim.HasValue &&
+            filtro.DataInicio.Value > filtro.DataFim.Value)
+        {
+            throw new ValidationException(
+                "A data inicial não pode ser maior que a final.");
+        }
+
+        if (filtro.ProdutoId.HasValue && filtro.ProdutoId.Value <= 0)
+            throw new ValidationException("Código do produto inválido.");
+
+        await using var context =
+            await contextFactory.CriarAsync(cancellationToken);
+
+        var repository = new MovimentacaoRepository(context);
+
+        var (itens, total) = await repository.ListarAsync(
+            filtro, cancellationToken);
+
+        return new MovimentacoesPaginadasResponseDTO(
+            itens.Select(Mapear).ToList(),
+            total,
+            filtro.Pagina,
+            filtro.TamanhoPagina
+        );
+    }
 }
