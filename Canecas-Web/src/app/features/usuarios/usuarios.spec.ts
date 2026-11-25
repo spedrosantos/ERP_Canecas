@@ -57,10 +57,15 @@ describe('Usuários', () => {
     expect(tela.querySelector('tbody')?.textContent).toContain('Álvaro');
     expect(tela.querySelector('tbody')?.textContent).not.toContain('Beatriz');
     preencher('[type="search"]', '78');
+    expect(tela.querySelector('tbody')?.textContent).not.toContain('Beatriz');
+    const situacao = tela.querySelector('select')!;
+    expect(situacao.value).toBe('ativos');
+    situacao.value = 'todos';
+    situacao.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
     expect(tela.querySelector('tbody')?.textContent).toContain('Beatriz');
     preencher('[type="search"]', '');
 
-    const situacao = tela.querySelector('select')!;
     situacao.value = 'ativos';
     situacao.dispatchEvent(new Event('change'));
     fixture.detectChanges();

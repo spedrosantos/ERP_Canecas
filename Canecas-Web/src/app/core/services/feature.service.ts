@@ -11,6 +11,7 @@ export const FEATURES = {
   editarUsuario: 'USUARIO_EDITAR',
   alterarSenhaUsuario: 'USUARIO_ALTERAR_SENHA',
   permissoes: 'USUARIO_PERMISSOES',
+  clientes: 'CLIENTE',
 } as const;
 
 interface FeatureEfetiva {

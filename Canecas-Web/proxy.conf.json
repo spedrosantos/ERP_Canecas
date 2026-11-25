@@ -10,5 +10,14 @@
   },
   "/api/usuarios/**": {
     "target": "http://localhost:5127"
+  },
+  "/api/clientes": {
+    "target": "http://localhost:5259"
+  },
+  "/api/clientes/**": {
+    "target": "http://localhost:5259"
+  },
+  "/api/consultas/**": {
+    "target": "http://localhost:5259"
   }
 }
