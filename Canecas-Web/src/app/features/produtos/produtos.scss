@@ -1,14 +1,20 @@
 @use '../../shared/styles/cadastro';
 
-.documento {
-  white-space: nowrap;
+.painel {
+  margin-top: 2.25rem;
 }
 
-.fantasia {
-  display: block;
-  color: var(--secundario);
-  font-size: 0.875rem;
-  font-weight: 400;
+.filtros {
+  align-items: end;
+
+  label {
+    min-width: 0;
+  }
+}
+
+.erro-lista {
+  margin: 0;
+  padding: 0.75rem 1rem;
 }
 
 .paginacao {
@@ -19,11 +25,6 @@
   gap: 0.75rem;
   padding: 0.75rem 1rem;
   border-top: 1px solid var(--linha);
-
-  label {
-    display: flex;
-    align-items: center;
-  }
 }
 
 .editor {
@@ -39,26 +40,4 @@
   margin: 0;
   padding: 0;
   border: 0;
-}
-
-.campo {
-  display: grid;
-  gap: 0.375rem;
-}
-
-.secao-campos {
-  grid-column: 1 / -1;
-  margin: 0.5rem 0 0;
-}
-
-.com-consulta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.375rem;
-
-  input {
-    flex: 1 1 8rem;
-    min-width: 0;
-    width: auto;
-  }
 }

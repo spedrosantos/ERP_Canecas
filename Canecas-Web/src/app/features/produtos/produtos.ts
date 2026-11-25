@@ -3,7 +3,6 @@ import {
   ViewChild, ElementRef
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { CommonModule } from '@angular/common';
 
 import { ProdutosService } from './produtos.service';
 import {
@@ -16,7 +15,7 @@ import {
 
 @Component({
   selector: 'app-produtos',
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [ReactiveFormsModule],
   templateUrl: './produtos.html',
   styleUrl: './produtos.scss'
 })
@@ -57,13 +56,9 @@ export class Produtos implements OnInit {
   readonly formulario = this.fb.nonNullable.group({
     categoriaId: [0, [Validators.min(1)]],
     unidadeMedidaId: [0, [Validators.min(1)]],
-    sku: ['', [Validators.required, Validators.maxLength(50)]],
     nome: ['', [Validators.required, Validators.maxLength(150)]],
     descricao: ['', Validators.maxLength(500)],
-    tipo: ['ACABADO' as TipoProduto, Validators.required],
-    precoCusto: [0, Validators.min(0)],
-    precoVenda: [0, Validators.min(0)],
-    estoqueMinimo: [0, Validators.min(0)]
+    tipo: ['ACABADO' as TipoProduto, Validators.required]
   });
 
   ngOnInit(): void {
@@ -133,13 +128,9 @@ export class Produtos implements OnInit {
     this.formulario.reset({
       categoriaId: 0,
       unidadeMedidaId: 0,
-      sku: '',
       nome: '',
       descricao: '',
-      tipo: 'ACABADO',
-      precoCusto: 0,
-      precoVenda: 0,
-      estoqueMinimo: 0
+      tipo: 'ACABADO'
     });
 
     this.modalAberto.set(true);
@@ -192,7 +183,6 @@ export class Produtos implements OnInit {
       ...valores,
       categoriaId: Number(valores.categoriaId),
       unidadeMedidaId: Number(valores.unidadeMedidaId),
-      sku: valores.sku.trim().toUpperCase(),
       nome: valores.nome.trim(),
       descricao: valores.descricao.trim() || null
     };

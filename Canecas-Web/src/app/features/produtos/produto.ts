@@ -16,13 +16,9 @@ export interface UnidadeMedida {
 export interface SalvarProduto {
   categoriaId: number;
   unidadeMedidaId: number;
-  sku: string;
   nome: string;
   descricao: string | null;
   tipo: TipoProduto;
-  precoCusto: number;
-  precoVenda: number;
-  estoqueMinimo: number;
 }
 
 export interface Produto extends SalvarProduto {
