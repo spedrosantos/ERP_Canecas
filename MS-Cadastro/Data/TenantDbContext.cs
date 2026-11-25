@@ -178,8 +178,6 @@ public class TenantDbContext : DbContext
 
         entity.HasKey(x => x.Id);
 
-        entity.HasIndex(x => x.Sku).IsUnique();
-
         entity.Property(x => x.Id)
             .HasColumnName("id")
             .UseIdentityAlwaysColumn();
@@ -189,11 +187,6 @@ public class TenantDbContext : DbContext
 
         entity.Property(x => x.UnidadeMedidaId)
             .HasColumnName("unidade_medida_id");
-
-        entity.Property(x => x.Sku)
-            .HasColumnName("sku")
-            .HasMaxLength(50)
-            .IsRequired();
 
         entity.Property(x => x.Nome)
             .HasColumnName("nome")
@@ -208,18 +201,6 @@ public class TenantDbContext : DbContext
             .HasColumnName("tipo")
             .HasMaxLength(20)
             .IsRequired();
-
-        entity.Property(x => x.PrecoCusto)
-            .HasColumnName("preco_custo")
-            .HasPrecision(15, 4);
-
-        entity.Property(x => x.PrecoVenda)
-            .HasColumnName("preco_venda")
-            .HasPrecision(15, 2);
-
-        entity.Property(x => x.EstoqueMinimo)
-            .HasColumnName("estoque_minimo")
-            .HasPrecision(15, 3);
 
         entity.Property(x => x.Ativo)
             .HasColumnName("ativo")

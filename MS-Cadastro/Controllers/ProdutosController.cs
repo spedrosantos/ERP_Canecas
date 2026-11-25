@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 using MS_Cadastro.Authorization;
 using MS_Cadastro.DTOs.Produtos;
-using MS_Cadastro.Services;
 using MS_Cadastro.Services.Interfaces;
 
 namespace MS_Cadastro.Controllers;
@@ -49,10 +48,6 @@ public class ProdutosController : ControllerBase
                 new { id = produto.Id },
                 produto);
         }
-        catch (CadastroDuplicadoException ex)
-        {
-            return Conflict(new { mensagem = ex.Message });
-        }
         catch (ValidationException ex)
         {
             return BadRequest(new { mensagem = ex.Message });
@@ -68,10 +63,6 @@ public class ProdutosController : ControllerBase
             var produto = await _service.AtualizarAsync(id, dto);
 
             return produto is null ? NotFound() : Ok(produto);
-        }
-        catch (CadastroDuplicadoException ex)
-        {
-            return Conflict(new { mensagem = ex.Message });
         }
         catch (ValidationException ex)
         {

@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
-using Npgsql;
 using MS_Cadastro.Data.Interfaces;
 using MS_Cadastro.DTOs.Produtos;
 using MS_Cadastro.Entities;
@@ -27,13 +26,9 @@ public class ProdutoService : IProdutoService
             produto.Categoria.Nome,
             produto.UnidadeMedidaId,
             produto.UnidadeMedida.Sigla,
-            produto.Sku,
             produto.Nome,
             produto.Descricao,
             produto.Tipo,
-            produto.PrecoCusto,
-            produto.PrecoVenda,
-            produto.EstoqueMinimo,
             produto.Ativo,
             produto.CriadoEm,
             produto.AtualizadoEm
@@ -79,12 +74,9 @@ public class ProdutoService : IProdutoService
 
         await PreencherProdutoAsync(context, produto, dto);
 
-        if (await repository.SkuExisteAsync(produto.Sku))
-            throw new CadastroDuplicadoException("SKU já cadastrado.");
-
         repository.Adicionar(produto);
 
-        await SalvarProdutoAsync(repository);
+        await repository.SalvarAsync();
 
         return Mapear(produto);
     }
@@ -103,12 +95,9 @@ public class ProdutoService : IProdutoService
 
         await PreencherProdutoAsync(context, produto, dto);
 
-        if (await repository.SkuExisteAsync(produto.Sku, id))
-            throw new CadastroDuplicadoException("SKU já cadastrado.");
-
         produto.AtualizadoEm = DateTime.UtcNow;
 
-        await SalvarProdutoAsync(repository);
+        await repository.SalvarAsync();
 
         return Mapear(produto);
     }
@@ -158,41 +147,14 @@ public class ProdutoService : IProdutoService
         if (unidade is null)
             throw new ValidationException("Unidade inválida ou inativa.");
 
-        if (decimal.Round(dto.PrecoCusto, 4) != dto.PrecoCusto ||
-            decimal.Round(dto.PrecoVenda, 2) != dto.PrecoVenda ||
-            decimal.Round(dto.EstoqueMinimo, 3) != dto.EstoqueMinimo)
-        {
-            throw new ValidationException(
-                "Quantidade de casas decimais inválida.");
-        }
-
         produto.CategoriaId = categoria.Id;
         produto.Categoria = categoria;
 
         produto.UnidadeMedidaId = unidade.Id;
         produto.UnidadeMedida = unidade;
 
-        produto.Sku = dto.Sku.Trim().ToUpperInvariant();
         produto.Nome = dto.Nome.Trim();
         produto.Descricao = dto.Descricao?.Trim();
         produto.Tipo = dto.Tipo;
-        produto.PrecoCusto = dto.PrecoCusto;
-        produto.PrecoVenda = dto.PrecoVenda;
-        produto.EstoqueMinimo = dto.EstoqueMinimo;
-    }
-    private static async Task SalvarProdutoAsync(
-    ProdutoRepository repository)
-    {
-        try
-        {
-            await repository.SalvarAsync();
-        }
-        catch (DbUpdateException ex)
-            when (ex.InnerException is PostgresException pg &&
-                  pg.SqlState == PostgresErrorCodes.UniqueViolation &&
-                  pg.ConstraintName == "produtos_sku_key")
-        {
-            throw new CadastroDuplicadoException("SKU já cadastrado.");
-        }
     }
 }

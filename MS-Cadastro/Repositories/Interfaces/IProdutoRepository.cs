@@ -10,9 +10,6 @@ public interface IProdutoRepository
 
     Task<Produto?> ObterPorIdAsync(long id);
 
-    Task<bool> SkuExisteAsync(
-        string sku, long? ignorarId = null);
-
     void Adicionar(Produto produto);
 
     Task SalvarAsync();

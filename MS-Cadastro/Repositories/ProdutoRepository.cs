@@ -26,16 +26,18 @@ public class ProdutoRepository : IProdutoRepository
 
         if (!string.IsNullOrWhiteSpace(filtro.Busca))
         {
-            var busca = filtro.Busca.Trim()
+            var busca = filtro.Busca.Trim();
+            var buscarPorId = long.TryParse(busca, out var id) && id > 0;
+            var nome = busca
                 .Replace("\\", "\\\\")
                 .Replace("%", "\\%")
                 .Replace("_", "\\_");
 
-            var termo = $"%{busca}%";
+            var termo = $"%{nome}%";
 
             query = query.Where(x =>
                 EF.Functions.ILike(x.Nome, termo, "\\") ||
-                EF.Functions.ILike(x.Sku, termo, "\\"));
+                (buscarPorId && x.Id == id));
         }
 
         if (filtro.CategoriaId.HasValue)
@@ -73,14 +75,6 @@ public class ProdutoRepository : IProdutoRepository
             .Include(x => x.Categoria)
             .Include(x => x.UnidadeMedida)
             .FirstOrDefaultAsync(x => x.Id == id);
-    }
-
-    public async Task<bool> SkuExisteAsync(
-        string sku, long? ignorarId = null)
-    {
-        return await _context.Produtos.AnyAsync(x =>
-            x.Sku == sku &&
-            (!ignorarId.HasValue || x.Id != ignorarId.Value));
     }
 
     public void Adicionar(Produto produto)
