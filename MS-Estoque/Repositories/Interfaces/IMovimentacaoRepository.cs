@@ -1,9 +1,14 @@
 using MS_Estoque.Entities;
+using MS_Estoque.DTOs.Movimentacoes;
 
 namespace MS_Estoque.Repositories.Interfaces;
 
 public interface IMovimentacaoRepository
 {
+    Task<(List<MovimentacaoEstoque> Itens, long Total)> ListarAsync(
+        ListarMovimentacoesDTO filtro,
+        CancellationToken cancellationToken = default);
+
     Task<Saldo> BloquearSaldoAsync(
         long produtoId,
         CancellationToken cancellationToken = default);
