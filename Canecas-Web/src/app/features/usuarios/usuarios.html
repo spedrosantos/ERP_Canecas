@@ -15,7 +15,10 @@
     <div class="filtros">
       <label>
         Buscar por código ou nome
-        <input type="search" [formControl]="busca" />
+        <span class="busca-com-icone">
+          <svg class="icone" aria-hidden="true"><use href="icons/bootstrap-icons.svg#search" /></svg>
+          <input type="search" [formControl]="busca" placeholder="Código ou nome do usuário" />
+        </span>
       </label>
       <label>
         Situação

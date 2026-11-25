@@ -120,7 +120,7 @@ ul {
   border-inline-start: 1px solid var(--linha);
 }
 
-.arvore > ul > .grupo {
+.arvore>ul>.grupo {
   margin-bottom: 0.625rem;
   border: 1px solid var(--linha);
   border-radius: 0.5rem;
@@ -226,4 +226,65 @@ dialog {
 
 .erro {
   color: #9f2439;
+}
+
+.grupo-aba {
+  margin-bottom: 0.875rem;
+
+  >ul {
+    margin: 0.5rem 0 0.5rem 1rem;
+    padding-left: 0.875rem;
+    border-left: 2px solid var(--linha);
+  }
+}
+
+.titulo-aba {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.75rem;
+  background: color-mix(in srgb, var(--cor-primaria) 8%, white);
+  color: var(--destaque);
+  border-radius: 0.375rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+
+  &:hover {
+    background: color-mix(in srgb, var(--cor-primaria) 12%, white);
+  }
+
+  &::after {
+    content: '';
+    width: 6px;
+    height: 6px;
+    margin-left: auto;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(-90deg);
+    transition: transform 150ms ease;
+  }
+}
+
+.grupo-aba[open]>.titulo-aba::after {
+  transform: rotate(45deg);
+}
+
+.grupo-aba .grupo-feature {
+  background: transparent;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding-inline: 0.25rem;
+}
+
+.grupo-aba .opcao {
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+
+.grupo-aba ul ul {
+  margin-left: 0.75rem;
+  padding-left: 1rem;
+  border-left: 1px solid var(--linha);
 }

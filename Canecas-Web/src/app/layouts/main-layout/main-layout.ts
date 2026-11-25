@@ -34,6 +34,7 @@ export class MainLayout {
     this.features.permiteRota(FEATURES.usuarios) && this.features.temFilha(FEATURES.usuarios),
   );
   protected readonly mostrarPermissoes = computed(() => this.features.tem(FEATURES.permissoes));
+  protected readonly mostrarClientes = computed(() => this.features.permiteRota(FEATURES.clientes));
 
   constructor() {
     effect(() => {
@@ -53,7 +54,7 @@ export class MainLayout {
     });
   }
 
-  protected expandirConfiguracoes(evento: MouseEvent, menu: HTMLDetailsElement): void {
+  protected expandirMenu(evento: MouseEvent, menu: HTMLDetailsElement): void {
     if (this.recolhida()) {
       this.recolhida.set(false);
       if (menu.open) {

@@ -3,69 +3,113 @@
   <p class="aviso" role="status">{{ aviso() }}</p>
 
   @if (carregando()) {
-    <p role="status">Carregando permissões…</p>
+  <p role="status">Carregando permissões…</p>
   } @else if (erroConsulta()) {
-    <p class="erro" role="alert">{{ erroConsulta() }}</p>
-    <button type="button" (click)="carregar()">
-      <svg class="icone icone-acao" aria-hidden="true"><use href="icons/bootstrap-icons.svg#arrow-clockwise" /></svg>
-      Tentar novamente
-    </button>
+  <p class="erro" role="alert">{{ erroConsulta() }}</p>
+  <button type="button" (click)="carregar()">
+    <svg class="icone icone-acao" aria-hidden="true">
+      <use href="icons/bootstrap-icons.svg#arrow-clockwise" />
+    </svg>
+    Tentar novamente
+  </button>
   } @else {
-    <div class="paineis">
-      <section class="painel" aria-labelledby="titulo-usuarios">
-        <header>
-          <h2 id="titulo-usuarios">Usuários</h2>
-          <span>{{ usuariosSelecionados().size }} selecionado(s)</span>
-        </header>
-        <label class="busca">
-          Buscar por nome ou código
-          <input #busca type="search" [value]="termo()" (input)="termo.set(busca.value)" />
-        </label>
-        <ul class="lista">
-          @for (usuario of usuariosFiltrados(); track usuario.id) {
-            <li>
-              <label class="opcao">
-                <input #selecionado type="checkbox" [checked]="usuariosSelecionados().has(usuario.id)"
-                  [disabled]="!codigoValido(usuario.id)"
-                  (change)="selecionarUsuario(usuario.id, selecionado.checked)" />
-                <span class="nome">{{ usuario.id }} - {{ usuario.nome }}</span>
-                @if (usuario.proprioUsuario) {
-                  <span class="codigo">Você</span>
-                }
-              </label>
-            </li>
-          } @empty {
-            <li class="vazio">Nenhum usuário encontrado.</li>
-          }
-        </ul>
-      </section>
-
-      <section class="painel" aria-labelledby="titulo-features">
-        <header>
-          <h2 id="titulo-features">Permissões por área</h2>
-        </header>
-        <label class="busca">
-          Buscar permissões
-          <input #buscaFeature type="search" [value]="termoFeature()"
-            (input)="buscarFeatures(buscaFeature.value)" />
-        </label>
-        <div class="arvore">
-          @if (arvoreFiltrada().length) {
-            <ng-container *ngTemplateOutlet="ramo; context: { $implicit: arvoreFiltrada() }" />
-          } @else {
-            <p class="vazio">Nenhuma permissão encontrada.</p>
-          }
-        </div>
-        @if (podeGerenciar()) {
-          <footer class="acoes">
-            <button class="primario" type="button" [disabled]="!podeAplicar()" (click)="confirmar(confirmacao)">
-              <svg class="icone icone-acao" aria-hidden="true"><use href="icons/bootstrap-icons.svg#check-lg" /></svg>
-              Salvar
-            </button>
-          </footer>
+  <div class="paineis">
+    <section class="painel" aria-labelledby="titulo-usuarios">
+      <header>
+        <h2 id="titulo-usuarios">Usuários</h2>
+        <span>{{ usuariosSelecionados().size }} selecionado(s)</span>
+      </header>
+      <label class="busca">
+        Buscar por nome ou código
+        <span class="busca-com-icone">
+          <svg class="icone" aria-hidden="true">
+            <use href="icons/bootstrap-icons.svg#search" />
+          </svg>
+          <input #busca type="search" [value]="termo()" (input)="termo.set(busca.value)"
+            placeholder="Código ou nome do usuário" />
+        </span>
+      </label>
+      <ul class="lista">
+        @for (usuario of usuariosFiltrados(); track usuario.id) {
+        <li>
+          <label class="opcao">
+            <input #selecionado type="checkbox" [checked]="usuariosSelecionados().has(usuario.id)"
+              [disabled]="!codigoValido(usuario.id)" (change)="selecionarUsuario(usuario.id, selecionado.checked)" />
+            <span class="nome">{{ usuario.id }} - {{ usuario.nome }}</span>
+            @if (usuario.proprioUsuario) {
+            <span class="codigo">Você</span>
+            }
+          </label>
+        </li>
+        } @empty {
+        <li class="vazio">Nenhum usuário encontrado.</li>
         }
-      </section>
-    </div>
+      </ul>
+    </section>
+
+    <section class="painel" aria-labelledby="titulo-features">
+      <header>
+        <h2 id="titulo-features">Permissões por área</h2>
+      </header>
+      <label class="busca">
+        Buscar permissões
+        <span class="busca-com-icone">
+          <svg class="icone" aria-hidden="true">
+            <use href="icons/bootstrap-icons.svg#search" />
+          </svg>
+          <input #buscaFeature type="search" [value]="termoFeature()" (input)="buscarFeatures(buscaFeature.value)"
+            placeholder="Nome ou código da permissão" />
+        </span>
+      </label>
+      <div class="arvore">
+        @for (grupo of featuresAgrupadas(); track grupo.nome) {
+        <details class="grupo-aba" open>
+          <summary class="titulo-aba">
+            {{ grupo.nome }}
+          </summary>
+
+          <div class="modulos">
+            @for (modulo of grupo.modulos; track modulo.id) {
+            <div class="modulo">
+              @let aberto = grupoAberto(modulo.id);
+
+              <button class="grupo-feature" type="button" [attr.aria-expanded]="aberto"
+                [attr.aria-controls]="'modulo-' + modulo.id" (click)="alternarGrupo(modulo.id)">
+
+                <svg class="icone" aria-hidden="true">
+                  <use [attr.href]="'icons/bootstrap-icons.svg#' +
+                  (aberto ? 'dash-circle' : 'plus-circle')" />
+                </svg>
+
+                <span class="nome">{{ modulo.nome }}</span>
+              </button>
+
+              <div [id]="'modulo-' + modulo.id" [hidden]="!aberto">
+                @if (aberto) {
+                <ng-container *ngTemplateOutlet="ramo;
+                  context: { $implicit: modulo.permissoes }" />
+                }
+              </div>
+            </div>
+            }
+          </div>
+        </details>
+        } @empty {
+        <p class="vazio">Nenhuma permissão encontrada.</p>
+        }
+      </div>
+      @if (podeGerenciar()) {
+      <footer class="acoes">
+        <button class="primario" type="button" [disabled]="!podeAplicar()" (click)="confirmar(confirmacao)">
+          <svg class="icone icone-acao" aria-hidden="true">
+            <use href="icons/bootstrap-icons.svg#check-lg" />
+          </svg>
+          Salvar
+        </button>
+      </footer>
+      }
+    </section>
+  </div>
   }
 </section>
 
@@ -75,24 +119,36 @@
       <li [class.grupo]="no.filhos.length">
         @if (no.filhos.length) {
           @let aberto = grupoAberto(no.id);
-          <button class="grupo-feature" type="button" [attr.aria-expanded]="aberto"
-            [attr.aria-controls]="'grupo-feature-' + no.id" (click)="alternarGrupo(no.id)">
+
+          <button class="grupo-feature" type="button"
+            [attr.aria-expanded]="aberto"
+            [attr.aria-controls]="'grupo-feature-' + no.id"
+            (click)="alternarGrupo(no.id)">
+
             <svg class="icone" aria-hidden="true">
-              <use [attr.href]="'icons/bootstrap-icons.svg#' + (aberto ? 'dash-circle' : 'plus-circle')" />
+              <use [attr.href]="'icons/bootstrap-icons.svg#' +
+                (aberto ? 'dash-circle' : 'plus-circle')" />
             </svg>
+
             <span class="nome">{{ no.nome }}</span>
           </button>
+
           <div [id]="'grupo-feature-' + no.id" [hidden]="!aberto">
             @if (aberto) {
-              <ng-container *ngTemplateOutlet="ramo; context: { $implicit: no.filhos }" />
+              <ng-container *ngTemplateOutlet="ramo;
+                context: { $implicit: no.filhos }" />
             }
           </div>
         } @else {
           @let estado = estadoFeature(no.id);
+
           <label class="opcao">
-            <input #marcado type="checkbox" [checked]="estado === true" [indeterminate]="estado === 'misto'"
+            <input #marcado type="checkbox"
+              [checked]="estado === true"
+              [indeterminate]="estado === 'misto'"
               [disabled]="!usuariosSelecionados().size || !gerenciaveis().has(no.id)"
               (change)="selecionarFeature(no, marcado.checked)" />
+
             <span class="nome">{{ no.nome }}</span>
           </label>
         }
@@ -105,16 +161,18 @@
   (cancel)="cancelar($event)">
   <h2 id="titulo-confirmacao-lote">Confirmar alteração em lote</h2>
   @if (operacao(); as lote) {
-    <p id="resumo-confirmacao-lote">
-      Salvar as alterações de permissões para {{ lote.usuarioIds.length }} usuário(s)?
-    </p>
+  <p id="resumo-confirmacao-lote">
+    Salvar as alterações de permissões para {{ lote.usuarioIds.length }} usuário(s)?
+  </p>
   }
   @if (erroOperacao()) {
-    <p class="erro" role="alert">{{ erroOperacao() }}</p>
+  <p class="erro" role="alert">{{ erroOperacao() }}</p>
   }
   <div class="acoes">
     <button type="button" autofocus [disabled]="aplicando()" (click)="confirmacao.close()">
-      <svg class="icone icone-acao" aria-hidden="true"><use href="icons/bootstrap-icons.svg#x-lg" /></svg>
+      <svg class="icone icone-acao" aria-hidden="true">
+        <use href="icons/bootstrap-icons.svg#x-lg" />
+      </svg>
       Cancelar
     </button>
     @if (operacaoAutorizada()) {

@@ -13,7 +13,11 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
       /^\/api\/usuarios\/permissoes\/lote\/?$/i.test(caminho)) ||
     (request.method === 'GET' && /^\/api\/usuarios\/me\/features\/?$/i.test(caminho)) ||
     (request.method === 'PUT' && /^\/api\/usuarios\/\d+\/?$/i.test(caminho)) ||
-    (request.method === 'PATCH' && /^\/api\/usuarios\/\d+\/(?:situacao|senha)\/?$/i.test(caminho));
+    (request.method === 'PATCH' && /^\/api\/usuarios\/\d+\/(?:situacao|senha)\/?$/i.test(caminho)) ||
+    ((request.method === 'GET' || request.method === 'POST') && /^\/api\/clientes\/?$/i.test(caminho)) ||
+    ((request.method === 'GET' || request.method === 'PUT') && /^\/api\/clientes\/\d+\/?$/i.test(caminho)) ||
+    (request.method === 'PATCH' && /^\/api\/clientes\/\d+\/situacao\/?$/i.test(caminho)) ||
+    (request.method === 'GET' && /^\/api\/consultas\/(?:cep|cnpj)\/?$/i.test(caminho));
 
   if (!protegido) {
     return next(request);

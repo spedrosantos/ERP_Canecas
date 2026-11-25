@@ -46,3 +46,20 @@ textarea {
 .icone-acao {
   margin-inline-end: 0.375rem;
 }
+
+.busca-com-icone {
+  position: relative;
+}
+
+.busca-com-icone > .icone {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 0.75rem;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--cor-secundaria);
+}
+
+label .busca-com-icone > input[type='search'] {
+  padding-inline-start: 2.25rem;
+}

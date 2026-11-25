@@ -48,12 +48,28 @@
           <span class="rotulo-menu">Início</span>
         </a>
 
+        @if (mostrarClientes()) {
+          <details class="configuracoes" #cadastros>
+            <summary class="item-menu" title="Cadastros" (click)="expandirMenu($event, cadastros)">
+              <svg class="icone icone-item" aria-hidden="true"><use href="icons/bootstrap-icons.svg#collection" /></svg>
+              <span class="rotulo-menu">Cadastros</span>
+            </summary>
+            <ul class="submenu">
+              <li>
+                <a routerLink="/clientes" routerLinkActive="item-ativo" ariaCurrentWhenActive="page"
+                  (click)="menuMovelAberto.set(false)">
+                  <svg class="icone icone-acao" aria-hidden="true"><use href="icons/bootstrap-icons.svg#people" /></svg>Clientes
+                </a>
+              </li>
+            </ul>
+          </details>
+        }
         @if (mostrarUsuarios() || mostrarPermissoes()) {
         <details class="configuracoes" #configuracoes>
           <summary
             class="item-menu"
             title="Configurações"
-            (click)="expandirConfiguracoes($event, configuracoes)"
+            (click)="expandirMenu($event, configuracoes)"
           >
             <svg class="icone icone-item" aria-hidden="true"><use href="icons/bootstrap-icons.svg#gear" /></svg>
             <span class="rotulo-menu">Configurações</span>

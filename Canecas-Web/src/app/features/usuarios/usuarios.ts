@@ -58,7 +58,7 @@ export class Usuarios {
   protected readonly podeAlterarSenha = computed(() => this.features.tem(FEATURES.alterarSenhaUsuario));
 
   protected readonly busca = this.fb.control('');
-  protected readonly situacao = this.fb.control<FiltroSituacao>('todos');
+  protected readonly situacao = this.fb.control<FiltroSituacao>('ativos');
   private readonly buscaAtual = toSignal(this.busca.valueChanges, { initialValue: this.busca.value });
   private readonly situacaoAtual = toSignal(this.situacao.valueChanges, {
     initialValue: this.situacao.value,

@@ -26,6 +26,12 @@ export const routes: Routes = [
         component: Home
       },
       {
+        path: 'clientes',
+        canActivate: [featureGuard],
+        data: { feature: FEATURES.clientes },
+        loadComponent: () => import('./features/clientes/clientes').then((modulo) => modulo.Clientes)
+      },
+      {
         path: 'usuarios',
         canActivate: [featureGuard],
         data: { feature: FEATURES.usuarios },
