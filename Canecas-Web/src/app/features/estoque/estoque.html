@@ -163,6 +163,7 @@
             <th scope="col">Custo unitário</th>
             <th scope="col">Origem</th>
             <th scope="col">Justificativa</th>
+            <th scope="col" class="coluna-acoes">Ações</th>
           </tr>
         </thead>
 
@@ -181,10 +182,22 @@
             <td>{{ mov.custoUnitario | currency:'BRL':'symbol':'1.2-4' }}</td>
             <td>{{ mov.origem }}</td>
             <td>{{ mov.justificativa || '—' }}</td>
+
+            <td class="coluna-acoes">
+              @if (mov.origem === 'AJUSTE') {
+              <div class="acoes">
+                <button type="button" (click)="abrirEstorno(mov)">
+                  Estornar
+                </button>
+              </div>
+              } @else {
+              —
+              }
+            </td>
           </tr>
           } @empty {
           <tr>
-            <td class="estado" colspan="8">
+            <td class="estado" colspan="9">
               Nenhuma movimentação encontrada.
             </td>
           </tr>
@@ -272,26 +285,61 @@
     </div>
   </form>
 </dialog>
-<dialog #editorMinimo class="editor"
-  aria-labelledby="titulo-minimo"
-  (cancel)="cancelarMinimo($event)">
+<dialog #editorMinimo class="editor" aria-labelledby="titulo-minimo" (cancel)="cancelarMinimo($event)">
 
-  <form [formGroup]="formularioMinimo"
-    (ngSubmit)="salvarMinimo()" novalidate>
+  <form [formGroup]="formularioMinimo" (ngSubmit)="salvarMinimo()" novalidate>
 
     <h2 id="titulo-minimo">Configurar estoque mínimo</h2>
 
     @if (saldoSelecionado(); as saldo) {
-      <p><strong>{{ saldo.nomeProduto }}</strong></p>
-      <p>Saldo atual: {{ saldo.quantidade }} {{ saldo.unidadeMedida }}</p>
+    <p><strong>{{ saldo.nomeProduto }}</strong></p>
+    <p>Saldo atual: {{ saldo.quantidade }} {{ saldo.unidadeMedida }}</p>
     }
 
     <fieldset class="campos" [disabled]="salvando()">
       <label>
         Estoque mínimo
-        <input type="number"
-          formControlName="estoqueMinimo"
-          min="0" step="0.001" required />
+        <input type="number" formControlName="estoqueMinimo" min="0" step="0.001" required />
+      </label>
+    </fieldset>
+
+    @if (erroEditor()) {
+    <p class="erro" role="alert">{{ erroEditor() }}</p>
+    }
+
+    <div class="acoes-modal">
+      <button type="button" [disabled]="salvando()" (click)="fecharMinimo()">
+        Cancelar
+      </button>
+
+      <button class="primario" type="submit" [disabled]="salvando()">
+        {{ salvando() ? 'Salvando…' : 'Salvar' }}
+      </button>
+    </div>
+  </form>
+</dialog>
+<dialog #editorEstorno class="editor"
+  aria-labelledby="titulo-estorno"
+  (cancel)="cancelarEstorno($event)">
+
+  <form [formGroup]="formularioEstorno"
+    (ngSubmit)="salvarEstorno()" novalidate>
+
+    <h2 id="titulo-estorno">Estornar movimentação</h2>
+
+    @if (movimentacaoSelecionada(); as mov) {
+      <p>Movimentação: <strong>{{ mov.id }}</strong></p>
+      <p>Produto: {{ mov.produtoId }}</p>
+      <p>Quantidade: {{ mov.quantidade }}</p>
+      <p>Tipo: {{ mov.tipo }}</p>
+      <p>O estorno gerará uma movimentação inversa no estoque.</p>
+    }
+
+    <fieldset class="campos" [disabled]="salvando()">
+      <label>
+        Justificativa do estorno
+        <textarea formControlName="justificativa"
+          maxlength="500" rows="3" required></textarea>
       </label>
     </fieldset>
 
@@ -301,13 +349,13 @@
 
     <div class="acoes-modal">
       <button type="button" [disabled]="salvando()"
-        (click)="fecharMinimo()">
+        (click)="fecharEstorno()">
         Cancelar
       </button>
 
       <button class="primario" type="submit"
         [disabled]="salvando()">
-        {{ salvando() ? 'Salvando…' : 'Salvar' }}
+        {{ salvando() ? 'Estornando…' : 'Confirmar estorno' }}
       </button>
     </div>
   </form>

@@ -56,6 +56,12 @@ export class Estoque implements OnInit {
   @ViewChild('editorMinimo')
   private editorMinimo!: ElementRef<HTMLDialogElement>;
 
+  @ViewChild('editorEstorno')
+  private editorEstorno!: ElementRef<HTMLDialogElement>;
+
+  readonly movimentacaoSelecionada =
+    signal<MovimentacaoEstoque | null>(null);
+
   readonly saldoSelecionado = signal<SaldoEstoque | null>(null);
   readonly salvando = signal(false);
   readonly erroEditor = signal('');
@@ -209,6 +215,74 @@ export class Estoque implements OnInit {
       Validators.max(999999999999.999)
     ]]
   });
+
+  readonly formularioEstorno = this.fb.group({
+    justificativa: ['', [
+      Validators.required,
+      Validators.maxLength(500)
+    ]]
+  });
+
+  abrirEstorno(movimentacao: MovimentacaoEstoque): void {
+    this.movimentacaoSelecionada.set(movimentacao);
+    this.erroEditor.set('');
+
+    this.formularioEstorno.reset({
+      justificativa: ''
+    });
+
+    this.editorEstorno.nativeElement.showModal();
+  }
+
+  fecharEstorno(): void {
+    if (this.salvando()) return;
+
+    this.editorEstorno.nativeElement.close();
+    this.movimentacaoSelecionada.set(null);
+    this.erroEditor.set('');
+  }
+
+  cancelarEstorno(event: Event): void {
+    event.preventDefault();
+    this.fecharEstorno();
+  }
+
+  salvarEstorno(): void {
+    const movimentacao = this.movimentacaoSelecionada();
+
+    if (!movimentacao || this.salvando()) return;
+
+    const justificativa =
+      this.formularioEstorno.controls.justificativa.value.trim();
+
+    if (this.formularioEstorno.invalid || !justificativa) {
+      this.formularioEstorno.markAllAsTouched();
+      this.erroEditor.set('Informe uma justificativa válida.');
+      return;
+    }
+
+    this.salvando.set(true);
+    this.erroEditor.set('');
+
+    this.service.estornar(
+      movimentacao.id,
+      justificativa
+    ).subscribe({
+      next: () => {
+        this.salvando.set(false);
+        this.fecharEstorno();
+        this.aviso.set('Movimentação estornada com sucesso.');
+        this.carregar(1);
+      },
+      error: resposta => {
+        this.salvando.set(false);
+        this.erroEditor.set(
+          resposta.error?.mensagem ||
+          'Erro ao estornar movimentação.'
+        );
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.carregar();
