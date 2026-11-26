@@ -63,14 +63,14 @@ describe('Compras', () => {
     const custo = tela.querySelector<HTMLInputElement>('[aria-label="Custo unitário de Caneca"]')!;
     quantidade.value = '2.5';
     quantidade.dispatchEvent(new Event('input'));
-    custo.value = '31250';
+    custo.value = '313';
     custo.dispatchEvent(new Event('input'));
     fixture.detectChanges();
-    expect(custo.value).toMatch(/^R\$\s3,1250$/);
+    expect(custo.value).toMatch(/^R\$\s3,13$/);
     expect(tela.querySelector('.nome-produto small')?.textContent).toContain('UN');
-    expect(tela.querySelector('td.subtotal')?.textContent).toContain('7,81');
+    expect(tela.querySelector('td.subtotal')?.textContent).toContain('7,83');
     expect(tela.querySelector('.fechamento-pedido')?.textContent).toContain('2,5');
-    expect(tela.querySelector('.total-pedido')?.textContent).toContain('7,81');
+    expect(tela.querySelector('.total-pedido')?.textContent).toContain('7,83');
 
     tela.querySelector<HTMLButtonElement>('.remover')!.click();
     fixture.detectChanges();

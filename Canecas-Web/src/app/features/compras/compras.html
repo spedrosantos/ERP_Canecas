@@ -70,7 +70,7 @@
                         [name]="'quantidade-' + item.produtoId" [(ngModel)]="item.quantidade" />
                     </td>
                     <td>
-                      <input type="text" inputmode="numeric" appMoeda [casasDecimaisMoeda]="4" required
+                      <input type="text" inputmode="numeric" appMoeda required
                         [attr.aria-label]="'Custo unitário de ' + (item.nome ?? 'produto #' + item.produtoId)"
                         [name]="'custo-' + item.produtoId" [(ngModel)]="item.custoUnitario" />
                     </td>
