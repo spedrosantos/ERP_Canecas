@@ -1,7 +1,14 @@
-import { Component, DestroyRef, inject, input, output, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Component, DestroyRef, InjectionToken, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, map, of, Subscription, switchMap, timer } from 'rxjs';
-import { CadastroAtivo, ComprasService } from './compras.service';
+export interface CadastroAtivo {
+  id: number;
+  nome: string;
+  unidadeMedida?: string | null;
+}
+
+export const URL_BUSCA_CADASTRO = new InjectionToken<string>('URL de busca de cadastros');
 
 @Component({
   selector: 'app-busca-cadastro',
@@ -61,11 +68,12 @@ import { CadastroAtivo, ComprasService } from './compras.service';
   `]
 })
 export class BuscaCadastro {
-  private readonly api = inject(ComprasService);
+  private readonly http = inject(HttpClient);
+  private readonly url = inject(URL_BUSCA_CADASTRO);
   private readonly destroyRef = inject(DestroyRef);
   private requisicao?: Subscription;
 
-  readonly tipo = input.required<'fornecedores' | 'produtos'>();
+  readonly tipo = input.required<'clientes' | 'fornecedores' | 'produtos'>();
   readonly rotulo = input.required<string>();
   readonly selecionado = input('');
   readonly escolhido = output<CadastroAtivo>();
@@ -87,7 +95,9 @@ export class BuscaCadastro {
     this.erro.set(false);
     const busca = termo.trim();
     this.requisicao = timer(busca ? 250 : 0).pipe(
-      switchMap(() => this.api.listarCadastros(this.tipo(), busca, 1)),
+      switchMap(() => this.http.get<{ itens: CadastroAtivo[] }>(
+        this.url + '/' + this.tipo(), { params: { busca, pagina: 1, tamanhoPagina: 10 } },
+      )),
       map(dados => dados.itens),
       catchError(() => of(null)),
       takeUntilDestroyed(this.destroyRef)
