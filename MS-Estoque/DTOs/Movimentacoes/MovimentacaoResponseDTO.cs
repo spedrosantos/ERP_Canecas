@@ -11,5 +11,8 @@ public record MovimentacaoResponseDTO(
     long? MovimentacaoOriginalId,
     long UsuarioId,
     string? Justificativa,
-    DateTime CriadoEm
+    DateTime CriadoEm,
+    string? NomeProduto = null,
+    string? NomeUsuario = null,
+    long? EstornoId = null
 );
