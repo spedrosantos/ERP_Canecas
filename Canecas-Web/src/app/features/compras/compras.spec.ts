@@ -92,7 +92,8 @@ describe('Compras', () => {
 
     http.expectOne(`${api}?pagina=1&tamanhoPagina=20`).flush(pagina);
     fixture.detectChanges();
-    clicar('Abrir');
+    tela.querySelector<HTMLButtonElement>('button[aria-label="Ver pedido #12"]')!.click();
+    fixture.detectChanges();
     http.expectOne(`${api}/12`).flush(detalhe);
     fixture.detectChanges();
 

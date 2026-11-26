@@ -198,9 +198,8 @@
         </label>
         <label>Data inicial<input name="dataInicio" type="date" [(ngModel)]="filtro.dataInicio" /></label>
         <label>Data final<input name="dataFim" type="date" [(ngModel)]="filtro.dataFim" /></label>
-        <button type="submit" [disabled]="ocupado()">
+        <button type="submit" class="botao-icone" aria-label="Pesquisar pedidos" title="Pesquisar pedidos" [disabled]="ocupado()">
           <svg aria-hidden="true"><use href="icons/bootstrap-icons.svg#search" /></svg>
-          Pesquisar
         </button>
       </form>
       @if (carregando()) { <p class="estado" role="status">Carregando pedidos…</p> }
@@ -219,10 +218,10 @@
                       <td>{{ pedido.criadoEm | date:'dd/MM/yyyy HH:mm' }}</td>
                       <td>{{ situacoes[pedido.situacao] }}</td>
                       <td>{{ pedido.valorTotal | currency:'BRL':'symbol':'1.2-2' }}</td>
-                      <td><button type="button" [disabled]="ocupado()" [attr.aria-label]="'Ver pedido #' + pedido.id"
+                      <td><button type="button" class="botao-icone" title="Ver pedido" [disabled]="ocupado()"
+                        [attr.aria-label]="'Ver pedido #' + pedido.id"
                         (click)="abrir(pedido.id)">
                           <svg aria-hidden="true"><use href="icons/bootstrap-icons.svg#eye" /></svg>
-                          Abrir
                         </button></td>
                     </tr>
                   }
@@ -232,15 +231,15 @@
             <div class="paginacao">
               <span>{{ dados.total }} {{ dados.total === 1 ? 'pedido' : 'pedidos' }} · Página {{ dados.pagina }}</span>
               <div class="acoes">
-                <button type="button" [disabled]="dados.pagina <= 1 || ocupado()" (click)="carregar(dados.pagina - 1)">
+                <button type="button" class="botao-icone" aria-label="Página anterior" title="Página anterior"
+                  [disabled]="dados.pagina <= 1 || ocupado()" (click)="carregar(dados.pagina - 1)">
                   <svg aria-hidden="true"><use href="icons/bootstrap-icons.svg#chevron-left" /></svg>
-                  Anterior
                 </button>
-                <button type="button" [disabled]="dados.pagina * dados.tamanhoPagina >= dados.total || ocupado()"
+                <button type="button" class="botao-icone" aria-label="Próxima página" title="Próxima página"
+                  [disabled]="dados.pagina * dados.tamanhoPagina >= dados.total || ocupado()"
                   (click)="carregar(dados.pagina + 1)">
-                    Próxima
-                    <svg aria-hidden="true"><use href="icons/bootstrap-icons.svg#chevron-right" /></svg>
-                  </button>
+                  <svg aria-hidden="true"><use href="icons/bootstrap-icons.svg#chevron-right" /></svg>
+                </button>
               </div>
             </div>
           } @else {
