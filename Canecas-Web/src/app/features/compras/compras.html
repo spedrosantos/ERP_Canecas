@@ -1,6 +1,9 @@
 <section class="pagina" aria-labelledby="titulo-compras">
   <header class="cabecalho">
-    <h1 id="titulo-compras">Compras</h1>
+    <div>
+      @if (edicao()) { <p class="caminho">Compras</p> }
+      <h1 id="titulo-compras">{{ edicao()?.id ? 'Editar pedido #' + edicao()?.id : edicao() ? 'Novo pedido' : 'Compras' }}</h1>
+    </div>
     @if (!edicao() && !detalhe()) {
       <button type="button" class="primario" [disabled]="ocupado()" (click)="novo()">Novo pedido</button>
     }
@@ -11,37 +14,97 @@
   @if (ocupado()) { <p role="status">Processando pedido…</p> }
 
   @if (edicao(); as dados) {
-    <form class="painel conteudo" (ngSubmit)="salvar(dados)">
-      <h2>{{ dados.id ? 'Editar pedido #' + dados.id : 'Novo pedido' }}</h2>
+    <form (ngSubmit)="salvar(dados)">
       <fieldset class="campos-editor" [disabled]="ocupado()">
-        <div class="dados-pedido">
-          <app-busca-cadastro tipo="fornecedores" rotulo="Fornecedor"
-            [selecionado]="dados.nomeFornecedor ?? (dados.fornecedorId ? '#' + dados.fornecedorId : '')"
-            (escolhido)="selecionarFornecedor(dados, $event)" />
-          <label>Observação
-            <textarea name="observacao" [(ngModel)]="dados.observacao" maxlength="500" rows="2"></textarea>
-          </label>
-        </div>
-        <div class="cabecalho-itens">
-          <h3>Itens do pedido</h3>
-          <app-busca-cadastro tipo="produtos" rotulo="Adicionar produto"
-            (escolhido)="adicionarProduto(dados, $event)" />
-        </div>
-        @for (item of dados.itens; track item.produtoId; let indice = $index) {
-          <fieldset class="linha-item">
-            <legend>{{ item.nome ?? 'Produto' }} · #{{ item.produtoId }}</legend>
-            <label>Quantidade
-              <input type="number" min="0.001" step="0.001" required
-                [name]="'quantidade-' + item.produtoId" [(ngModel)]="item.quantidade" />
+        <section class="painel cartao-editor" aria-labelledby="titulo-dados-pedido">
+          <h2 id="titulo-dados-pedido">Dados do pedido</h2>
+          <div class="dados-pedido">
+            <app-busca-cadastro tipo="fornecedores" rotulo="Fornecedor"
+              [selecionado]="dados.nomeFornecedor ?? (dados.fornecedorId ? '#' + dados.fornecedorId : '')"
+              (escolhido)="selecionarFornecedor(dados, $event)" />
+            @if (dados.criadoEm) {
+              <div class="data-pedido">
+                <span>Data do pedido</span>
+                <time [attr.datetime]="dados.criadoEm">{{ dados.criadoEm | date:'dd/MM/yyyy' }}</time>
+              </div>
+            }
+            <label class="campo-observacao">Observação
+              <textarea name="observacao" [(ngModel)]="dados.observacao" maxlength="500" rows="2"></textarea>
             </label>
-            <label>Custo unitário (R$)
-              <input type="number" min="0" step="0.0001" required
-                [name]="'custo-' + item.produtoId" [(ngModel)]="item.custoUnitario" />
-            </label>
-            <button type="button" (click)="dados.itens.splice(indice, 1)">Remover produto #{{ item.produtoId }}</button>
-          </fieldset>
-        }
-        <div class="acoes">
+          </div>
+        </section>
+
+        <section class="painel cartao-editor cartao-itens" aria-labelledby="titulo-itens-pedido">
+          <header class="topo-itens">
+            <h2 id="titulo-itens-pedido">Itens do pedido</h2>
+            <div class="incluir-produto">
+              <app-busca-cadastro tipo="produtos" rotulo="Buscar produto"
+                [selecionado]="produtoSelecionado()?.nome ?? ''"
+                (escolhido)="produtoSelecionado.set($event)" />
+              <button type="button" class="adicionar" [disabled]="!produtoSelecionado()"
+                (click)="adicionarProduto(dados)">
+                <svg aria-hidden="true"><use href="icons/bootstrap-icons.svg#plus-lg" /></svg>
+                Adicionar
+              </button>
+            </div>
+          </header>
+
+          <div class="rolagem tabela-editor" tabindex="0" role="region" aria-label="Itens do pedido">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Produto</th><th scope="col">Quantidade</th>
+                  <th scope="col">Custo unitário</th><th scope="col" class="subtotal">Subtotal</th>
+                  <th scope="col" class="acao-item">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of dados.itens; track item.produtoId; let indice = $index) {
+                  <tr>
+                    <th scope="row" class="nome-produto">
+                      <strong>{{ item.nome ?? 'Produto #' + item.produtoId }}</strong>
+                      @if (item.nome) { <small>#{{ item.produtoId }}</small> }
+                    </th>
+                    <td>
+                      <input type="number" min="0.001" step="0.001" required
+                        [attr.aria-label]="'Quantidade de ' + (item.nome ?? 'produto #' + item.produtoId)"
+                        [name]="'quantidade-' + item.produtoId" [(ngModel)]="item.quantidade" />
+                    </td>
+                    <td>
+                      <input type="number" min="0" step="0.0001" required
+                        [attr.aria-label]="'Custo unitário de ' + (item.nome ?? 'produto #' + item.produtoId)"
+                        [name]="'custo-' + item.produtoId" [(ngModel)]="item.custoUnitario" />
+                    </td>
+                    <td class="subtotal">
+                      @if (item.quantidade !== null && item.custoUnitario !== null) {
+                        {{ subtotal(item) | currency:'BRL':'symbol':'1.2-2' }}
+                      } @else { — }
+                    </td>
+                    <td class="acao-item">
+                      <button type="button" class="remover" title="Remover produto"
+                        [attr.aria-label]="'Remover ' + (item.nome ?? 'produto #' + item.produtoId)"
+                        (click)="dados.itens.splice(indice, 1)">
+                        <svg aria-hidden="true"><use href="icons/bootstrap-icons.svg#x-lg" /></svg>
+                      </button>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="5" class="itens-vazios">Nenhum item adicionado.</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          @let resumo = resumir(dados.itens);
+          <dl class="fechamento-pedido">
+            <div><dt>Produtos distintos</dt><dd>{{ dados.itens.length }}</dd></div>
+            <div><dt>Quantidade total de itens</dt><dd>{{ resumo.quantidade | number:'1.0-3' }}</dd></div>
+            <div class="total-pedido"><dt>Valor total do pedido</dt>
+              <dd>{{ resumo.valor | currency:'BRL':'symbol':'1.2-2' }}</dd>
+            </div>
+          </dl>
+        </section>
+        <div class="acoes acoes-editor">
           <button type="button" (click)="voltar()">Voltar</button>
           <button type="submit" class="primario">Salvar pedido</button>
         </div>

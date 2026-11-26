@@ -12,6 +12,9 @@ import {
 
 registerLocaleData(pt);
 
+const FORMATO_QUANTIDADE = /^\d{1,12}(\.\d{1,3})?$/;
+const FORMATO_CUSTO = /^\d{1,11}(\.\d{1,4})?$/;
+
 interface ItemEdicao {
   produtoId: number;
   quantidade: number | null;
@@ -21,6 +24,7 @@ interface ItemEdicao {
 
 interface Edicao {
   id?: number;
+  criadoEm?: string;
   fornecedorId: number | null;
   nomeFornecedor?: string;
   observacao: string;
@@ -32,7 +36,7 @@ interface Edicao {
   imports: [FormsModule, DatePipe, CurrencyPipe, DecimalPipe, BuscaCadastro],
   providers: [{ provide: LOCALE_ID, useValue: 'pt-BR' }],
   templateUrl: './compras.html',
-  styleUrl: './compras.scss'
+  styleUrls: ['./compras.scss', './compras-editor.scss']
 })
 export class Compras {
   private readonly api = inject(ComprasService);
@@ -42,6 +46,7 @@ export class Compras {
 
   protected readonly lista = signal<Pagina<Pedido> | null>(null);
   protected readonly detalhe = signal<PedidoDetalhe | null>(null);
+  protected readonly produtoSelecionado = signal<CadastroAtivo | null>(null);
   protected readonly edicao = signal<Edicao | null>(null);
   protected readonly carregando = signal(false);
   protected readonly ocupado = signal(false);
@@ -103,16 +108,19 @@ export class Compras {
   }
 
   protected novo() {
+    this.produtoSelecionado.set(null);
     this.aviso.set('');
     this.erroAcao.set('');
     this.edicao.set({ fornecedorId: null, observacao: '', itens: [] });
   }
 
   protected editar(detalhe: PedidoDetalhe) {
+    this.produtoSelecionado.set(null);
     this.aviso.set('');
     this.erroAcao.set('');
     this.edicao.set({
       id: detalhe.pedido.id,
+      criadoEm: detalhe.pedido.criadoEm,
       fornecedorId: detalhe.pedido.fornecedorId,
       observacao: detalhe.pedido.observacao ?? '',
       itens: detalhe.itens.map(item => ({
@@ -132,13 +140,45 @@ export class Compras {
     edicao.nomeFornecedor = fornecedor.nome;
   }
 
-  protected adicionarProduto(edicao: Edicao, produto: CadastroAtivo) {
+  protected adicionarProduto(edicao: Edicao) {
+    const produto = this.produtoSelecionado();
+    if (!produto) return;
+
+    this.produtoSelecionado.set(null);
     if (edicao.itens.some(item => item.produtoId === produto.id)) {
       this.erroAcao.set('Este produto já está no pedido.');
       return;
     }
     this.erroAcao.set('');
     edicao.itens.push({ produtoId: produto.id, nome: produto.nome, quantidade: 1, custoUnitario: null });
+  }
+
+  protected subtotal(item: ItemEdicao): number {
+    return this.emReais(this.valorItem(item));
+  }
+
+  protected resumir(itens: ItemEdicao[]) {
+    let quantidade = 0;
+    let valor = 0n;
+    for (const item of itens) {
+      quantidade += item.quantidade ?? 0;
+      valor += this.valorItem(item);
+    }
+    return { quantidade, valor: this.emReais(valor) };
+  }
+
+  private valorItem(item: ItemEdicao): bigint {
+    const quantidade = item.quantidade ?? 0;
+    const custo = item.custoUnitario ?? 0;
+    if (!FORMATO_QUANTIDADE.test(String(quantidade)) ||
+        !FORMATO_CUSTO.test(String(custo))) return 0n;
+
+    // Escala de sete casas: três da quantidade e quatro do custo.
+    return BigInt(Math.round(quantidade * 1000)) * BigInt(Math.round(custo * 10000));
+  }
+
+  private emReais(valor: bigint): number {
+    return Number((valor + 50000n) / 100000n) / 100;
   }
 
   protected salvar(edicao: Edicao) {
@@ -149,8 +189,8 @@ export class Compras {
     }
     const itens: ItemCompra[] = [];
     for (const { produtoId, quantidade, custoUnitario } of edicao.itens) {
-      if (quantidade === null || quantidade <= 0 || !/^\d{1,12}(\.\d{1,3})?$/.test(String(quantidade)) ||
-          custoUnitario === null || !/^\d{1,11}(\.\d{1,4})?$/.test(String(custoUnitario))) {
+      if (quantidade === null || quantidade <= 0 || !FORMATO_QUANTIDADE.test(String(quantidade)) ||
+          custoUnitario === null || !FORMATO_CUSTO.test(String(custoUnitario))) {
         this.erroAcao.set(`Revise o produto #${produtoId}. Informe quantidade positiva com até três casas decimais e custo com até quatro.`);
         return;
       }

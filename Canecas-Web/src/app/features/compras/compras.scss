@@ -12,45 +12,14 @@ h2, h3 {
   margin-block: 0 0.75rem;
 }
 
-.filtros, .linha-item {
+.filtros {
   align-items: end;
 }
 
-.campos-editor {
-  display: grid;
-  gap: 0.875rem;
-  min-width: 0;
-  border: 0;
-  padding: 0;
-  margin: 0;
-
-  p, h3 {
-    margin: 0;
-  }
-}
-
-.linha-item, .resumo-pedido {
+.resumo-pedido {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
   gap: 0.75rem;
-}
-
-.linha-item {
-  min-width: 0;
-  margin: 0;
-  padding: 0.75rem;
-  border: 1px solid var(--linha);
-  border-radius: 0.5rem;
-}
-
-textarea {
-  box-sizing: border-box;
-  width: 100%;
-  padding: 0.625rem 0.75rem;
-  border: 1px solid var(--linha);
-  border-radius: 0.5rem;
-  font: inherit;
-  resize: vertical;
 }
 
 .resumo-pedido {
@@ -77,23 +46,4 @@ textarea {
 .paginacao {
   justify-content: space-between;
   padding: 0.75rem 1rem;
-}
-
-.dados-pedido {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
-  gap: 1rem;
-}
-
-.cabecalho-itens {
-  display: grid;
-  gap: .75rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--linha);
-}
-
-.campos-editor > .acoes {
-  justify-content: flex-end;
-  padding-top: 1rem;
-  border-top: 1px solid var(--linha);
 }
