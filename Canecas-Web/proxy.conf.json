@@ -56,6 +56,9 @@
   "/api/vendas/**": {
     "target": "http://localhost:5262"
   },
+  "/api/financeiro/**": {
+    "target": "http://localhost:5263"
+  },
   "/api/estoque": {
     "target": "http://localhost:5260",
     "secure": false

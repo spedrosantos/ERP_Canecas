@@ -50,3 +50,37 @@ describe('Autenticação em Compras e Vendas', () => {
     http.verify();
   });
 });
+
+describe('Autenticação no Financeiro', () => {
+  it('envia o JWT às rotas financeiras e preserva URLs externas', () => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(withInterceptors([authInterceptor])), provideHttpClientTesting(),
+        { provide: AuthService, useValue: { obterToken: () => 'token-de-teste' } },
+      ],
+    });
+    const cliente = TestBed.inject(HttpClient);
+    const http = TestBed.inject(HttpTestingController);
+    const rotas = [
+      ['GET', '/api/financeiro/titulos?tipo=PAGAR'],
+      ['GET', '/api/financeiro/titulos/1'],
+      ['GET', '/api/financeiro/indicadores?tipo=RECEBER'],
+      ['POST', '/api/financeiro/titulos/1/baixas'],
+      ['POST', '/api/financeiro/titulos/1/baixas/2/estornar'],
+    ];
+
+    for (const [method, url] of rotas) {
+      cliente.request(method, url).subscribe();
+      const requisicao = http.expectOne({ method, url });
+      expect(requisicao.request.headers.get('Authorization')).toBe('Bearer token-de-teste');
+      requisicao.flush(null);
+    }
+
+    const externa = 'https://example.com/api/financeiro/titulos';
+    cliente.get(externa).subscribe();
+    const requisicaoExterna = http.expectOne(externa);
+    expect(requisicaoExterna.request.headers.has('Authorization')).toBe(false);
+    requisicaoExterna.flush(null);
+    http.verify();
+  });
+});
