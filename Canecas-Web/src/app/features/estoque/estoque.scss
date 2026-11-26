@@ -1,0 +1,100 @@
+@use '../../shared/styles/cadastro';
+
+.filtros {
+  align-items: end;
+
+  label {
+    min-width: 0;
+  }
+}
+
+.paginacao {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--linha);
+}
+
+.campos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+  gap: 1rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.abas {
+  display: flex;
+  gap: 1rem;
+  border-bottom: 1px solid var(--cor-primaria);
+
+  button {
+    border: none;
+    border-bottom: 3px solid transparent;
+    border-radius: 0;
+    background: transparent;
+    color: inherit;
+    padding: 0.75rem 1rem;
+
+    &.ativa {
+      border-bottom-color: var(--cor-primaria);
+      font-weight: 600;
+    }
+  }
+}
+
+.referencia {
+  display: block;
+  color: var(--secundario);
+  white-space: nowrap;
+}
+
+.editor {
+  width: min(36rem, calc(100% - 2rem));
+
+  label:has(textarea) {
+    grid-column: 1 / -1;
+  }
+
+  textarea {
+    font: inherit;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid var(--linha);
+    border-radius: 0.5rem;
+    background: #fff;
+    color: var(--texto);
+    resize: vertical;
+  }
+
+  .acoes-modal {
+    padding-top: 1rem;
+    border-top: 1px solid var(--linha);
+  }
+}
+
+.resumo-modal {
+  display: grid;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--linha);
+  border-radius: 0.625rem;
+  background: var(--superficie);
+
+  span {
+    color: var(--secundario);
+    font-size: 0.875rem;
+  }
+}
+
+.orientacao-modal {
+  color: var(--secundario);
+  font-size: 0.875rem;
+}

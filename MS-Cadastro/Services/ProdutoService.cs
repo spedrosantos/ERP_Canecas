@@ -86,18 +86,41 @@ public class ProdutoService : IProdutoService
         await using var context =
             await _contextFactory.CriarAsync();
 
+        await using var transacao = await context.Database.BeginTransactionAsync();
+        // Serializa a troca de unidade com os ajustes e a configuração do mínimo.
+        var ids = await context.Database.SqlQuery<long>($"""
+            SELECT id AS "Value" FROM cadastro.produtos WHERE id = {id} FOR UPDATE
+            """).ToListAsync();
+
+        if (ids.Count == 0)
+            return null;
+
         var repository = new ProdutoRepository(context);
-
         var produto = await repository.ObterPorIdAsync(id);
-
         if (produto is null)
             return null;
+
+        if (produto.UnidadeMedidaId != dto.UnidadeMedidaId)
+        {
+            var unidadeEmUso = await context.Database.SqlQuery<bool>($"""
+                SELECT (
+                    EXISTS (SELECT 1 FROM estoque.movimentacoes WHERE produto_id = {id})
+                    OR EXISTS (SELECT 1 FROM estoque.saldos
+                               WHERE produto_id = {id} AND (quantidade <> 0 OR estoque_minimo <> 0))
+                ) AS "Value"
+                """).SingleAsync();
+
+            if (unidadeEmUso)
+                throw new ValidationException(
+                    "A unidade de medida não pode ser alterada com histórico de estoque, saldo ou mínimo configurado.");
+        }
 
         await PreencherProdutoAsync(context, produto, dto);
 
         produto.AtualizadoEm = DateTime.UtcNow;
 
         await repository.SalvarAsync();
+        await transacao.CommitAsync();
 
         return Mapear(produto);
     }

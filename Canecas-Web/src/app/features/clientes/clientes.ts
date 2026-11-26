@@ -2,6 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectorRef, Component, computed, DestroyRef, effect, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Mascara } from '../../shared/directives/mascara';
 import { catchError, debounceTime, distinctUntilChanged, finalize, map, Observable, of, Subject, switchMap, takeUntil } from 'rxjs';
 
 import { FEATURES, FeatureService } from '../../core/services/feature.service';
@@ -26,6 +27,7 @@ function mensagemErro(erro: unknown, padrao: string): string {
     case 403:
       return 'Você não tem permissão para realizar esta operação.';
     case 409:
+    case 429:
       return typeof erro.error?.title === 'string' ? erro.error.title : padrao;
     case 503:
       return 'Serviço indisponível. Tente novamente.';
@@ -38,7 +40,7 @@ function mensagemErro(erro: unknown, padrao: string): string {
 
 @Component({
   selector: 'app-clientes',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, Mascara],
   templateUrl: './clientes.html',
   styleUrl: './clientes.scss',
 })

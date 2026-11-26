@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Globalization;
 using MS_Cadastro.Authorization;
 using MS_Cadastro.DTOs.Consultas;
 using MS_Cadastro.Services;
@@ -32,6 +33,22 @@ public class ConsultasController(IConsultaCepService cepService, IConsultaCnpjSe
 
     private ActionResult<T> Responder<T>(ResultadoConsulta<T> resultado, string tipo) where T : class
     {
+        if (resultado.Situacao == SituacaoConsulta.LimiteDeConsultas)
+        {
+            var segundos = resultado.TentarAposSegundos;
+            if (segundos.HasValue)
+                Response.Headers.RetryAfter = segundos.Value.ToString(CultureInfo.InvariantCulture);
+
+            var orientacao = segundos switch
+            {
+                1 => "Aguarde 1 segundo antes de tentar novamente.",
+                > 1 => $"Aguarde {segundos} segundos antes de tentar novamente.",
+                _ => "Aguarde alguns instantes antes de tentar novamente."
+            };
+            return Problem(statusCode: StatusCodes.Status429TooManyRequests,
+                title: $"Limite de consultas de {tipo} atingido. {orientacao}");
+        }
+
         return resultado.Situacao switch
         {
             SituacaoConsulta.Encontrado => Ok(resultado.Dados),

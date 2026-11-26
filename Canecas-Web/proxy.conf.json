@@ -49,5 +49,13 @@
   "/api/unidades-medida/**": {
     "target": "http://localhost:5259",
     "secure": false
+  },
+  "/api/estoque": {
+    "target": "http://localhost:5260",
+    "secure": false
+  },
+  "/api/estoque/**": {
+    "target": "http://localhost:5260",
+    "secure": false
   }
 }

@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MS-Cadastro", "MS-Cadastro\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FeatureAuthorization", "Shared\FeatureAuthorization\FeatureAuthorization.csproj", "{74D8297C-EA8F-4ADE-8EC5-3F17C5F411A1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MS-Estoque", "MS-Estoque\MS-Estoque.csproj", "{08A33CB7-2B64-40B2-BF1B-8B58773EC473}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -71,6 +73,18 @@ Global
 		{74D8297C-EA8F-4ADE-8EC5-3F17C5F411A1}.Release|x64.Build.0 = Release|Any CPU
 		{74D8297C-EA8F-4ADE-8EC5-3F17C5F411A1}.Release|x86.ActiveCfg = Release|Any CPU
 		{74D8297C-EA8F-4ADE-8EC5-3F17C5F411A1}.Release|x86.Build.0 = Release|Any CPU
+		{08A33CB7-2B64-40B2-BF1B-8B58773EC473}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{08A33CB7-2B64-40B2-BF1B-8B58773EC473}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{08A33CB7-2B64-40B2-BF1B-8B58773EC473}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{08A33CB7-2B64-40B2-BF1B-8B58773EC473}.Debug|x64.Build.0 = Debug|Any CPU
+		{08A33CB7-2B64-40B2-BF1B-8B58773EC473}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{08A33CB7-2B64-40B2-BF1B-8B58773EC473}.Debug|x86.Build.0 = Debug|Any CPU
+		{08A33CB7-2B64-40B2-BF1B-8B58773EC473}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{08A33CB7-2B64-40B2-BF1B-8B58773EC473}.Release|Any CPU.Build.0 = Release|Any CPU
+		{08A33CB7-2B64-40B2-BF1B-8B58773EC473}.Release|x64.ActiveCfg = Release|Any CPU
+		{08A33CB7-2B64-40B2-BF1B-8B58773EC473}.Release|x64.Build.0 = Release|Any CPU
+		{08A33CB7-2B64-40B2-BF1B-8B58773EC473}.Release|x86.ActiveCfg = Release|Any CPU
+		{08A33CB7-2B64-40B2-BF1B-8B58773EC473}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

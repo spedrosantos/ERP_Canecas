@@ -103,19 +103,17 @@
 
                         <td class="coluna-acoes">
                             <div class="acoes">
-                                <button type="button" (click)="editar(produto)">
-                                    <svg class="icone icone-acao" aria-hidden="true">
+                                <button class="botao-icone" type="button" (click)="editar(produto)" aria-label="Editar" title="Editar">
+                                    <svg class="icone" aria-hidden="true">
                                         <use href="icons/bootstrap-icons.svg#pencil" />
                                     </svg>
-                                    Editar
                                 </button>
 
-                                <button type="button" (click)="alterarSituacao(produto)">
-                                    <svg class="icone icone-acao" aria-hidden="true">
+                                <button class="botao-icone" type="button" (click)="alterarSituacao(produto)" [attr.aria-label]="produto.ativo ? 'Inativar' : 'Ativar'" [title]="produto.ativo ? 'Inativar' : 'Ativar'">
+                                    <svg class="icone" aria-hidden="true">
                                         <use [attr.href]="'icons/bootstrap-icons.svg#' +
                           (produto.ativo ? 'dash-circle' : 'plus-circle')" />
                                     </svg>
-                                    {{ produto.ativo ? 'Inativar' : 'Ativar' }}
                                 </button>
                             </div>
                         </td>

@@ -17,7 +17,11 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
     ((request.method === 'GET' || request.method === 'POST') && /^\/api\/(?:clientes|fornecedores|produtos|categorias|unidades-medida)\/?$/i.test(caminho)) ||
     ((request.method === 'GET' || request.method === 'PUT') && /^\/api\/(?:clientes|fornecedores|produtos|categorias|unidades-medida)\/\d+\/?$/i.test(caminho)) ||
     (request.method === 'PATCH' && /^\/api\/(?:clientes|fornecedores|produtos|categorias|unidades-medida)\/\d+\/situacao\/?$/i.test(caminho)) ||
-    (request.method === 'GET' && /^\/api\/consultas\/(?:cep|cnpj)\/?$/i.test(caminho));
+    (request.method === 'GET' && /^\/api\/consultas\/(?:cep|cnpj)\/?$/i.test(caminho)) ||
+    (request.method === 'GET' && /^\/api\/estoque\/(?:saldos|movimentacoes)\/?$/i.test(caminho)) ||
+    (request.method === 'POST' && /^\/api\/estoque\/movimentacoes\/ajuste\/?$/i.test(caminho)) ||
+    (request.method === 'POST' && /^\/api\/estoque\/movimentacoes\/\d+\/estorno\/?$/i.test(caminho)) ||
+    (request.method === 'PATCH' && /^\/api\/estoque\/saldos\/\d+\/minimo\/?$/i.test(caminho));
 
   if (!protegido) {
     return next(request);

@@ -14,6 +14,7 @@ export const FEATURES = {
   clientes: 'CLIENTE',
   fornecedores: 'FORNECEDOR',
   produtos: 'PRODUTO',
+  estoque: 'ESTOQUE',
 } as const;
 
 interface FeatureEfetiva {

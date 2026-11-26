@@ -146,7 +146,7 @@ describe('Usuários', () => {
     acesso.set(new Set([FEATURES.usuarios, FEATURES.alterarSenhaUsuario]));
     fixture.detectChanges();
     const alterarSenha = tela.querySelector<HTMLButtonElement>('tbody button')!;
-    expect(alterarSenha.textContent).toContain('Alterar senha');
+    expect(alterarSenha.getAttribute('aria-label')).toBe('Alterar senha');
     alterarSenha.click();
     expect(tela.querySelector('[formControlName="nome"]')).toBeNull();
     preencher('#usuario-senha', 'novaSenha123');
