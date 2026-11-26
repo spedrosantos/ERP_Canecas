@@ -7,6 +7,7 @@ import { PedidoDetalhe } from './compras.service';
 
 const api = '/api/compras/pedidos';
 const detalhe: PedidoDetalhe = {
+  nomeFornecedor: 'Fornecedor cadastrado',
   pedido: {
     id: 12, fornecedorId: 5, usuarioId: 3, situacao: 'PENDENTE', valorTotal: 7.4,
     observacao: null, criadoEm: '2026-11-25T14:30:00Z', atualizadoEm: null, recebidoEm: null
@@ -61,7 +62,7 @@ describe('Compras', () => {
     await fixture.whenStable();
     const quantidade = tela.querySelector<HTMLInputElement>('[aria-label="Quantidade de Caneca"]')!;
     const custo = tela.querySelector<HTMLInputElement>('[aria-label="Custo unitário de Caneca"]')!;
-    quantidade.value = '2.5';
+    quantidade.value = '2,5';
     quantidade.dispatchEvent(new Event('input'));
     custo.value = '313';
     custo.dispatchEvent(new Event('input'));
@@ -72,10 +73,28 @@ describe('Compras', () => {
     expect(tela.querySelector('.fechamento-pedido')?.textContent).toContain('2,5');
     expect(tela.querySelector('.total-pedido')?.textContent).toContain('7,83');
 
-    tela.querySelector<HTMLButtonElement>('.remover')!.click();
+    tela.querySelector<HTMLButtonElement>('[title="Remover produto"]')!.click();
     fixture.detectChanges();
     expect(tela.querySelector('.nome-produto')).toBeNull();
     expect(tela.querySelector('.total-pedido')?.textContent).toContain('0,00');
+    http.verify();
+  });
+
+  it('mostra o nome do fornecedor ao reabrir a edição de um pedido salvo', () => {
+    const fixture = TestBed.createComponent(Compras);
+    const http = TestBed.inject(HttpTestingController);
+    const tela: HTMLElement = fixture.nativeElement;
+    http.expectOne(`${api}?pagina=1&tamanhoPagina=20`).flush(pagina);
+    fixture.detectChanges();
+
+    tela.querySelector<HTMLButtonElement>('[aria-label="Ver pedido #12"]')!.click();
+    http.expectOne(`${api}/12`).flush(detalhe);
+    fixture.detectChanges();
+    Array.from(tela.querySelectorAll('button'))
+      .find(botao => botao.textContent.trim() === 'Editar')!.click();
+    fixture.detectChanges();
+
+    expect(tela.querySelector<HTMLInputElement>('.dados-pedido input')?.value).toBe('Fornecedor cadastrado');
     http.verify();
   });
 
@@ -111,6 +130,39 @@ describe('Compras', () => {
     expect(tela.textContent).not.toContain('Editar');
     expect(tela.textContent).not.toContain('Cancelar pedido');
     expect(tela.textContent).not.toContain('Receber pedido');
+    http.verify();
+  });
+
+  it('só cancela o pedido após a confirmação no modal', () => {
+    const fixture = TestBed.createComponent(Compras);
+    const http = TestBed.inject(HttpTestingController);
+    const tela: HTMLElement = fixture.nativeElement;
+
+    http.expectOne(`${api}?pagina=1&tamanhoPagina=20`).flush(pagina);
+    fixture.detectChanges();
+    tela.querySelector<HTMLButtonElement>('button[aria-label="Ver pedido #12"]')!.click();
+    http.expectOne(`${api}/12`).flush(detalhe);
+    fixture.detectChanges();
+
+    const dialogo = tela.querySelector('dialog')!;
+    dialogo.showModal = () => dialogo.setAttribute('open', '');
+    dialogo.close = () => dialogo.removeAttribute('open');
+    const cancelar = Array.from(tela.querySelectorAll('button')).find(
+      botao => botao.textContent.trim() === 'Cancelar pedido',
+    )!;
+    cancelar.click();
+    expect(dialogo.open).toBe(true);
+    http.expectNone(`${api}/12/cancelar`);
+    dialogo.querySelector<HTMLButtonElement>('.primario')!.click();
+
+    http.expectOne({ method: 'POST', url: `${api}/12/cancelar` }).flush({
+      ...detalhe,
+      pedido: { ...detalhe.pedido, situacao: 'CANCELADO' },
+    });
+    http.expectOne(`${api}?pagina=1&tamanhoPagina=20`).flush(pagina);
+    fixture.detectChanges();
+    expect(tela.querySelector('dialog')).toBeNull();
+    expect(tela.textContent).toContain('Pedido cancelado.');
     http.verify();
   });
 });

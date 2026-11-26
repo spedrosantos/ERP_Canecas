@@ -1,10 +1,12 @@
 import { CurrencyPipe, DatePipe, DecimalPipe, registerLocaleData } from '@angular/common';
 import pt from '@angular/common/locales/pt';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, DestroyRef, LOCALE_ID, inject, signal } from '@angular/core';
+import { Component, DestroyRef, ElementRef, LOCALE_ID, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Observable, Subscription, finalize } from 'rxjs';
+import { NotificacoesService } from '../../core/services/notificacoes.service';
+import { Mascara } from '../../shared/directives/mascara';
 import { Moeda } from '../../shared/directives/moeda';
 import { BuscaCadastro } from './busca-cadastro';
 import {
@@ -35,12 +37,13 @@ interface Edicao {
 
 @Component({
   selector: 'app-compras',
-  imports: [FormsModule, DatePipe, CurrencyPipe, DecimalPipe, BuscaCadastro, Moeda],
+  imports: [FormsModule, DatePipe, CurrencyPipe, DecimalPipe, BuscaCadastro, Moeda, Mascara],
   providers: [{ provide: LOCALE_ID, useValue: 'pt-BR' }],
   templateUrl: './compras.html',
   styleUrls: ['./compras.scss', './compras-editor.scss']
 })
 export class Compras {
+  private readonly notificacoes = inject(NotificacoesService);
   private readonly api = inject(ComprasService);
   private readonly destroyRef = inject(DestroyRef);
   private requisicaoLista?: Subscription;
@@ -55,7 +58,7 @@ export class Compras {
   protected readonly erroLista = signal('');
   protected readonly erroAcao = signal('');
   protected readonly aviso = signal('');
-  protected readonly confirmarCancelamento = signal(false);
+  private readonly dialogoCancelamento = viewChild<ElementRef<HTMLDialogElement>>('dialogoCancelamento');
   protected readonly situacoes: Record<SituacaoPedido, string> = {
     PENDENTE: 'Pendente', RECEBIDO: 'Recebido', CANCELADO: 'Cancelado'
   };
@@ -66,14 +69,22 @@ export class Compras {
     this.carregar();
   }
 
+  protected dialogoAberto(): boolean {
+    return this.dialogoCancelamento()?.nativeElement.open ?? false;
+  }
+
+  protected totalPaginas(dados: Pagina<Pedido>): number {
+    return Math.max(1, Math.ceil(dados.total / dados.tamanhoPagina));
+  }
+
   protected pesquisar() {
     const { fornecedorId, situacao, dataInicio, dataFim } = this.filtro;
     if (fornecedorId !== null && (!Number.isSafeInteger(fornecedorId) || fornecedorId < 1)) {
-      this.erroLista.set('Informe um código de fornecedor válido.');
+      this.erroValidacao(this.erroLista, 'Informe um código de fornecedor válido.');
       return;
     }
     if (dataInicio && dataFim && dataInicio > dataFim) {
-      this.erroLista.set('A data inicial não pode ser posterior à data final.');
+      this.erroValidacao(this.erroLista, 'A data inicial não pode ser posterior à data final.');
       return;
     }
 
@@ -124,6 +135,7 @@ export class Compras {
       id: detalhe.pedido.id,
       criadoEm: detalhe.pedido.criadoEm,
       fornecedorId: detalhe.pedido.fornecedorId,
+      nomeFornecedor: detalhe.nomeFornecedor ?? undefined,
       observacao: detalhe.pedido.observacao ?? '',
       itens: detalhe.itens.map(item => ({
         produtoId: item.produtoId, quantidade: item.quantidade, custoUnitario: item.custoUnitario,
@@ -135,7 +147,6 @@ export class Compras {
   protected voltar() {
     this.edicao.set(null);
     this.erroAcao.set('');
-    this.confirmarCancelamento.set(false);
   }
 
   protected selecionarFornecedor(edicao: Edicao, fornecedor: CadastroAtivo) {
@@ -149,7 +160,7 @@ export class Compras {
 
     this.produtoSelecionado.set(null);
     if (edicao.itens.some(item => item.produtoId === produto.id)) {
-      this.erroAcao.set('Este produto já está no pedido.');
+      this.erroValidacao(this.erroAcao, 'Este produto já está no pedido.');
       return;
     }
     this.erroAcao.set('');
@@ -187,14 +198,14 @@ export class Compras {
   protected salvar(edicao: Edicao) {
     if (this.ocupado()) return;
     if (edicao.fornecedorId === null || !edicao.itens.length) {
-      this.erroAcao.set('Selecione um fornecedor e adicione pelo menos um produto.');
+      this.erroValidacao(this.erroAcao, 'Selecione um fornecedor e adicione pelo menos um produto.');
       return;
     }
     const itens: ItemCompra[] = [];
     for (const { produtoId, quantidade, custoUnitario } of edicao.itens) {
       if (quantidade === null || quantidade <= 0 || !FORMATO_QUANTIDADE.test(String(quantidade)) ||
           custoUnitario === null || !FORMATO_CUSTO.test(String(custoUnitario))) {
-        this.erroAcao.set(`Revise o produto #${produtoId}. Informe quantidade positiva com até três casas decimais e custo com até quatro.`);
+        this.erroValidacao(this.erroAcao, `Revise o produto #${produtoId}. Informe quantidade positiva com até três casas decimais e custo com até quatro.`);
         return;
       }
       itens.push({ produtoId, quantidade, custoUnitario });
@@ -202,6 +213,18 @@ export class Compras {
     this.executar(this.api.salvar({
       fornecedorId: edicao.fornecedorId, observacao: edicao.observacao, itens
     }, edicao.id), 'Não foi possível salvar o pedido.', 'Pedido salvo.');
+  }
+
+  protected abrirCancelamento(dialogo: HTMLDialogElement): void {
+    this.erroAcao.set('');
+    dialogo.showModal();
+  }
+
+  protected fecharCancelamento(dialogo: HTMLDialogElement, evento?: Event): void {
+    evento?.preventDefault();
+    if (this.ocupado()) return;
+    this.erroAcao.set('');
+    dialogo.close();
   }
 
   protected alterar(id: number, acao: 'receber' | 'cancelar') {
@@ -218,7 +241,8 @@ export class Compras {
         next: detalhe => {
           this.detalhe.set(detalhe);
           this.edicao.set(null);
-          this.confirmarCancelamento.set(false);
+          const dialogo = this.dialogoCancelamento()?.nativeElement;
+          if (dialogo?.open) dialogo.close();
           if (sucesso) {
             this.aviso.set(sucesso);
             this.carregar(this.lista()?.pagina ?? 1);
@@ -226,6 +250,11 @@ export class Compras {
         },
         error: erro => this.erroAcao.set(this.mensagem(erro, falha))
       });
+  }
+
+  private erroValidacao(destino: typeof this.erroAcao, mensagem: string): void {
+    destino.set(mensagem);
+    this.notificacoes.erro(mensagem);
   }
 
   private mensagem(erro: HttpErrorResponse, padrao: string): string {

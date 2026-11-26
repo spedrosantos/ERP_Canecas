@@ -4,6 +4,10 @@
   margin-bottom: 1rem;
 }
 
+.painel-lista {
+  margin-top: 2.25rem;
+}
+
 .conteudo {
   padding: 1rem;
 }
@@ -32,23 +36,21 @@ h2, h3 {
   white-space: pre-wrap;
 }
 
-.confirmacao, .conteudo > .acoes {
+.conteudo > .acoes {
   margin-top: 1rem;
 }
 
-.acoes, .paginacao {
+.paginacao {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.paginacao {
+  gap: 0.75rem;
   justify-content: space-between;
   padding: 0.75rem 1rem;
+  border-top: 1px solid var(--linha);
 }
 
-button {
+button:not(.botao-icone) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -60,9 +62,4 @@ button {
     height: 1rem;
     fill: currentColor;
   }
-}
-
-.botao-icone {
-  width: 2.5rem;
-  padding: .5rem;
 }

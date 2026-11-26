@@ -23,6 +23,7 @@ export interface ItemCompra {
 
 export interface PedidoDetalhe {
   pedido: Pedido;
+  nomeFornecedor: string | null;
   itens: (ItemCompra & { id: number; nomeProduto?: string | null; unidadeMedida?: string | null })[];
 }
 

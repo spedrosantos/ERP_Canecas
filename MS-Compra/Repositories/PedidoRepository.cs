@@ -30,7 +30,7 @@ public class PedidoRepository(TenantDbContext context) : IPedidoRepository
             consulta = consulta.Where(x => x.CriadoEm < limite);
         }
 
-        var pedidos = consulta.OrderByDescending(x => x.Id).Select(x => new PedidoResponseDTO(
+        var pedidos = consulta.OrderBy(x => x.Id).Select(x => new PedidoResponseDTO(
             x.Id, x.FornecedorId, x.UsuarioId, x.Situacao, x.ValorTotal, x.Observacao,
             x.CriadoEm, x.AtualizadoEm, x.RecebidoEm));
 
@@ -76,6 +76,11 @@ public class PedidoRepository(TenantDbContext context) : IPedidoRepository
 
         return fornecedores.Count == 1;
     }
+
+    public Task<string?> ObterNomeFornecedorAsync(long id, CancellationToken ct) =>
+        context.Database.SqlQuery<string>($"""
+            SELECT nome AS "Value" FROM cadastro.fornecedores WHERE id = {id}
+            """).SingleOrDefaultAsync(ct);
 
     public async Task<int> BloquearProdutosAtivosAsync(long[] ids, CancellationToken ct)
     {
@@ -127,7 +132,7 @@ public class PedidoRepository(TenantDbContext context) : IPedidoRepository
             consulta = consulta.Where(x => EF.Functions.ILike(x.Nome, termo, "\\") || (temCodigo && x.Id == codigo));
         }
 
-        return PaginarAsync(consulta.OrderBy(x => x.Nome).ThenBy(x => x.Id),
+        return PaginarAsync(consulta.OrderBy(x => x.Id),
             filtro.Pagina, filtro.TamanhoPagina, ct);
     }
 

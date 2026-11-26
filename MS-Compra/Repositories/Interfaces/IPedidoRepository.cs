@@ -9,6 +9,7 @@ public interface IPedidoRepository
     Task<Pedido?> ObterAsync(long id, CancellationToken ct);
     Task<Pedido?> BloquearAsync(long id, CancellationToken ct);
     Task<bool> BloquearFornecedorAtivoAsync(long id, CancellationToken ct);
+    Task<string?> ObterNomeFornecedorAsync(long id, CancellationToken ct);
     Task<int> BloquearProdutosAtivosAsync(long[] ids, CancellationToken ct);
     Task<PaginadoResponseDTO<CadastroAtivoResponseDTO>> ListarFornecedoresAsync(ListarCadastrosDTO filtro, CancellationToken ct);
     Task<PaginadoResponseDTO<CadastroAtivoResponseDTO>> ListarProdutosAsync(ListarCadastrosDTO filtro, CancellationToken ct);

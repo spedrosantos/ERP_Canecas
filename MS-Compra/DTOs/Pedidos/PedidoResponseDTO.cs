@@ -6,7 +6,7 @@ public record PedidoResponseDTO(
     DateTime? AtualizadoEm, DateTime? RecebidoEm);
 
 public record PedidoDetalheResponseDTO(
-    PedidoResponseDTO Pedido, IReadOnlyList<PedidoItemResponseDTO> Itens);
+    PedidoResponseDTO Pedido, IReadOnlyList<PedidoItemResponseDTO> Itens, string? NomeFornecedor);
 
 public record PedidoItemResponseDTO(
     long Id, long ProdutoId, decimal Quantidade, decimal CustoUnitario,

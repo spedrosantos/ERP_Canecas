@@ -217,7 +217,9 @@ public class PedidoService(ITenantContextFactory contextFactory, IHttpContextAcc
                 item.CustoUnitario, produto?.Nome, produto?.UnidadeMedida);
         }).ToArray();
 
+        var nomeFornecedor = await repository.ObterNomeFornecedorAsync(pedido.FornecedorId, ct);
         return new(new PedidoResponseDTO(pedido.Id, pedido.FornecedorId, pedido.UsuarioId, pedido.Situacao,
-            pedido.ValorTotal, pedido.Observacao, pedido.CriadoEm, pedido.AtualizadoEm, pedido.RecebidoEm), itens);
+            pedido.ValorTotal, pedido.Observacao, pedido.CriadoEm, pedido.AtualizadoEm, pedido.RecebidoEm),
+            itens, nomeFornecedor);
     }
 }
