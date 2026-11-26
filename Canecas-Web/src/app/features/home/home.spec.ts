@@ -6,6 +6,8 @@ import { provideRouter } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { FEATURES, FeatureService } from '../../core/services/feature.service';
 import { Home } from './home';
+import { granularidadeDiaria, periodoAnterior, periodoPredefinido } from './dashboard-periodo';
+import { situacoesFinanceiras } from './dashboard-graficos';
 
 const urlVendas = '/api/vendas/pedidos/dashboard';
 const urlCompras = '/api/compras/pedidos/dashboard';
@@ -33,11 +35,40 @@ function montar(...codigos: string[]) {
   const fixture = TestBed.createComponent(Home);
   fixture.detectChanges();
   const tela: HTMLElement = fixture.nativeElement;
-  const requisicao = (url: string) => http.expectOne(request => request.url === url);
+  const requisicao = (url: string) => {
+    if (url === urlEstoque) return http.expectOne(request => request.url === url);
+    const consultas = http.match(request => request.url === url);
+    expect(consultas).toHaveLength(2);
+    return {
+      request: consultas[0].request,
+      flush: (dados: Parameters<(typeof consultas)[number]['flush']>[0],
+        opcoes?: Parameters<(typeof consultas)[number]['flush']>[1]) => {
+        consultas[0].flush(dados, opcoes);
+        if (!consultas[1].cancelled) consultas[1].flush(dados, opcoes);
+      },
+    };
+  };
   return { fixture, tela, http, permissoes, requisicao };
 }
 
 describe('Dashboard', () => {
+  it('compara períodos equivalentes em viradas de ano e usa série mensal a partir de 46 dias', () => {
+    const semana = periodoPredefinido('semana', '2025-01-04');
+    expect(semana).toEqual({ dataInicio: '2024-12-29', dataFim: '2025-01-04' });
+    expect(periodoAnterior(semana, 'semana')).toEqual({ dataInicio: '2024-12-22', dataFim: '2024-12-28' });
+    expect(periodoAnterior(periodoPredefinido('mes', '2025-01-04'), 'mes'))
+      .toEqual({ dataInicio: '2024-12-01', dataFim: '2024-12-31' });
+    expect(granularidadeDiaria({ dataInicio: '2025-01-01', dataFim: '2025-02-14' })).toBe(true);
+    expect(granularidadeDiaria({ dataInicio: '2025-01-01', dataFim: '2025-02-15' })).toBe(false);
+  });
+
+  it('divide o valor financeiro sem contar o saldo vencido duas vezes', () => {
+    const categorias = situacoesFinanceiras({
+      totalTitulos: 2, valorTotal: 100, valorBaixado: 60, saldo: 40, saldoVencido: 10,
+    });
+    expect(categorias.map(item => item.value)).toEqual([60, 30, 10]);
+  });
+
   it('consulta só os módulos autorizados e oculta dados quando a permissão é removida', () => {
     const { fixture, tela, http, permissoes, requisicao } = montar(FEATURES.vendas);
     const consulta = requisicao(urlVendas);
@@ -47,9 +78,9 @@ describe('Dashboard', () => {
     fixture.detectChanges();
     expect(tela.textContent).toContain('120,00');
     expect(tela.textContent).toContain('76,67%');
-    expect(tela.textContent).toContain('Caneca');
+    expect(tela.querySelector('[descricao="Ranking dos cinco produtos mais vendidos"]')).not.toBeNull();
     expect(tela.textContent).toContain('Cliente de teste');
-    expect(tela.querySelector('.legenda')?.textContent).not.toContain('Compras');
+    expect(tela.textContent).not.toContain('Total de compras');
 
     permissoes.set(new Set());
     fixture.detectChanges();
@@ -68,6 +99,9 @@ describe('Dashboard', () => {
     expect(estoque.request.params.get('abaixoDoMinimo')).toBe('true');
     expect(estoque.request.params.get('tamanhoPagina')).toBe('5');
     estoque.flush({ total: 0, pagina: 1, tamanhoPagina: 5, itens: [] });
+    fixture.detectChanges();
+    Array.from(tela.querySelectorAll<HTMLButtonElement>('.atalhos button'))
+      .find(botao => botao.textContent.trim() === 'Personalizado')!.click();
     fixture.detectChanges();
     await fixture.whenStable();
 
@@ -91,11 +125,11 @@ describe('Dashboard', () => {
     http.expectNone(request => request.url === urlEstoque);
 
     fixture.detectChanges();
-    expect(tela.textContent).toContain('Não foi possível carregar as compras.');
+    expect(tela.textContent).toContain('Não foi possível carregar: Compras.');
     expect(tela.textContent).toContain('Nenhuma venda confirmada no período.');
     expect(tela.textContent).toContain('Nenhum produto abaixo do mínimo.');
     expect(tela.textContent).toContain('40,00');
-    expect(tela.querySelector('.legenda')?.textContent).toContain('Vendas');
+    expect(tela.textContent).toContain('Nenhuma operação no período.');
     http.verify();
   });
 });

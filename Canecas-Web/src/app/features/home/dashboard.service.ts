@@ -11,6 +11,7 @@ export interface PeriodoDashboard {
 export interface MesDashboard {
   mes: string;
   valor: number;
+  lucroBruto?: number | null;
 }
 
 export interface ResumoVendas {
