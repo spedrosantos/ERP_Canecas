@@ -172,6 +172,11 @@ tbody th {
     background: #def4e8;
     color: #16603e;
   }
+
+  &.negativa {
+    background: #fce8eb;
+    color: var(--erro);
+  }
 }
 
 .acoes {
