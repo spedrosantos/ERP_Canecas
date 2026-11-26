@@ -58,7 +58,7 @@
                 <td class="codigo">{{ usuario.id }}</td>
                 <th scope="row">{{ usuario.nome }}</th>
                 <td class="coluna-situacao">
-                  <span class="situacao" [class.ativa]="usuario.ativo">
+                  <span class="situacao" [class.ativa]="usuario.ativo" [class.negativa]="!usuario.ativo">
                     {{ usuario.ativo ? 'Ativo' : 'Inativo' }}
                   </span>
                 </td>

@@ -121,7 +121,8 @@
             <td>{{ saldo.estoqueMinimo | number:'1.0-3' }}</td>
             <td>{{ saldo.custoMedio | currency:'BRL':'symbol':'1.2-4' }}</td>
             <td class="coluna-situacao">
-              <span class="situacao" [class.ativa]="saldo.produtoAtivo && saldo.quantidade >= saldo.estoqueMinimo">
+              <span class="situacao" [class.ativa]="saldo.produtoAtivo && saldo.quantidade >= saldo.estoqueMinimo"
+                [class.negativa]="!saldo.produtoAtivo || saldo.quantidade < saldo.estoqueMinimo">
                 {{ !saldo.produtoAtivo ? 'Produto inativo' : saldo.quantidade < saldo.estoqueMinimo ? 'Abaixo do mínimo' : 'Normal' }}
               </span>
             </td>
@@ -179,7 +180,7 @@
             <th scope="row">{{ mov.nomeProduto || ("Produto " + mov.produtoId) }}</th>
             <td>{{ mov.criadoEm | date:'dd/MM/yyyy HH:mm' }}</td>
             <td>
-              <span class="situacao" [class.ativa]="mov.tipo === 'ENTRADA'">
+              <span class="situacao" [class.ativa]="mov.tipo === 'ENTRADA'" [class.negativa]="mov.tipo === 'SAIDA'">
                 {{ mov.tipo === 'ENTRADA' ? 'Entrada' : 'Saída' }}
               </span>
             </td>
@@ -196,7 +197,7 @@
 
             <td class="coluna-acoes">
               @if (mov.estornoId; as estorno) {
-              <span class="situacao" [title]="'Estorno ' + estorno">Estornado · {{ estorno }}</span>
+              <span class="situacao negativa" [title]="'Estorno ' + estorno">Estornado · {{ estorno }}</span>
               } @else if (mov.origem === 'AJUSTE') {
               <div class="acoes">
                 <button class="botao-icone" type="button" (click)="abrirEstorno(mov)"

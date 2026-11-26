@@ -72,7 +72,7 @@
                 </th>
                 <td class="documento">{{ formatarDocumento(cliente.cpfCnpj, cliente.tipoPessoa) }}</td>
                 <td class="coluna-situacao">
-                  <span class="situacao" [class.ativa]="cliente.ativo">{{ cliente.ativo ? 'Ativo' : 'Inativo' }}</span>
+                  <span class="situacao" [class.ativa]="cliente.ativo" [class.negativa]="!cliente.ativo">{{ cliente.ativo ? 'Ativo' : 'Inativo' }}</span>
                 </td>
                 @if (podeGerenciar()) {
                   <td class="coluna-acoes">

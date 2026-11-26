@@ -32,10 +32,6 @@
               </div>
             }
           </div>
-          <label class="observacao-editor">
-            Observação
-            <textarea name="observacao" maxlength="500" rows="2" [(ngModel)]="dados.observacao"></textarea>
-          </label>
         </section>
 
         <section class="painel cartao-editor cartao-itens" aria-labelledby="titulo-itens-pedido">
@@ -132,7 +128,10 @@
     <section class="painel conteudo" aria-labelledby="titulo-pedido">
       <h2 id="titulo-pedido">Venda #{{ dados.pedido.id }}</h2>
       <dl class="resumo-pedido">
-        <div><dt>Situação</dt><dd>{{ situacoes[dados.pedido.situacao] }}</dd></div>
+        <div><dt>Situação</dt><dd>
+          <span class="situacao" [class.ativa]="dados.pedido.situacao === 'CONFIRMADO'"
+            [class.negativa]="dados.pedido.situacao === 'CANCELADO'">{{ situacoes[dados.pedido.situacao] }}</span>
+        </dd></div>
         <div><dt>Cliente</dt><dd>{{ dados.nomeCliente ?? '#' + dados.pedido.clienteId }}</dd></div>
         <div><dt>Total</dt><dd>{{ dados.pedido.valorTotal | currency:'BRL':'symbol':'1.2-2' }}</dd></div>
         <div><dt>Criado em</dt><dd>{{ dados.pedido.criadoEm | date:'dd/MM/yyyy HH:mm' }}</dd></div>
@@ -245,7 +244,8 @@
                       <td>#{{ pedido.clienteId }}</td>
                       <td>{{ pedido.criadoEm | date:'dd/MM/yyyy HH:mm' }}</td>
                       <td class="coluna-situacao">
-                        <span class="situacao" [class.ativa]="pedido.situacao === 'CONFIRMADO'">
+                        <span class="situacao" [class.ativa]="pedido.situacao === 'CONFIRMADO'"
+                          [class.negativa]="pedido.situacao === 'CANCELADO'">
                           {{ situacoes[pedido.situacao] }}
                         </span>
                       </td>

@@ -96,7 +96,7 @@
                         <td>{{ produto.unidadeMedida }}</td>
 
                         <td class="coluna-situacao">
-                            <span class="situacao" [class.ativa]="produto.ativo">
+                            <span class="situacao" [class.ativa]="produto.ativo" [class.negativa]="!produto.ativo">
                                 {{ produto.ativo ? 'Ativo' : 'Inativo' }}
                             </span>
                         </td>
