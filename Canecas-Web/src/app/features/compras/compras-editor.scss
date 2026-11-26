@@ -8,16 +8,6 @@
   margin: 0;
 }
 
-textarea {
-  box-sizing: border-box;
-  width: 100%;
-  padding: 0.625rem 0.75rem;
-  border: 1px solid var(--linha);
-  border-radius: 0.5rem;
-  font: inherit;
-  resize: vertical;
-}
-
 .caminho {
   margin: 0 0 .25rem;
   color: var(--secundario);
@@ -32,11 +22,14 @@ textarea {
 
 .dados-pedido {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  grid-template-columns: minmax(0, 1fr);
+
+  @media (min-width: 42rem) {
+    &:has(.data-pedido) { grid-template-columns: minmax(0, 1fr) 10rem; }
+  }
   gap: 1rem;
 }
 
-.campo-observacao { grid-column: 1 / -1; }
 .data-pedido {
   display: grid;
   align-content: start;
