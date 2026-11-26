@@ -54,6 +54,10 @@ public class PedidosController(IPedidoService service) : ControllerBase
     public Task<ActionResult<PedidoDetalheResponseDTO>> Cancelar(long id, CancellationToken ct) =>
         ExecutarAsync(() => service.CancelarAsync(id, ct));
 
+    [HttpPost("{id:long}/receber")]
+    public Task<ActionResult<PedidoDetalheResponseDTO>> Receber(long id, CancellationToken ct) =>
+        ExecutarAsync(() => service.ReceberAsync(id, ct));
+
     private async Task<ActionResult<PedidoDetalheResponseDTO>> ExecutarAsync(
         Func<Task<PedidoDetalheResponseDTO?>> executar, bool criado = false)
     {

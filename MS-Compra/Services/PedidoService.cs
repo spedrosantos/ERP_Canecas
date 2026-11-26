@@ -7,6 +7,9 @@ using MS_Compra.Entities;
 using MS_Compra.Repositories;
 using MS_Compra.Repositories.Interfaces;
 using MS_Compra.Services.Interfaces;
+using MS_Estoque.Entities;
+using MS_Estoque.Repositories;
+using MS_Estoque.Rules;
 
 namespace MS_Compra.Services;
 
@@ -53,6 +56,47 @@ public class PedidoService(ITenantContextFactory contextFactory, IHttpContextAcc
             pedido.Situacao = Pedido.Cancelado;
             return Task.CompletedTask;
         }, ct);
+
+    public Task<PedidoDetalheResponseDTO?> ReceberAsync(long id, CancellationToken ct)
+    {
+        var usuarioId = ObterUsuarioId();
+        return AlterarPendenteAsync(id, async (context, repository, pedido) =>
+        {
+            if (pedido.Itens.Count == 0)
+                throw new ValidationException("O pedido não contém itens.");
+
+            var itens = pedido.Itens.OrderBy(x => x.ProdutoId).ToArray();
+            var produtos = itens.Select(x => x.ProdutoId).ToArray();
+            if (produtos.Distinct().Count() != produtos.Length)
+                throw new ValidationException("O pedido contém produtos duplicados.");
+
+            await ValidarCadastrosAsync(repository, pedido.FornecedorId, produtos, ct);
+
+            var movimentacoes = new MovimentacaoRepository(context);
+            var recebidoEm = DateTime.UtcNow;
+
+            // Adquire os saldos em ordem de produto em todos os recebimentos.
+            foreach (var item in itens)
+            {
+                var saldo = await movimentacoes.BloquearSaldoAsync(item.ProdutoId, ct);
+                CalculoEstoque.RegistrarEntrada(saldo, item.Quantidade, item.CustoUnitario);
+                movimentacoes.Adicionar(new MovimentacaoEstoque
+                {
+                    ProdutoId = item.ProdutoId,
+                    Tipo = "ENTRADA",
+                    Quantidade = item.Quantidade,
+                    CustoUnitario = item.CustoUnitario,
+                    Origem = "COMPRA",
+                    ReferenciaId = pedido.Id,
+                    UsuarioId = usuarioId,
+                    CriadoEm = recebidoEm
+                });
+            }
+
+            pedido.Situacao = Pedido.Recebido;
+            pedido.RecebidoEm = recebidoEm;
+        }, ct);
+    }
 
     public async Task<PaginadoResponseDTO<CadastroAtivoResponseDTO>> ListarFornecedoresAsync(
         ListarCadastrosDTO filtro, CancellationToken ct)
@@ -104,12 +148,9 @@ public class PedidoService(ITenantContextFactory contextFactory, IHttpContextAcc
                 throw new ValidationException("Informe um produto válido para cada item.");
             if (!produtos.Add(item.ProdutoId))
                 throw new ValidationException("Um produto só pode aparecer uma vez por pedido.");
-            if (item.Quantidade <= 0 || item.Quantidade > 999999999999.999m ||
-                decimal.Round(item.Quantidade, 3) != item.Quantidade)
-                throw new ValidationException("Quantidade inválida. Informe até três casas decimais.");
-            if (item.CustoUnitario is not decimal custo || custo < 0 || custo > 99999999999.9999m ||
-                decimal.Round(custo, 4) != custo)
-                throw new ValidationException("Custo unitário inválido. Informe até quatro casas decimais.");
+            CalculoEstoque.ValidarQuantidade(item.Quantidade);
+            var custo = item.CustoUnitario ?? throw new ValidationException("Informe o custo unitário.");
+            CalculoEstoque.ValidarCustoUnitario(custo);
 
             total += item.Quantidade * custo;
             if (total >= limiteTotal + 0.005m)

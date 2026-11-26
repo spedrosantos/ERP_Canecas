@@ -65,7 +65,14 @@ builder.Services.AddAuthorization(options =>
     });
 });
 
-builder.Services.AddControllers();
+builder.Services.AddControllers().ConfigureApplicationPartManager(manager =>
+{
+    // A referência ao Estoque reutiliza a persistência e as regras de entrada.
+    var estoque = manager.ApplicationParts.FirstOrDefault(part =>
+        part.Name == typeof(MS_Estoque.Data.TenantDbContext).Assembly.GetName().Name);
+    if (estoque is not null)
+        manager.ApplicationParts.Remove(estoque);
+});
 builder.Services.AddOpenApi();
 
 var app = builder.Build();

@@ -3,7 +3,8 @@ using MS_Compra.Entities;
 
 namespace MS_Compra.Data;
 
-public class TenantDbContext(DbContextOptions<TenantDbContext> options) : DbContext(options)
+public class TenantDbContext(DbContextOptions<TenantDbContext> options)
+    : MS_Estoque.Data.TenantDbContext(options)
 {
     public DbSet<Pedido> Pedidos => Set<Pedido>();
     public DbSet<PedidoItem> Itens => Set<PedidoItem>();

@@ -15,6 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\MS-Estoque\MS-Estoque.csproj" />
     <ProjectReference Include="..\Shared\FeatureAuthorization\FeatureAuthorization.csproj" />
     <ProjectReference Include="..\Shared\MultiTenancy\MultiTenancy.csproj" />
   </ItemGroup>

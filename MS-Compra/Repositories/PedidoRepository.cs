@@ -8,6 +8,8 @@ namespace MS_Compra.Repositories;
 
 public class PedidoRepository(TenantDbContext context) : IPedidoRepository
 {
+    private static readonly TimeZoneInfo Fuso = TimeZoneInfo.FindSystemTimeZoneById("America/Sao_Paulo");
+
     public Task<PaginadoResponseDTO<PedidoResponseDTO>> ListarAsync(ListarPedidosDTO filtro, CancellationToken ct)
     {
         var consulta = context.Pedidos.AsNoTracking();
@@ -16,16 +18,15 @@ public class PedidoRepository(TenantDbContext context) : IPedidoRepository
         if (filtro.Situacao is not null)
             consulta = consulta.Where(x => x.Situacao == filtro.Situacao);
 
-        var fuso = TimeZoneInfo.FindSystemTimeZoneById("America/Sao_Paulo");
         if (filtro.DataInicio is DateOnly inicio)
         {
-            var limite = TimeZoneInfo.ConvertTimeToUtc(inicio.ToDateTime(TimeOnly.MinValue), fuso);
+            var limite = InicioDoDiaUtc(inicio);
             consulta = consulta.Where(x => x.CriadoEm >= limite);
         }
 
         if (filtro.DataFim is DateOnly fim && fim < DateOnly.MaxValue)
         {
-            var limite = TimeZoneInfo.ConvertTimeToUtc(fim.AddDays(1).ToDateTime(TimeOnly.MinValue), fuso);
+            var limite = InicioDoDiaUtc(fim.AddDays(1));
             consulta = consulta.Where(x => x.CriadoEm < limite);
         }
 
@@ -34,6 +35,17 @@ public class PedidoRepository(TenantDbContext context) : IPedidoRepository
             x.CriadoEm, x.AtualizadoEm, x.RecebidoEm));
 
         return PaginarAsync(pedidos, filtro.Pagina, filtro.TamanhoPagina, ct);
+    }
+
+    private static DateTime InicioDoDiaUtc(DateOnly data)
+    {
+        var meiaNoite = data.ToDateTime(TimeOnly.MinValue);
+
+        // No início do horário de verão, a meia-noite local pode ser suprimida.
+        if (Fuso.IsInvalidTime(meiaNoite))
+            return new DateTimeOffset(meiaNoite, Fuso.GetUtcOffset(meiaNoite.AddHours(-1))).UtcDateTime;
+
+        return TimeZoneInfo.ConvertTimeToUtc(meiaNoite, Fuso);
     }
 
     public Task<Pedido?> ObterAsync(long id, CancellationToken ct) =>
