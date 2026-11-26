@@ -1,8 +1,9 @@
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { authInterceptor } from '../../core/interceptors/auth.interceptor';
 import { AuthService } from '../../core/services/auth.service';
 import { FEATURES, FeatureService } from '../../core/services/feature.service';
 import { Home } from './home';
@@ -23,11 +24,12 @@ const vendas = {
 
 function montar(...codigos: string[]) {
   const permissoes = signal(new Set(codigos));
+  const sessao = signal({ token: 'token-teste', ultimaInteracao: 0 });
   TestBed.configureTestingModule({
     imports: [Home],
     providers: [
-      provideHttpClient(), provideHttpClientTesting(), provideRouter([]),
-      { provide: AuthService, useValue: { usuario: () => ({ nome: 'Ana' }) } },
+      provideHttpClient(withInterceptors([authInterceptor])), provideHttpClientTesting(), provideRouter([]),
+      { provide: AuthService, useValue: { usuario: () => ({ nome: 'Ana' }), obterToken: () => sessao().token } },
       { provide: FeatureService, useValue: { prontas: signal(true), permiteRota: (codigo: string) => permissoes().has(codigo) } },
     ],
   });
@@ -48,7 +50,7 @@ function montar(...codigos: string[]) {
       },
     };
   };
-  return { fixture, tela, http, permissoes, requisicao };
+  return { fixture, tela, http, permissoes, requisicao, sessao };
 }
 
 describe('Dashboard', () => {
@@ -67,6 +69,23 @@ describe('Dashboard', () => {
       totalTitulos: 2, valorTotal: 100, valorBaixado: 60, saldo: 40, saldoVencido: 10,
     });
     expect(categorias.map(item => item.value)).toEqual([60, 30, 10]);
+  });
+
+  it('mantém os gráficos e evita novas consultas quando a rolagem atualiza a atividade da sessão', () => {
+    const { fixture, tela, http, requisicao, sessao } = montar(FEATURES.vendas, FEATURES.estoque);
+    const resumo = requisicao(urlVendas);
+    expect(resumo.request.headers.get('Authorization')).toBe('Bearer token-teste');
+    resumo.flush(vendas);
+    requisicao(urlEstoque).flush({ itens: [], total: 0, pagina: 1, tamanhoPagina: 5 });
+    fixture.detectChanges();
+    const grafico = tela.querySelector('app-grafico-dashboard');
+
+    sessao.update(atual => ({ ...atual, ultimaInteracao: 1 }));
+    fixture.detectChanges();
+
+    http.expectNone(request => request.url === urlVendas || request.url === urlEstoque);
+    expect(tela.querySelector('app-grafico-dashboard')).toBe(grafico);
+    http.verify();
   });
 
   it('consulta só os módulos autorizados e oculta dados quando a permissão é removida', () => {

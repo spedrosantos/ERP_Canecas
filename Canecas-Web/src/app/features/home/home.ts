@@ -1,6 +1,6 @@
 import { CurrencyPipe, DecimalPipe, registerLocaleData } from '@angular/common';
 import localePt from '@angular/common/locales/pt';
-import { Component, LOCALE_ID, WritableSignal, computed, effect, inject, signal } from '@angular/core';
+import { Component, LOCALE_ID, WritableSignal, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Observable, Subscription, catchError, forkJoin, of } from 'rxjs';
@@ -223,9 +223,10 @@ export class Home {
       return;
     }
     destino.set({ estado: 'carregando' });
-    return consulta.subscribe({
+    // O interceptor lê a sessão para obter o token. Renovar a atividade não deve refazer a consulta.
+    return untracked(() => consulta.subscribe({
       next: dados => destino.set({ estado: 'pronto', dados }),
       error: () => destino.set({ estado: 'erro' }),
-    });
+    }));
   }
 }

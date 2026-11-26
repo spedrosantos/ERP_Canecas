@@ -32,7 +32,7 @@
     } @else {
       @if (indicadores().length) {
         <div class="faixa-periodo">
-          <span><svg class="icone" aria-hidden="true"><use href="icons/bootstrap-icons.svg#calendar3" /></svg>
+          <span>
             {{ dataCurta(periodo().dataInicio) }} a {{ dataCurta(periodo().dataFim) }}
           </span>
           @if (periodoComparacao(); as anterior) {
