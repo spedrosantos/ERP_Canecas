@@ -22,7 +22,7 @@ import { CadastroAtivo, ComprasService } from './compras.service';
             @for (item of itens(); track item.id; let i = $index) {
               <li role="option" [id]="tipo() + '-opcao-' + i" [attr.aria-selected]="indice() === i"
                 (pointerdown)="$event.preventDefault()" (click)="selecionar(item)">
-                <span>{{ item.nome }}</span><small>#{{ item.id }}</small>
+                <span>{{ item.nome }}</span><small>#{{ item.id }} @if (item.unidadeMedida) { · {{ item.unidadeMedida }} }</small>
               </li>
             }
           </ul>

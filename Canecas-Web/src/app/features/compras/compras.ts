@@ -5,6 +5,7 @@ import { Component, DestroyRef, LOCALE_ID, inject, signal } from '@angular/core'
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Observable, Subscription, finalize } from 'rxjs';
+import { Moeda } from '../../shared/directives/moeda';
 import { BuscaCadastro } from './busca-cadastro';
 import {
   CadastroAtivo, ComprasService, ItemCompra, Pagina, Pedido, PedidoDetalhe, SituacaoPedido
@@ -19,7 +20,8 @@ interface ItemEdicao {
   produtoId: number;
   quantidade: number | null;
   custoUnitario: number | null;
-  nome?: string;
+  nome?: string | null;
+  unidadeMedida?: string | null;
 }
 
 interface Edicao {
@@ -33,7 +35,7 @@ interface Edicao {
 
 @Component({
   selector: 'app-compras',
-  imports: [FormsModule, DatePipe, CurrencyPipe, DecimalPipe, BuscaCadastro],
+  imports: [FormsModule, DatePipe, CurrencyPipe, DecimalPipe, BuscaCadastro, Moeda],
   providers: [{ provide: LOCALE_ID, useValue: 'pt-BR' }],
   templateUrl: './compras.html',
   styleUrls: ['./compras.scss', './compras-editor.scss']
@@ -124,7 +126,8 @@ export class Compras {
       fornecedorId: detalhe.pedido.fornecedorId,
       observacao: detalhe.pedido.observacao ?? '',
       itens: detalhe.itens.map(item => ({
-        produtoId: item.produtoId, quantidade: item.quantidade, custoUnitario: item.custoUnitario
+        produtoId: item.produtoId, quantidade: item.quantidade, custoUnitario: item.custoUnitario,
+        nome: item.nomeProduto, unidadeMedida: item.unidadeMedida
       }))
     });
   }
@@ -150,7 +153,7 @@ export class Compras {
       return;
     }
     this.erroAcao.set('');
-    edicao.itens.push({ produtoId: produto.id, nome: produto.nome, quantidade: 1, custoUnitario: null });
+    edicao.itens.push({ produtoId: produto.id, nome: produto.nome, unidadeMedida: produto.unidadeMedida, quantidade: 1, custoUnitario: null });
   }
 
   protected subtotal(item: ItemEdicao): number {

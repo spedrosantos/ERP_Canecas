@@ -12,6 +12,7 @@ public interface IPedidoRepository
     Task<int> BloquearProdutosAtivosAsync(long[] ids, CancellationToken ct);
     Task<PaginadoResponseDTO<CadastroAtivoResponseDTO>> ListarFornecedoresAsync(ListarCadastrosDTO filtro, CancellationToken ct);
     Task<PaginadoResponseDTO<CadastroAtivoResponseDTO>> ListarProdutosAsync(ListarCadastrosDTO filtro, CancellationToken ct);
+    Task<Dictionary<long, CadastroAtivoResponseDTO>> ObterProdutosAsync(long[] ids, CancellationToken ct);
     void Adicionar(Pedido pedido);
     void RemoverItem(PedidoItem item);
 }

@@ -48,6 +48,8 @@
 
           <div class="rolagem tabela-editor" tabindex="0" role="region" aria-label="Itens do pedido">
             <table>
+              <colgroup><col /><col class="col-quantidade" /><col class="col-custo" />
+                <col class="col-subtotal" /><col class="col-acoes" /></colgroup>
               <thead>
                 <tr>
                   <th scope="col">Produto</th><th scope="col">Quantidade</th>
@@ -60,7 +62,7 @@
                   <tr>
                     <th scope="row" class="nome-produto">
                       <strong>{{ item.nome ?? 'Produto #' + item.produtoId }}</strong>
-                      @if (item.nome) { <small>#{{ item.produtoId }}</small> }
+                      <small>#{{ item.produtoId }} @if (item.unidadeMedida) { · {{ item.unidadeMedida }} }</small>
                     </th>
                     <td>
                       <input type="number" min="0.001" step="0.001" required
@@ -68,7 +70,7 @@
                         [name]="'quantidade-' + item.produtoId" [(ngModel)]="item.quantidade" />
                     </td>
                     <td>
-                      <input type="number" min="0" step="0.0001" required
+                      <input type="text" inputmode="numeric" appMoeda [casasDecimaisMoeda]="4" required
                         [attr.aria-label]="'Custo unitário de ' + (item.nome ?? 'produto #' + item.produtoId)"
                         [name]="'custo-' + item.produtoId" [(ngModel)]="item.custoUnitario" />
                     </td>
@@ -124,12 +126,12 @@
       </dl>
       <div class="rolagem" tabindex="0" role="region" aria-label="Itens do pedido">
         <table>
-          <thead><tr><th scope="col">Código do produto</th><th scope="col">Quantidade</th><th scope="col">Custo unitário</th></tr></thead>
+          <thead><tr><th scope="col">Produto</th><th scope="col">Quantidade</th><th scope="col">Custo unitário</th></tr></thead>
           <tbody>
             @for (item of dados.itens; track item.id) {
               <tr>
-                <td>{{ item.produtoId }}</td>
-                <td>{{ item.quantidade | number:'1.0-3' }}</td>
+                <td>{{ item.nomeProduto ?? item.produtoId }}</td>
+                <td>{{ item.quantidade | number:'1.0-3' }} {{ item.unidadeMedida }}</td>
                 <td>{{ item.custoUnitario | currency:'BRL':'symbol':'1.2-4' }}</td>
               </tr>
             }

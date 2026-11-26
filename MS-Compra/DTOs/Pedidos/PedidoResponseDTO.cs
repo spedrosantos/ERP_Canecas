@@ -9,9 +9,10 @@ public record PedidoDetalheResponseDTO(
     PedidoResponseDTO Pedido, IReadOnlyList<PedidoItemResponseDTO> Itens);
 
 public record PedidoItemResponseDTO(
-    long Id, long ProdutoId, decimal Quantidade, decimal CustoUnitario);
+    long Id, long ProdutoId, decimal Quantidade, decimal CustoUnitario,
+    string? NomeProduto, string? UnidadeMedida);
 
-public record CadastroAtivoResponseDTO(long Id, string Nome);
+public record CadastroAtivoResponseDTO(long Id, string Nome, string? UnidadeMedida);
 
 public record PaginadoResponseDTO<T>(
     IReadOnlyList<T> Itens, long Total, int Pagina, int TamanhoPagina);

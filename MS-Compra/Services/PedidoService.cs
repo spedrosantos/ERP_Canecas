@@ -28,8 +28,9 @@ public class PedidoService(ITenantContextFactory contextFactory, IHttpContextAcc
     public async Task<PedidoDetalheResponseDTO?> ObterAsync(long id, CancellationToken ct)
     {
         await using var context = await contextFactory.CriarAsync(ct);
-        var pedido = await new PedidoRepository(context).ObterAsync(id, ct);
-        return pedido is null ? null : Mapear(pedido);
+        var repository = new PedidoRepository(context);
+        var pedido = await repository.ObterAsync(id, ct);
+        return pedido is null ? null : await MapearAsync(repository, pedido, ct);
     }
 
     public async Task<PedidoDetalheResponseDTO> CadastrarAsync(SalvarPedidoDTO dto, CancellationToken ct)
@@ -43,8 +44,9 @@ public class PedidoService(ITenantContextFactory contextFactory, IHttpContextAcc
         repository.Adicionar(pedido);
 
         await context.SaveChangesAsync(ct);
+        var resposta = await MapearAsync(repository, pedido, ct);
         await transacao.CommitAsync(ct);
-        return Mapear(pedido);
+        return resposta;
     }
 
     public Task<PedidoDetalheResponseDTO?> EditarAsync(long id, SalvarPedidoDTO dto, CancellationToken ct) =>
@@ -128,8 +130,9 @@ public class PedidoService(ITenantContextFactory contextFactory, IHttpContextAcc
         await alterar(context, repository, pedido);
         pedido.AtualizadoEm = DateTime.UtcNow;
         await context.SaveChangesAsync(ct);
+        var resposta = await MapearAsync(repository, pedido, ct);
         await transacao.CommitAsync(ct);
-        return Mapear(pedido);
+        return resposta;
     }
 
     private static async Task PreencherAsync(
@@ -202,9 +205,19 @@ public class PedidoService(ITenantContextFactory contextFactory, IHttpContextAcc
         return id;
     }
 
-    private static PedidoDetalheResponseDTO Mapear(Pedido pedido) => new(
-        new PedidoResponseDTO(pedido.Id, pedido.FornecedorId, pedido.UsuarioId, pedido.Situacao,
-            pedido.ValorTotal, pedido.Observacao, pedido.CriadoEm, pedido.AtualizadoEm, pedido.RecebidoEm),
-        pedido.Itens.OrderBy(x => x.Id).Select(x =>
-            new PedidoItemResponseDTO(x.Id, x.ProdutoId, x.Quantidade, x.CustoUnitario)).ToArray());
+    private static async Task<PedidoDetalheResponseDTO> MapearAsync(
+        IPedidoRepository repository, Pedido pedido, CancellationToken ct)
+    {
+        var produtos = await repository.ObterProdutosAsync(
+            pedido.Itens.Select(x => x.ProdutoId).Distinct().ToArray(), ct);
+        var itens = pedido.Itens.OrderBy(x => x.Id).Select(item =>
+        {
+            produtos.TryGetValue(item.ProdutoId, out var produto);
+            return new PedidoItemResponseDTO(item.Id, item.ProdutoId, item.Quantidade,
+                item.CustoUnitario, produto?.Nome, produto?.UnidadeMedida);
+        }).ToArray();
+
+        return new(new PedidoResponseDTO(pedido.Id, pedido.FornecedorId, pedido.UsuarioId, pedido.Situacao,
+            pedido.ValorTotal, pedido.Observacao, pedido.CriadoEm, pedido.AtualizadoEm, pedido.RecebidoEm), itens);
+    }
 }

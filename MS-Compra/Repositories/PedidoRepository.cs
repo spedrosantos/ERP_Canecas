@@ -90,14 +90,26 @@ public class PedidoRepository(TenantDbContext context) : IPedidoRepository
     public Task<PaginadoResponseDTO<CadastroAtivoResponseDTO>> ListarFornecedoresAsync(
         ListarCadastrosDTO filtro, CancellationToken ct) =>
         ListarCadastrosAsync(context.Database.SqlQuery<CadastroAtivoResponseDTO>($"""
-            SELECT id AS "Id", nome AS "Nome" FROM cadastro.fornecedores WHERE ativo
+            SELECT id AS "Id", nome AS "Nome", NULL::text AS "UnidadeMedida"
+            FROM cadastro.fornecedores WHERE ativo
             """), filtro, ct);
 
     public Task<PaginadoResponseDTO<CadastroAtivoResponseDTO>> ListarProdutosAsync(
         ListarCadastrosDTO filtro, CancellationToken ct) =>
         ListarCadastrosAsync(context.Database.SqlQuery<CadastroAtivoResponseDTO>($"""
-            SELECT id AS "Id", nome AS "Nome" FROM cadastro.produtos WHERE ativo
+            SELECT p.id AS "Id", p.nome AS "Nome", u.sigla AS "UnidadeMedida"
+            FROM cadastro.produtos p
+            JOIN cadastro.unidades_medida u ON u.id = p.unidade_medida_id
+            WHERE p.ativo
             """), filtro, ct);
+
+    public Task<Dictionary<long, CadastroAtivoResponseDTO>> ObterProdutosAsync(long[] ids, CancellationToken ct) =>
+        context.Database.SqlQuery<CadastroAtivoResponseDTO>($"""
+            SELECT p.id AS "Id", p.nome AS "Nome", u.sigla AS "UnidadeMedida"
+            FROM cadastro.produtos p
+            JOIN cadastro.unidades_medida u ON u.id = p.unidade_medida_id
+            WHERE p.id = ANY ({ids})
+            """).ToDictionaryAsync(x => x.Id, ct);
 
     public void Adicionar(Pedido pedido) => context.Pedidos.Add(pedido);
 

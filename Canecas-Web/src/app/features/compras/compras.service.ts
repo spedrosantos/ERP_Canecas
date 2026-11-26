@@ -23,7 +23,7 @@ export interface ItemCompra {
 
 export interface PedidoDetalhe {
   pedido: Pedido;
-  itens: (ItemCompra & { id: number })[];
+  itens: (ItemCompra & { id: number; nomeProduto?: string | null; unidadeMedida?: string | null })[];
 }
 
 export interface SalvarPedido {
@@ -35,6 +35,7 @@ export interface SalvarPedido {
 export interface CadastroAtivo {
   id: number;
   nome: string;
+  unidadeMedida?: string | null;
 }
 
 export interface Pagina<T> {

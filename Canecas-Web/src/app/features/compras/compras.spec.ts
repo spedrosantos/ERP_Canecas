@@ -49,7 +49,7 @@ describe('Compras', () => {
     produto.dispatchEvent(new Event('input'));
     await vi.waitFor(() => {
       const req = http.expectOne(r => r.url === `${api}/produtos` && r.params.get('busca') === 'Caneca');
-      req.flush({ itens: [{ id: 8, nome: 'Caneca' }] });
+      req.flush({ itens: [{ id: 8, nome: 'Caneca', unidadeMedida: 'UN' }] });
     });
     fixture.detectChanges();
     tela.querySelector<HTMLElement>('#produtos-opcao-0')!.click();
@@ -63,9 +63,11 @@ describe('Compras', () => {
     const custo = tela.querySelector<HTMLInputElement>('[aria-label="Custo unitário de Caneca"]')!;
     quantidade.value = '2.5';
     quantidade.dispatchEvent(new Event('input'));
-    custo.value = '3.125';
+    custo.value = '31250';
     custo.dispatchEvent(new Event('input'));
     fixture.detectChanges();
+    expect(custo.value).toMatch(/^R\$\s3,1250$/);
+    expect(tela.querySelector('.nome-produto small')?.textContent).toContain('UN');
     expect(tela.querySelector('td.subtotal')?.textContent).toContain('7,81');
     expect(tela.querySelector('.fechamento-pedido')?.textContent).toContain('2,5');
     expect(tela.querySelector('.total-pedido')?.textContent).toContain('7,81');
