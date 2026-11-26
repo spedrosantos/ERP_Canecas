@@ -41,25 +41,30 @@ public class PedidoRepository(TenantDbContext context) : IPedidoRepository
 
     public async Task<DashboardVendaDTO> ObterDashboardAsync(DateOnly inicio, DateOnly fim, CancellationToken ct)
     {
+        var granularidade = fim.DayNumber - inicio.DayNumber < 45 ? "day" : "month";
         var de = InicioDoDiaUtc(inicio);
         var ate = fim == DateOnly.MaxValue ? DateTime.MaxValue : InicioDoDiaUtc(fim.AddDays(1));
         await using var leitura = await context.Database.BeginTransactionAsync(IsolationLevel.RepeatableRead, ct);
 
-        var meses = await context.Database.SqlQuery<VendaMensalDTO>($"""
-            SELECT date_trunc('month', confirmado_em AT TIME ZONE 'America/Sao_Paulo')::date AS "Mes",
-                SUM(valor_total) AS "Valor", COUNT(*) AS "Quantidade"
-            FROM vendas.pedidos
-            WHERE situacao = {Pedido.Confirmado} AND confirmado_em >= {de} AND confirmado_em < {ate}
-            GROUP BY 1 ORDER BY 1
+        var serie = await context.Database.SqlQuery<VendaPorPeriodoDTO>($"""
+            WITH pedidos AS (
+                SELECT id, valor_total, date_trunc({granularidade},
+                    confirmado_em AT TIME ZONE 'America/Sao_Paulo')::date AS periodo
+                FROM vendas.pedidos
+                WHERE situacao = {Pedido.Confirmado} AND confirmado_em >= {de} AND confirmado_em < {ate}
+            ),
+            custos AS (
+                SELECT p.id, SUM(i.quantidade * i.custo_unitario) AS custo,
+                    BOOL_OR(i.custo_unitario IS NULL) AS incompleto
+                FROM pedidos p
+                LEFT JOIN vendas.pedidos_itens i ON i.pedido_id = p.id
+                GROUP BY p.id
+            )
+            SELECT p.periodo AS "Mes", SUM(p.valor_total) AS "Valor", COUNT(*) AS "Quantidade",
+                CASE WHEN BOOL_OR(c.incompleto) THEN NULL ELSE SUM(p.valor_total - c.custo) END AS "LucroBruto"
+            FROM pedidos p JOIN custos c ON c.id = p.id
+            GROUP BY p.periodo ORDER BY p.periodo
             """).ToListAsync(ct);
-
-        var custo = await context.Database.SqlQuery<CustoDashboard>($"""
-            SELECT COALESCE(SUM(i.quantidade * i.custo_unitario), 0) AS "Valor",
-                COALESCE(BOOL_OR(i.custo_unitario IS NULL), FALSE) AS "Incompleto"
-            FROM vendas.pedidos p
-            LEFT JOIN vendas.pedidos_itens i ON i.pedido_id = p.id
-            WHERE p.situacao = {Pedido.Confirmado} AND p.confirmado_em >= {de} AND p.confirmado_em < {ate}
-            """).SingleAsync(ct);
 
         var ranking = await context.Database.SqlQuery<ProdutoMaisVendidoDTO>($"""
             SELECT i.produto_id AS "ProdutoId", pr.nome AS "NomeProduto", SUM(i.quantidade) AS "Quantidade"
@@ -83,17 +88,18 @@ public class PedidoRepository(TenantDbContext context) : IPedidoRepository
             """).ToListAsync(ct);
 
         await leitura.CommitAsync(ct);
-        var faturamento = meses.Sum(x => x.Valor);
-        decimal? lucro = custo.Incompleto ? null : faturamento - custo.Valor;
+        var faturamento = serie.Sum(x => x.Valor);
+        decimal? lucro = serie.Any(x => x.LucroBruto is null) ? null : serie.Sum(x => x.LucroBruto ?? 0);
         decimal? margem = faturamento > 0 && lucro.HasValue
             ? decimal.Round(lucro.Value / faturamento * 100, 2, MidpointRounding.AwayFromZero)
             : null;
-        return new(faturamento, meses.Sum(x => x.Quantidade),
-            lucro.HasValue ? decimal.Round(lucro.Value, 2, MidpointRounding.AwayFromZero) : null,
-            margem, meses, ranking, ultimas);
+        return new(faturamento, serie.Sum(x => x.Quantidade),
+            Arredondar(lucro),
+            margem, serie.Select(x => x with { LucroBruto = Arredondar(x.LucroBruto) }).ToArray(), ranking, ultimas);
     }
 
-    private sealed record CustoDashboard(decimal Valor, bool Incompleto);
+    private static decimal? Arredondar(decimal? valor) =>
+        valor.HasValue ? decimal.Round(valor.Value, 2, MidpointRounding.AwayFromZero) : null;
 
     private static DateTime InicioDoDiaUtc(DateOnly data)
     {

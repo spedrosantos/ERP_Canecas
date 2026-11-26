@@ -39,10 +39,11 @@ public class PedidoRepository(TenantDbContext context) : IPedidoRepository
 
     public async Task<DashboardCompraDTO> ObterDashboardAsync(DateOnly inicio, DateOnly fim, CancellationToken ct)
     {
+        var granularidade = fim.DayNumber - inicio.DayNumber < 45 ? "day" : "month";
         var de = InicioDoDiaUtc(inicio);
         var ate = fim == DateOnly.MaxValue ? DateTime.MaxValue : InicioDoDiaUtc(fim.AddDays(1));
-        var meses = await context.Database.SqlQuery<CompraMensalDTO>($"""
-            SELECT date_trunc('month', recebido_em AT TIME ZONE 'America/Sao_Paulo')::date AS "Mes",
+        var meses = await context.Database.SqlQuery<CompraPorPeriodoDTO>($"""
+            SELECT date_trunc({granularidade}, recebido_em AT TIME ZONE 'America/Sao_Paulo')::date AS "Mes",
                 SUM(valor_total) AS "Valor"
             FROM compras.pedidos
             WHERE situacao = {Pedido.Recebido} AND recebido_em >= {de} AND recebido_em < {ate}
