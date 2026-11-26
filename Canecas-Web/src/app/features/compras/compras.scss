@@ -1,0 +1,80 @@
+@use '../../shared/styles/cadastro';
+
+.cabecalho {
+  margin-bottom: 1rem;
+}
+
+.conteudo {
+  padding: 1rem;
+}
+
+h2, h3 {
+  margin-block: 0 0.75rem;
+}
+
+.filtros, .linha-item {
+  align-items: end;
+}
+
+.campos-editor {
+  display: grid;
+  gap: 0.875rem;
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  margin: 0;
+
+  p, h3 {
+    margin: 0;
+  }
+}
+
+.linha-item, .resumo-pedido {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+  gap: 0.75rem;
+}
+
+.linha-item {
+  min-width: 0;
+  margin: 0;
+  padding: 0.75rem;
+  border: 1px solid var(--linha);
+  border-radius: 0.5rem;
+}
+
+textarea {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--linha);
+  border-radius: 0.5rem;
+  font: inherit;
+  resize: vertical;
+}
+
+.resumo-pedido {
+  dt { color: var(--secundario); }
+  dd { margin: 0.25rem 0 0; }
+}
+
+.observacao {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.confirmacao, .conteudo > .acoes {
+  margin-top: 1rem;
+}
+
+.acoes, .paginacao {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.paginacao {
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+}

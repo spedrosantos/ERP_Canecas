@@ -1,0 +1,153 @@
+<section class="pagina" aria-labelledby="titulo-compras">
+  <header class="cabecalho">
+    <h1 id="titulo-compras">Compras</h1>
+    @if (!edicao() && !detalhe()) {
+      <button type="button" class="primario" [disabled]="ocupado()" (click)="novo()">Novo pedido</button>
+    }
+  </header>
+
+  @if (aviso()) { <p role="status">{{ aviso() }}</p> }
+  @if (erroAcao()) { <p class="erro" role="alert">{{ erroAcao() }}</p> }
+  @if (ocupado()) { <p role="status">Processando pedido…</p> }
+
+  @if (edicao(); as dados) {
+    <form class="painel conteudo" (ngSubmit)="salvar(dados)">
+      <h2>{{ dados.id ? 'Editar pedido #' + dados.id : 'Novo pedido' }}</h2>
+      <fieldset class="campos-editor" [disabled]="ocupado()">
+        <app-busca-cadastro tipo="fornecedores" rotulo="Buscar fornecedor ativo"
+          (escolhido)="selecionarFornecedor(dados, $event)" />
+        <p>Fornecedor: {{ dados.nomeFornecedor ?? (dados.fornecedorId ? '#' + dados.fornecedorId : 'Selecione um fornecedor') }}</p>
+        <label>
+          Observação
+          <textarea name="observacao" [(ngModel)]="dados.observacao" maxlength="500" rows="3"></textarea>
+        </label>
+        <h3>Itens do pedido</h3>
+        <app-busca-cadastro tipo="produtos" rotulo="Buscar produto ativo"
+          (escolhido)="adicionarProduto(dados, $event)" />
+        @for (item of dados.itens; track item.produtoId; let indice = $index) {
+          <fieldset class="linha-item">
+            <legend>{{ item.nome ?? 'Produto' }} · #{{ item.produtoId }}</legend>
+            <label>Quantidade
+              <input type="number" min="0.001" step="0.001" required
+                [name]="'quantidade-' + item.produtoId" [(ngModel)]="item.quantidade" />
+            </label>
+            <label>Custo unitário (R$)
+              <input type="number" min="0" step="0.0001" required
+                [name]="'custo-' + item.produtoId" [(ngModel)]="item.custoUnitario" />
+            </label>
+            <button type="button" (click)="dados.itens.splice(indice, 1)">Remover produto #{{ item.produtoId }}</button>
+          </fieldset>
+        } @empty {
+          <p>Nenhum produto adicionado.</p>
+        }
+        <div class="acoes">
+          <button type="button" (click)="voltar()">Voltar</button>
+          <button type="submit" class="primario">Salvar pedido</button>
+        </div>
+      </fieldset>
+    </form>
+  } @else if (detalhe(); as dados) {
+    <section class="painel conteudo" aria-labelledby="titulo-pedido">
+      <h2 id="titulo-pedido">Pedido #{{ dados.pedido.id }}</h2>
+      <dl class="resumo-pedido">
+        <div><dt>Situação</dt><dd>{{ situacoes[dados.pedido.situacao] }}</dd></div>
+        <div><dt>Código do fornecedor</dt><dd>{{ dados.pedido.fornecedorId }}</dd></div>
+        <div><dt>Total</dt><dd>{{ dados.pedido.valorTotal | currency:'BRL':'symbol':'1.2-2' }}</dd></div>
+        <div><dt>Criado em</dt><dd>{{ dados.pedido.criadoEm | date:'dd/MM/yyyy HH:mm' }}</dd></div>
+        @if (dados.pedido.recebidoEm) {
+          <div><dt>Recebido em</dt><dd>{{ dados.pedido.recebidoEm | date:'dd/MM/yyyy HH:mm' }}</dd></div>
+        }
+        @if (dados.pedido.observacao) {
+          <div><dt>Observação</dt><dd class="observacao">{{ dados.pedido.observacao }}</dd></div>
+        }
+      </dl>
+      <div class="rolagem" tabindex="0" role="region" aria-label="Itens do pedido">
+        <table>
+          <thead><tr><th scope="col">Código do produto</th><th scope="col">Quantidade</th><th scope="col">Custo unitário</th></tr></thead>
+          <tbody>
+            @for (item of dados.itens; track item.id) {
+              <tr>
+                <td>{{ item.produtoId }}</td>
+                <td>{{ item.quantidade | number:'1.0-3' }}</td>
+                <td>{{ item.custoUnitario | currency:'BRL':'symbol':'1.2-4' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      @if (confirmacao(); as acao) {
+        <div class="confirmacao">
+          <p>{{ acao === 'receber' ? 'Confirmar a entrada de todos os itens no estoque?' : 'Confirmar o cancelamento deste pedido?' }}</p>
+          <div class="acoes">
+            <button type="button" [disabled]="ocupado()" (click)="confirmacao.set(null)">Voltar</button>
+            <button type="button" class="primario" [disabled]="ocupado()" (click)="alterar(dados.pedido.id, acao)">
+              {{ acao === 'receber' ? 'Confirmar recebimento' : 'Confirmar cancelamento' }}
+            </button>
+          </div>
+        </div>
+      } @else {
+        <div class="acoes">
+          <button type="button" [disabled]="ocupado()" (click)="detalhe.set(null); voltar()">Voltar à lista</button>
+          @if (dados.pedido.situacao === 'PENDENTE') {
+            <button type="button" [disabled]="ocupado()" (click)="editar(dados)">Editar</button>
+            <button type="button" [disabled]="ocupado()" (click)="confirmacao.set('cancelar')">Cancelar pedido</button>
+            <button type="button" class="primario" [disabled]="ocupado()" (click)="confirmacao.set('receber')">Receber pedido</button>
+          }
+        </div>
+      }
+    </section>
+  } @else {
+    <div class="painel" [attr.aria-busy]="carregando()">
+      <form class="filtros" (ngSubmit)="pesquisar()">
+        <label>Código do fornecedor<input name="fornecedor" type="number" min="1" [(ngModel)]="filtro.fornecedorId" /></label>
+        <label>Situação
+          <select name="situacao" [(ngModel)]="filtro.situacao">
+            <option value="">Todas</option>
+            <option value="PENDENTE">Pendente</option>
+            <option value="RECEBIDO">Recebido</option>
+            <option value="CANCELADO">Cancelado</option>
+          </select>
+        </label>
+        <label>Data inicial<input name="dataInicio" type="date" [(ngModel)]="filtro.dataInicio" /></label>
+        <label>Data final<input name="dataFim" type="date" [(ngModel)]="filtro.dataFim" /></label>
+        <button type="submit" [disabled]="ocupado()">Pesquisar</button>
+      </form>
+      @if (carregando()) { <p class="estado" role="status">Carregando pedidos…</p> }
+      @if (erroLista()) { <p class="estado erro" role="alert">{{ erroLista() }}</p> }
+      @if (!carregando()) {
+        @if (lista(); as dados) {
+          @if (dados.itens.length) {
+            <div class="rolagem" tabindex="0" role="region" aria-label="Pedidos de compra">
+              <table>
+                <thead><tr><th scope="col">Pedido</th><th scope="col">Fornecedor</th><th scope="col">Criado em</th><th scope="col">Situação</th><th scope="col">Total</th><th scope="col">Detalhes</th></tr></thead>
+                <tbody>
+                  @for (pedido of dados.itens; track pedido.id) {
+                    <tr>
+                      <td>#{{ pedido.id }}</td>
+                      <td>#{{ pedido.fornecedorId }}</td>
+                      <td>{{ pedido.criadoEm | date:'dd/MM/yyyy HH:mm' }}</td>
+                      <td>{{ situacoes[pedido.situacao] }}</td>
+                      <td>{{ pedido.valorTotal | currency:'BRL':'symbol':'1.2-2' }}</td>
+                      <td><button type="button" [disabled]="ocupado()" [attr.aria-label]="'Ver pedido #' + pedido.id"
+                        (click)="abrir(pedido.id)">Abrir</button></td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <div class="paginacao">
+              <span>{{ dados.total }} {{ dados.total === 1 ? 'pedido' : 'pedidos' }} · Página {{ dados.pagina }}</span>
+              <div class="acoes">
+                <button type="button" [disabled]="dados.pagina <= 1 || ocupado()" (click)="carregar(dados.pagina - 1)">Anterior</button>
+                <button type="button" [disabled]="dados.pagina * dados.tamanhoPagina >= dados.total || ocupado()"
+                  (click)="carregar(dados.pagina + 1)">Próxima</button>
+              </div>
+            </div>
+          } @else {
+            <p class="estado">Nenhum pedido encontrado.</p>
+          }
+        }
+      }
+    </div>
+  }
+</section>

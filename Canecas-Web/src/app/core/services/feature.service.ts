@@ -15,6 +15,7 @@ export const FEATURES = {
   fornecedores: 'FORNECEDOR',
   produtos: 'PRODUTO',
   estoque: 'ESTOQUE',
+  compras: 'COMPRA',
 } as const;
 
 interface FeatureEfetiva {

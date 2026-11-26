@@ -50,6 +50,9 @@
     "target": "http://localhost:5259",
     "secure": false
   },
+  "/api/compras/**": {
+    "target": "http://localhost:5261"
+  },
   "/api/estoque": {
     "target": "http://localhost:5260",
     "secure": false

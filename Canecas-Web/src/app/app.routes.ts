@@ -56,6 +56,12 @@ export const routes: Routes = [
             .then(modulo => modulo.Estoque)
       },
       {
+        path: 'compras',
+        canActivate: [featureGuard],
+        data: { feature: FEATURES.compras },
+        loadComponent: () => import('./features/compras/compras').then(modulo => modulo.Compras)
+      },
+      {
         path: 'usuarios',
         canActivate: [featureGuard],
         data: { feature: FEATURES.usuarios },
