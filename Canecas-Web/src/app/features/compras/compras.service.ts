@@ -33,12 +33,6 @@ export interface SalvarPedido {
   itens: ItemCompra[];
 }
 
-export interface CadastroAtivo {
-  id: number;
-  nome: string;
-  unidadeMedida?: string | null;
-}
-
 export interface Pagina<T> {
   itens: T[];
   total: number;
@@ -46,19 +40,15 @@ export interface Pagina<T> {
   tamanhoPagina: number;
 }
 
+export const URL_COMPRAS = '/api/compras/pedidos';
+
 @Injectable({ providedIn: 'root' })
 export class ComprasService {
   private readonly http = inject(HttpClient);
-  private readonly url = '/api/compras/pedidos';
+  private readonly url = URL_COMPRAS;
 
   listar(params: Record<string, string | number>) {
     return this.http.get<Pagina<Pedido>>(this.url, { params });
-  }
-
-  listarCadastros(tipo: 'fornecedores' | 'produtos', busca: string, pagina: number) {
-    return this.http.get<Pagina<CadastroAtivo>>(`${this.url}/${tipo}`, {
-      params: { busca, pagina, tamanhoPagina: 10 }
-    });
   }
 
   obter(id: number) {

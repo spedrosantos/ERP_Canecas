@@ -8,9 +8,9 @@ import { Observable, Subscription, finalize } from 'rxjs';
 import { NotificacoesService } from '../../core/services/notificacoes.service';
 import { Mascara } from '../../shared/directives/mascara';
 import { Moeda } from '../../shared/directives/moeda';
-import { BuscaCadastro } from './busca-cadastro';
+import { BuscaCadastro, CadastroAtivo, URL_BUSCA_CADASTRO } from '../../shared/components/busca-cadastro/busca-cadastro';
 import {
-  CadastroAtivo, ComprasService, ItemCompra, Pagina, Pedido, PedidoDetalhe, SituacaoPedido
+  ComprasService, ItemCompra, Pagina, Pedido, PedidoDetalhe, SituacaoPedido, URL_COMPRAS
 } from './compras.service';
 
 registerLocaleData(pt);
@@ -38,9 +38,12 @@ interface Edicao {
 @Component({
   selector: 'app-compras',
   imports: [FormsModule, DatePipe, CurrencyPipe, DecimalPipe, BuscaCadastro, Moeda, Mascara],
-  providers: [{ provide: LOCALE_ID, useValue: 'pt-BR' }],
+  providers: [
+    { provide: LOCALE_ID, useValue: 'pt-BR' },
+    { provide: URL_BUSCA_CADASTRO, useValue: URL_COMPRAS }
+  ],
   templateUrl: './compras.html',
-  styleUrls: ['./compras.scss', './compras-editor.scss']
+  styleUrls: ['../../shared/styles/pedidos.scss', '../../shared/styles/pedidos-editor.scss']
 })
 export class Compras {
   private readonly notificacoes = inject(NotificacoesService);

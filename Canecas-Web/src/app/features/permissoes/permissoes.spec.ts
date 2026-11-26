@@ -94,7 +94,7 @@ describe('Permissões em lote', () => {
     grupo.click();
     fixture.detectChanges();
 
-    const filhos = tela.querySelectorAll<HTMLInputElement>('.arvore ul ul input');
+    const filhos = tela.querySelectorAll<HTMLInputElement>('.arvore .modulo input');
     expect(tela.querySelector('.grupo-feature')?.textContent).toContain('Usuários');
     expect(tela.querySelectorAll('.arvore input')).toHaveLength(filhos.length);
     expect(filhos).toHaveLength(3);
@@ -136,7 +136,7 @@ describe('Permissões em lote', () => {
     });
     fixture.detectChanges();
     expect(dialogo.open).toBe(false);
-    const atualizados = tela.querySelectorAll<HTMLInputElement>('.arvore ul ul input');
+    const atualizados = tela.querySelectorAll<HTMLInputElement>('.arvore .modulo input');
     expect(atualizados[0].checked).toBe(true);
     expect(atualizados[2].checked).toBe(false);
     expect(tela.querySelector('.aviso')?.textContent).toContain('Permissões atualizadas.');

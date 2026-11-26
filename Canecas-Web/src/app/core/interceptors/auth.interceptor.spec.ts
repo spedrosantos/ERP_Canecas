@@ -5,8 +5,11 @@ import { TestBed } from '@angular/core/testing';
 import { AuthService } from '../services/auth.service';
 import { authInterceptor } from './auth.interceptor';
 
-describe('Autenticação em Compras', () => {
-  it('envia o JWT a todas as rotas de Compras do ERP e preserva URLs externas', () => {
+describe('Autenticação em Compras e Vendas', () => {
+  it.each([
+    ['compras', 'fornecedores', 'receber'],
+    ['vendas', 'clientes', 'confirmar'],
+  ])('envia o JWT às rotas de %s do ERP e preserva URLs externas', (modulo, cadastro, transicao) => {
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(withInterceptors([authInterceptor])),
@@ -17,17 +20,19 @@ describe('Autenticação em Compras', () => {
 
     const client = TestBed.inject(HttpClient);
     const http = TestBed.inject(HttpTestingController);
-    const api = '/api/compras/pedidos';
+    const api = '/api/' + modulo + '/pedidos';
     const rotas = [
       ['GET', '?pagina=1'],
       ['POST', ''],
       ['GET', '/1'],
       ['PUT', '/1'],
-      ['GET', '/fornecedores?busca=teste'],
+      ['GET', '/' + cadastro + '?busca=teste'],
       ['GET', '/produtos?busca=teste'],
       ['POST', '/1/cancelar'],
-      ['POST', '/1/receber']
+      ['POST', '/1/' + transicao]
     ];
+
+    if (modulo === 'vendas') rotas.push(['GET', '/produtos/1/disponibilidade']);
 
     for (const [method, sufixo] of rotas) {
       const url = api + sufixo;

@@ -48,6 +48,12 @@ export const routes: Routes = [
             .then(modulo => modulo.Produtos)
       },
       {
+        path: 'vendas',
+        canActivate: [featureGuard],
+        data: { feature: FEATURES.vendas },
+        loadComponent: () => import('./features/vendas/vendas').then(modulo => modulo.Vendas)
+      },
+      {
         path: 'estoque',
         canActivate: [featureGuard],
         data: { feature: FEATURES.estoque },

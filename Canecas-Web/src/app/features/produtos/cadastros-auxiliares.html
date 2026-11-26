@@ -34,7 +34,7 @@
                       {{ descricao(registro) }}
                     </th>
                     <td class="coluna-situacao">
-                      <span class="situacao" [class.ativa]="registro.ativo">
+                      <span class="situacao" [class.ativa]="registro.ativo" [class.negativa]="!registro.ativo">
                         {{ registro.ativo ? 'Ativo' : 'Inativo' }}
                       </span>
                     </td>

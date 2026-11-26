@@ -1,4 +1,4 @@
-import { Directive, ElementRef, forwardRef, inject } from '@angular/core';
+import { Directive, ElementRef, forwardRef, inject, input } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 @Directive({
@@ -15,6 +15,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
   },
 })
 export class Moeda implements ControlValueAccessor {
+  readonly preservarPrecisaoMoeda = input(false);
   private readonly campo = inject<ElementRef<HTMLInputElement>>(ElementRef).nativeElement;
   private readonly formato = new Intl.NumberFormat('pt-BR', {
     style: 'currency',
@@ -22,13 +23,19 @@ export class Moeda implements ControlValueAccessor {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
+  private readonly formatoPrecisao = new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    maximumFractionDigits: 4,
+  });
   private valor: number | null = null;
   private alterar: (valor: number | null) => void = () => {};
   private tocar: () => void = () => {};
 
   writeValue(valor: number | null): void {
     this.valor = valor;
-    this.campo.value = valor === null ? '' : this.formato.format(valor);
+    const formato = this.preservarPrecisaoMoeda() ? this.formatoPrecisao : this.formato;
+    this.campo.value = valor === null ? '' : formato.format(valor);
   }
 
   registerOnChange(alterar: (valor: number | null) => void): void {
@@ -44,6 +51,9 @@ export class Moeda implements ControlValueAccessor {
   }
 
   protected editar(): void {
+    if (this.preservarPrecisaoMoeda() && this.valor !== null) {
+      this.campo.value = this.formato.format(this.valor);
+    }
     this.campo.select();
   }
 

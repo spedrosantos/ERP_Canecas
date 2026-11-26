@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MS-Estoque", "MS-Estoque\MS
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MS-Compra", "MS-Compra\MS-Compra.csproj", "{A9980193-BD0D-4D09-B8F9-91ED97DEB969}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MS-Venda", "MS-Venda\MS-Venda.csproj", "{6C30478A-4292-427E-9CA8-A982CBC93C05}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -99,6 +101,18 @@ Global
 		{A9980193-BD0D-4D09-B8F9-91ED97DEB969}.Release|x64.Build.0 = Release|Any CPU
 		{A9980193-BD0D-4D09-B8F9-91ED97DEB969}.Release|x86.ActiveCfg = Release|Any CPU
 		{A9980193-BD0D-4D09-B8F9-91ED97DEB969}.Release|x86.Build.0 = Release|Any CPU
+		{6C30478A-4292-427E-9CA8-A982CBC93C05}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6C30478A-4292-427E-9CA8-A982CBC93C05}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6C30478A-4292-427E-9CA8-A982CBC93C05}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{6C30478A-4292-427E-9CA8-A982CBC93C05}.Debug|x64.Build.0 = Debug|Any CPU
+		{6C30478A-4292-427E-9CA8-A982CBC93C05}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{6C30478A-4292-427E-9CA8-A982CBC93C05}.Debug|x86.Build.0 = Debug|Any CPU
+		{6C30478A-4292-427E-9CA8-A982CBC93C05}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6C30478A-4292-427E-9CA8-A982CBC93C05}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6C30478A-4292-427E-9CA8-A982CBC93C05}.Release|x64.ActiveCfg = Release|Any CPU
+		{6C30478A-4292-427E-9CA8-A982CBC93C05}.Release|x64.Build.0 = Release|Any CPU
+		{6C30478A-4292-427E-9CA8-A982CBC93C05}.Release|x86.ActiveCfg = Release|Any CPU
+		{6C30478A-4292-427E-9CA8-A982CBC93C05}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

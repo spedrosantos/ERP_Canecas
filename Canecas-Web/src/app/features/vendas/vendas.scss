@@ -1,0 +1,28 @@
+.observacao-editor {
+  margin-top: 1rem;
+
+  textarea {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--linha);
+    border-radius: 0.5rem;
+    font: inherit;
+    color: inherit;
+    resize: vertical;
+  }
+}
+
+.nome-produto small.erro {
+  color: var(--erro);
+}
+
+@media (max-width: 36rem) {
+  .incluir-produto {
+    flex-wrap: wrap;
+  }
+
+  .incluir-produto app-busca-cadastro {
+    flex: 1 1 100%;
+  }
+}
