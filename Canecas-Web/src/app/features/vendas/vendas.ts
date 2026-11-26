@@ -7,6 +7,7 @@ import { FormsModule } from '@angular/forms';
 import { Observable, Subscription, finalize, of, switchMap } from 'rxjs';
 import { NotificacoesService } from '../../core/services/notificacoes.service';
 import { Mascara } from '../../shared/directives/mascara';
+import { dataAtualParaFormulario } from '../../shared/formatacao/data-local';
 import { Moeda } from '../../shared/directives/moeda';
 import { BuscaCadastro, CadastroAtivo, URL_BUSCA_CADASTRO } from '../../shared/components/busca-cadastro/busca-cadastro';
 import {
@@ -66,6 +67,7 @@ export class Vendas {
   protected readonly erroLista = signal('');
   protected readonly erroAcao = signal('');
   protected readonly aviso = signal('');
+  protected vencimento = '';
   protected readonly acaoPendente = signal<AcaoVenda | null>(null);
   private readonly confirmacao = viewChild<ElementRef<HTMLDialogElement>>('confirmacao');
   protected readonly situacoes: Record<SituacaoPedido, string> = {
@@ -270,6 +272,7 @@ export class Vendas {
 
   protected solicitarAcao(acao: AcaoVenda, dialogo: HTMLDialogElement): void {
     this.erroAcao.set('');
+    this.vencimento = acao === 'confirmar' ? dataAtualParaFormulario() : '';
     this.acaoPendente.set(acao);
     dialogo.showModal();
   }
@@ -285,7 +288,12 @@ export class Vendas {
     const acao = this.acaoPendente();
     if (!acao || this.ocupado()) return;
 
-    this.executar(this.api.alterarSituacao(id, acao),
+    if (acao === 'confirmar' && !this.vencimento) {
+      this.erroAcao.set('Informe o vencimento da conta a receber.');
+      return;
+    }
+
+    this.executar(this.api.alterarSituacao(id, acao, this.vencimento || undefined),
       acao === 'confirmar' ? 'Não foi possível confirmar a venda.' : 'Não foi possível cancelar a venda.',
       acao === 'confirmar' ? 'Venda confirmada e estoque atualizado.' : 'Venda cancelada.');
   }

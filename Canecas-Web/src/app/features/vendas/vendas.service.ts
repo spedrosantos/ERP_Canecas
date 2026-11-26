@@ -78,7 +78,7 @@ export class VendasService {
       : this.http.put<PedidoDetalhe>(`${this.url}/${id}`, dto);
   }
 
-  alterarSituacao(id: number, acao: 'confirmar' | 'cancelar') {
-    return this.http.post<PedidoDetalhe>(`${this.url}/${id}/${acao}`, null);
+  alterarSituacao(id: number, acao: 'confirmar' | 'cancelar', vencimento?: string) {
+    return this.http.post<PedidoDetalhe>(`${this.url}/${id}/${acao}`, acao === 'confirmar' ? { vencimento } : null);
   }
 }

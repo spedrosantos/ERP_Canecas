@@ -98,7 +98,7 @@ describe('Compras', () => {
     http.verify();
   });
 
-  it('recebe o pedido com um clique e retira ações de um pedido recebido', () => {
+  it('envia o vencimento ao receber e retira ações de um pedido recebido', async () => {
     const fixture = TestBed.createComponent(Compras);
     const http = TestBed.inject(HttpTestingController);
     const tela: HTMLElement = fixture.nativeElement;
@@ -116,9 +116,18 @@ describe('Compras', () => {
     http.expectOne(`${api}/12`).flush(detalhe);
     fixture.detectChanges();
 
+    const dialogo = tela.querySelector('dialog')!;
+    dialogo.showModal = () => dialogo.setAttribute('open', '');
+    dialogo.close = () => dialogo.removeAttribute('open');
     clicar('Receber pedido');
+    await fixture.whenStable();
+    http.expectNone({ method: 'POST', url: api + '/12/receber' });
+    const vencimento = dialogo.querySelector<HTMLInputElement>('input[type=date]')!;
+    vencimento.value = '2026-12-10';
+    vencimento.dispatchEvent(new Event('input'));
+    clicar('Confirmar recebimento');
     const recebimento = http.expectOne({ method: 'POST', url: `${api}/12/receber` });
-    expect(recebimento.request.body).toBeNull();
+    expect(recebimento.request.body).toEqual({ vencimento: '2026-12-10' });
     recebimento.flush({
       ...detalhe,
       pedido: { ...detalhe.pedido, situacao: 'RECEBIDO', recebidoEm: '2026-11-25T15:00:00Z' }
@@ -152,6 +161,7 @@ describe('Compras', () => {
     )!;
     cancelar.click();
     expect(dialogo.open).toBe(true);
+    fixture.detectChanges();
     http.expectNone(`${api}/12/cancelar`);
     dialogo.querySelector<HTMLButtonElement>('.primario')!.click();
 

@@ -86,13 +86,12 @@ describe('Vendas', () => {
     await fixture.whenStable();
     preencher('[aria-label="Quantidade de Caneca"]', '2,5');
     preencher('[aria-label="Preço unitário de Caneca"]', '500');
-    preencher('[name="observacao"]', 'Retirada');
     expect(tela.querySelector('.total-pedido')?.textContent).toContain('12,50');
 
     tela.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
     const salvar = http.expectOne({ method: 'POST', url: URL_VENDAS });
     expect(salvar.request.body).toEqual({
-      clienteId: 4, observacao: 'Retirada',
+      clienteId: 4, observacao: '',
       itens: [{ produtoId: 8, quantidade: 2.5, precoUnitario: 5 }],
     });
     salvar.flush(detalhe);
@@ -115,7 +114,7 @@ describe('Vendas', () => {
     listar().flush(pagina);
   });
 
-  it('pede confirmação das ações e mostra erros de estoque no modal', () => {
+  it('pede confirmação das ações e mostra erros de estoque no modal', async () => {
     abrirVenda();
     const dialogo = tela.querySelector('dialog')!;
     dialogo.showModal = () => dialogo.setAttribute('open', '');
@@ -125,8 +124,12 @@ describe('Vendas', () => {
     clicar('Confirmar venda', acoes);
     expect(dialogo.open).toBe(true);
     http.expectNone(URL_VENDAS + '/1/confirmar');
+    await fixture.whenStable();
+    preencher('dialog input[type=date]', '2026-12-10');
     clicar('Confirmar venda', dialogo);
-    http.expectOne({ method: 'POST', url: URL_VENDAS + '/1/confirmar' }).flush(
+    const confirmar = http.expectOne({ method: 'POST', url: URL_VENDAS + '/1/confirmar' });
+    expect(confirmar.request.body).toEqual({ vencimento: '2026-12-10' });
+    confirmar.flush(
       { mensagem: 'Saldo insuficiente para o produto 8.' }, { status: 400, statusText: 'Bad Request' },
     );
     fixture.detectChanges();
@@ -146,6 +149,13 @@ describe('Vendas', () => {
     clicar('Cancelar venda', acoes);
     expect(dialogo.textContent).toContain('devolvidos ao estoque');
     http.expectNone(URL_VENDAS + '/1/cancelar');
+    clicar('Confirmar cancelamento', dialogo);
+    http.expectOne({ method: 'POST', url: URL_VENDAS + '/1/cancelar' }).flush(
+      { mensagem: 'Estorne as baixas financeiras antes de cancelar a venda.' },
+      { status: 409, statusText: 'Conflict' },
+    );
+    fixture.detectChanges();
+    expect(dialogo.querySelector('[role="alert"]')?.textContent).toContain('Estorne as baixas financeiras');
     clicar('Confirmar cancelamento', dialogo);
     http.expectOne({ method: 'POST', url: URL_VENDAS + '/1/cancelar' }).flush({
       ...confirmada, pedido: { ...confirmada.pedido, situacao: 'CANCELADO', canceladoEm: '2026-11-25T17:00:00Z' },

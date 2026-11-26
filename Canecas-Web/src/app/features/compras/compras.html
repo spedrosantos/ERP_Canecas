@@ -156,26 +156,37 @@
           Voltar à lista
         </button>
         @if (dados.pedido.situacao === 'PENDENTE') {
-          <dialog #dialogoCancelamento aria-labelledby="titulo-cancelamento" (cancel)="fecharCancelamento(dialogoCancelamento, $event)">
-            <h2 id="titulo-cancelamento">Cancelar pedido</h2>
-            <p>Confirma o cancelamento do pedido <strong>#{{ dados.pedido.id }}</strong>?</p>
-            @if (erroAcao()) { <p class="erro" role="alert">{{ erroAcao() }}</p> }
-            <div class="acoes-modal">
-              <button type="button" autofocus [disabled]="ocupado()" (click)="fecharCancelamento(dialogoCancelamento)">Voltar</button>
-              <button type="button" class="primario" [disabled]="ocupado()" (click)="alterar(dados.pedido.id, 'cancelar')">
-                {{ ocupado() ? 'Cancelando…' : 'Confirmar cancelamento' }}
-              </button>
-            </div>
+          <dialog #confirmacao aria-labelledby="titulo-acao-compra" (cancel)="fecharConfirmacao($event)">
+            <form (ngSubmit)="aplicarAcao(dados.pedido.id, dados.pedido.valorTotal)" novalidate>
+              <h2 id="titulo-acao-compra">{{ acaoPendente() === 'receber' ? 'Receber pedido' : 'Cancelar pedido' }}</h2>
+              @if (acaoPendente() === 'receber') {
+                <p>Confirme o recebimento do pedido <strong>#{{ dados.pedido.id }}</strong>.</p>
+                @if (dados.pedido.valorTotal > 0) {
+                  <label>Vencimento da conta a pagar
+                    <input type="date" name="vencimento" [(ngModel)]="vencimento" [disabled]="ocupado()" required />
+                  </label>
+                }
+              } @else {
+                <p>Confirma o cancelamento do pedido <strong>#{{ dados.pedido.id }}</strong>?</p>
+              }
+              @if (erroAcao()) { <p class="erro" role="alert">{{ erroAcao() }}</p> }
+              <div class="acoes-modal">
+                <button type="button" autofocus [disabled]="ocupado()" (click)="fecharConfirmacao()">Voltar</button>
+                <button type="submit" class="primario" [disabled]="ocupado()">
+                  {{ ocupado() ? 'Processando…' : acaoPendente() === 'receber' ? 'Confirmar recebimento' : 'Confirmar cancelamento' }}
+                </button>
+              </div>
+            </form>
           </dialog>
           <button type="button" [disabled]="ocupado()" (click)="editar(dados)">
             <svg class="icone" aria-hidden="true"><use href="icons/bootstrap-icons.svg#pencil" /></svg>
             Editar
           </button>
-          <button type="button" [disabled]="ocupado()" (click)="abrirCancelamento(dialogoCancelamento)">
+          <button type="button" [disabled]="ocupado()" (click)="solicitarAcao('cancelar', confirmacao)">
             <svg class="icone" aria-hidden="true"><use href="icons/bootstrap-icons.svg#dash-circle" /></svg>
             Cancelar pedido
           </button>
-          <button type="button" class="primario" [disabled]="ocupado()" (click)="alterar(dados.pedido.id, 'receber')">
+          <button type="button" class="primario" [disabled]="ocupado()" (click)="solicitarAcao('receber', confirmacao)">
             <svg class="icone" aria-hidden="true"><use href="icons/bootstrap-icons.svg#box-arrow-in-right" /></svg>
             Receber pedido
           </button>
