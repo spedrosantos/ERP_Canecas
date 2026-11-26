@@ -208,6 +208,18 @@
     transition: grid-template-columns var(--transicao-sidebar);
   }
 
+  .barra-lateral {
+    position: sticky;
+    inset-block-start: 0;
+    align-self: start;
+    box-sizing: border-box;
+    height: 100dvh;
+  }
+
+  .navegacao {
+    overflow-y: auto;
+  }
+
   .recolhida {
     grid-template-columns: 4.75rem minmax(0, 1fr);
 
