@@ -78,3 +78,22 @@ textarea {
   justify-content: space-between;
   padding: 0.75rem 1rem;
 }
+
+.dados-pedido {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: 1rem;
+}
+
+.cabecalho-itens {
+  display: grid;
+  gap: .75rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--linha);
+}
+
+.campos-editor > .acoes {
+  justify-content: flex-end;
+  padding-top: 1rem;
+  border-top: 1px solid var(--linha);
+}

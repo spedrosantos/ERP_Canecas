@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -20,6 +21,41 @@ describe('Compras', () => {
       imports: [Compras],
       providers: [provideHttpClient(), provideHttpClientTesting()]
     });
+  });
+
+  it('sugere fornecedores ao focar e produtos ao digitar', async () => {
+    const fixture = TestBed.createComponent(Compras);
+    const http = TestBed.inject(HttpTestingController);
+    const tela: HTMLElement = fixture.nativeElement;
+    http.expectOne(`${api}?pagina=1&tamanhoPagina=20`).flush(pagina);
+    fixture.detectChanges();
+    tela.querySelector<HTMLButtonElement>('.cabecalho button')!.click();
+    fixture.detectChanges();
+
+    const fornecedor = tela.querySelector<HTMLInputElement>('#fornecedores-busca')!;
+    fornecedor.dispatchEvent(new Event('focus'));
+    await vi.waitFor(() => {
+      const req = http.expectOne(r => r.url === `${api}/fornecedores` && r.params.get('busca') === '');
+      req.flush({ itens: [{ id: 5, nome: 'Fornecedor A' }] });
+    });
+    fixture.detectChanges();
+    fornecedor.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
+    fornecedor.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    fixture.detectChanges();
+    expect(fornecedor.value).toBe('Fornecedor A');
+
+    const produto = tela.querySelector<HTMLInputElement>('#produtos-busca')!;
+    produto.value = 'Caneca';
+    produto.dispatchEvent(new Event('input'));
+    await vi.waitFor(() => {
+      const req = http.expectOne(r => r.url === `${api}/produtos` && r.params.get('busca') === 'Caneca');
+      req.flush({ itens: [{ id: 8, nome: 'Caneca' }] });
+    });
+    fixture.detectChanges();
+    tela.querySelector<HTMLElement>('#produtos-opcao-0')!.click();
+    fixture.detectChanges();
+    expect(tela.querySelector('legend')?.textContent).toContain('Caneca');
+    http.verify();
   });
 
   it('confirma o recebimento integral e retira ações de um pedido recebido', () => {

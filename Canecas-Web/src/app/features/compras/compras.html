@@ -14,16 +14,19 @@
     <form class="painel conteudo" (ngSubmit)="salvar(dados)">
       <h2>{{ dados.id ? 'Editar pedido #' + dados.id : 'Novo pedido' }}</h2>
       <fieldset class="campos-editor" [disabled]="ocupado()">
-        <app-busca-cadastro tipo="fornecedores" rotulo="Buscar fornecedor ativo"
-          (escolhido)="selecionarFornecedor(dados, $event)" />
-        <p>Fornecedor: {{ dados.nomeFornecedor ?? (dados.fornecedorId ? '#' + dados.fornecedorId : 'Selecione um fornecedor') }}</p>
-        <label>
-          Observação
-          <textarea name="observacao" [(ngModel)]="dados.observacao" maxlength="500" rows="3"></textarea>
-        </label>
-        <h3>Itens do pedido</h3>
-        <app-busca-cadastro tipo="produtos" rotulo="Buscar produto ativo"
-          (escolhido)="adicionarProduto(dados, $event)" />
+        <div class="dados-pedido">
+          <app-busca-cadastro tipo="fornecedores" rotulo="Fornecedor"
+            [selecionado]="dados.nomeFornecedor ?? (dados.fornecedorId ? '#' + dados.fornecedorId : '')"
+            (escolhido)="selecionarFornecedor(dados, $event)" />
+          <label>Observação
+            <textarea name="observacao" [(ngModel)]="dados.observacao" maxlength="500" rows="2"></textarea>
+          </label>
+        </div>
+        <div class="cabecalho-itens">
+          <h3>Itens do pedido</h3>
+          <app-busca-cadastro tipo="produtos" rotulo="Adicionar produto"
+            (escolhido)="adicionarProduto(dados, $event)" />
+        </div>
         @for (item of dados.itens; track item.produtoId; let indice = $index) {
           <fieldset class="linha-item">
             <legend>{{ item.nome ?? 'Produto' }} · #{{ item.produtoId }}</legend>
@@ -37,8 +40,6 @@
             </label>
             <button type="button" (click)="dados.itens.splice(indice, 1)">Remover produto #{{ item.produtoId }}</button>
           </fieldset>
-        } @empty {
-          <p>Nenhum produto adicionado.</p>
         }
         <div class="acoes">
           <button type="button" (click)="voltar()">Voltar</button>
