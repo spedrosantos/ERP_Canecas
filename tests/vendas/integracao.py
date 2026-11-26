@@ -1,4 +1,4 @@
-"""Executa o MS-Venda contra um PostgreSQL descartável. Requer Linux, PostgreSQL e .NET 10.
+"""Executa Vendas, Compras e Financeiro contra um PostgreSQL descartável. Requer Linux, PostgreSQL e .NET 10.
 
 Uso na raiz: dotnet build && python3 tests/vendas/integracao.py
 """
@@ -9,6 +9,7 @@ import http.client
 import json
 import os
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import ExitStack
 from decimal import Decimal
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -20,6 +21,8 @@ import threading
 import time
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
+
+from financeiro import executar_financeiro
 
 RAIZ = Path(__file__).resolve().parents[2]
 ROTA = "/api/vendas/pedidos"
@@ -41,8 +44,9 @@ def token(empresa, usuario=1):
 
 class IdentidadeDeTeste(BaseHTTPRequestHandler):
     def do_GET(self):
-        esperado = "/api/usuarios/me/features/verificar?codigo=VENDA"
-        status = 204 if self.path == esperado and self.headers.get("Authorization") in TOKENS else 403
+        esperados = {"/api/usuarios/me/features/verificar?codigo=" + codigo
+                     for codigo in ("VENDA", "COMPRA", "FINANCEIRO")}
+        status = 204 if self.path in esperados and self.headers.get("Authorization") in TOKENS else 403
         self.send_response(status)
         self.end_headers()
 
@@ -54,8 +58,8 @@ TOKEN_A, TOKEN_B, TOKEN_A_OPERADOR = token(1), token(2), token(1, 2)
 TOKENS = {f"Bearer {credencial}" for credencial in (TOKEN_A, TOKEN_B, TOKEN_A_OPERADOR)}
 
 
-def executar(porta, sql):
-    def requisitar(metodo, sufixo="", dados=None, jwt=TOKEN_A, caminho=ROTA):
+def cliente_http(porta, rota, token_padrao):
+    def requisitar(metodo, sufixo="", dados=None, jwt=token_padrao, caminho=rota):
         cabecalhos = {"Content-Type": "application/json"}
         if jwt:
             cabecalhos["Authorization"] = f"Bearer {jwt}"
@@ -67,12 +71,19 @@ def executar(porta, sql):
             resposta = erro
         with resposta:
             conteudo = resposta.read()
-            return resposta.status, json.loads(conteudo, parse_float=Decimal) if conteudo else None
+            tipo = resposta.headers.get("Content-Type", "")
+            return resposta.status, json.loads(conteudo, parse_float=Decimal) if conteudo and "json" in tipo else None
 
-    def verificar(status, metodo, sufixo="", dados=None, jwt=TOKEN_A, caminho=ROTA):
+    def verificar(status, metodo, sufixo="", dados=None, jwt=token_padrao, caminho=rota):
         codigo, resposta = requisitar(metodo, sufixo, dados, jwt, caminho)
         assert codigo == status, (metodo, sufixo, status, codigo, resposta)
         return resposta
+
+    return requisitar, verificar
+
+
+def executar(porta, sql):
+    requisitar, verificar = cliente_http(porta, ROTA, TOKEN_A)
 
     def item(produto, quantidade, preco=1):
         return {"produtoId": produto, "quantidade": quantidade, "precoUnitario": preco}
@@ -148,6 +159,7 @@ def executar(porta, sql):
     sql("UPDATE estoque.saldos SET quantidade = 999999999999.999 WHERE produto_id = 2")
     verificar(400, "POST", f"/{venda}/cancelar")
     assert saldo(1) == 5 and not sql("SELECT id FROM estoque.movimentacoes WHERE origem = 'ESTORNO'")
+    assert sql(f"SELECT count(*) FROM financeiro.titulos WHERE venda_id = {venda} AND cancelado_em IS NULL") == "1"
     assert verificar(200, "GET", f"/{venda}")["pedido"]["situacao"] == "CONFIRMADO"
 
     sql("""
@@ -178,8 +190,10 @@ def executar(porta, sql):
 
 def iniciar():
     pg = Path(subprocess.check_output(["pg_config", "--bindir"], text=True).strip())
-    dll = RAIZ / "MS-Venda/bin/Debug/net10.0/MS-Venda.dll"
-    if not dll.is_file():
+    projetos = ("MS-Venda", "MS-Compra", "MS-Financeiro")
+    dlls = {projeto: RAIZ / projeto / "bin/Debug/net10.0" / (projeto + ".dll")
+            for projeto in projetos}
+    if not all(dll.is_file() for dll in dlls.values()):
         raise SystemExit("Execute dotnet build antes do teste.")
 
     with tempfile.TemporaryDirectory(prefix="erp-vendas-") as pasta, \
@@ -209,10 +223,6 @@ def iniciar():
             """, "postgres")
 
             threading.Thread(target=identidade.serve_forever, daemon=True).start()
-            with socket.socket() as reserva:
-                reserva.bind(("127.0.0.1", 0))
-                porta = reserva.getsockname()[1]
-
             conexao = f"Host={pasta};Port=5432;Username=erp_teste;Database="
             ambiente = {
                 **os.environ, "ASPNETCORE_ENVIRONMENT": "Development", "DOTNET_ENVIRONMENT": "Development",
@@ -222,36 +232,53 @@ def iniciar():
                 "ConnectionStrings__empresa_b": conexao + "empresa_b",
                 "Integracoes__Identidade__BaseUrl": f"http://127.0.0.1:{identidade.server_port}",
             }
-            log_api = Path(pasta) / "api.log"
-            with log_api.open("w") as log, subprocess.Popen(
-                ["dotnet", str(dll), "--urls", f"http://127.0.0.1:{porta}"],
-                cwd=RAIZ / "MS-Venda", env=ambiente, stdout=log, stderr=subprocess.STDOUT,
-            ) as api:
+            with ExitStack() as recursos:
+                recursos.callback(identidade.shutdown)
+                portas = {}
+                for projeto, dll in dlls.items():
+                    portas[projeto] = iniciar_api(pasta, projeto, dll, ambiente, recursos)
+
                 try:
-                    prazo = time.monotonic() + 15
-                    while time.monotonic() < prazo and api.poll() is None:
-                        try:
-                            with urlopen(f"http://127.0.0.1:{porta}/openapi/v1.json", timeout=1):
-                                break
-                        except (OSError, http.client.HTTPException):
-                            time.sleep(0.1)
-                    else:
-                        raise RuntimeError("MS-Venda não iniciou.")
-                    executar(porta, psql)
+                    executar(portas["MS-Venda"], psql)
+                    executar_financeiro(portas, psql, cliente_http, TOKEN_A, TOKEN_B)
                 except Exception:
-                    print(log_api.read_text())
+                    for projeto in projetos:
+                        print((Path(pasta) / (projeto + ".log")).read_text())
                     raise
-                finally:
-                    if api.poll() is None:
-                        api.terminate()
-                        try:
-                            api.wait(timeout=10)
-                        except subprocess.TimeoutExpired:
-                            api.kill()
-                    identidade.shutdown()
         finally:
             subprocess.run([*comando_pg, "-m", "immediate", "stop"],
                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+
+
+def iniciar_api(pasta, projeto, dll, ambiente, recursos):
+    with socket.socket() as reserva:
+        reserva.bind(("127.0.0.1", 0))
+        porta = reserva.getsockname()[1]
+
+    log = recursos.enter_context((Path(pasta) / (projeto + ".log")).open("w"))
+    api = recursos.enter_context(subprocess.Popen(
+        ["dotnet", str(dll), "--urls", f"http://127.0.0.1:{porta}"],
+        cwd=RAIZ / projeto, env=ambiente, stdout=log, stderr=subprocess.STDOUT,
+    ))
+
+    def parar():
+        if api.poll() is None:
+            api.terminate()
+            try:
+                api.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                api.kill()
+
+    recursos.callback(parar)
+    prazo = time.monotonic() + 15
+    while time.monotonic() < prazo and api.poll() is None:
+        try:
+            with urlopen(f"http://127.0.0.1:{porta}/openapi/v1.json", timeout=1):
+                return porta
+        except (OSError, http.client.HTTPException):
+            time.sleep(0.1)
+
+    raise RuntimeError(projeto + " não iniciou. Verifique a compilação e a configuração de teste.")
 
 
 if __name__ == "__main__":

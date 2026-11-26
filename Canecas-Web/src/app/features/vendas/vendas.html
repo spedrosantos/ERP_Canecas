@@ -32,10 +32,6 @@
               </div>
             }
           </div>
-          <label class="observacao-editor">
-            Observação
-            <textarea name="observacao" maxlength="500" rows="2" [(ngModel)]="dados.observacao"></textarea>
-          </label>
         </section>
 
         <section class="painel cartao-editor cartao-itens" aria-labelledby="titulo-itens-pedido">
@@ -171,22 +167,27 @@
         </button>
         @if (dados.pedido.situacao !== 'CANCELADO') {
           <dialog #confirmacao aria-labelledby="titulo-acao-venda" (cancel)="fecharConfirmacao($event)">
-            <h2 id="titulo-acao-venda">{{ acaoPendente() === 'confirmar' ? 'Confirmar venda' : 'Cancelar venda' }}</h2>
-            @if (acaoPendente() === 'confirmar') {
-              <p>A confirmação da venda <strong>#{{ dados.pedido.id }}</strong> dará baixa nos itens do estoque.</p>
-            } @else {
-              <p>Confirma o cancelamento da venda <strong>#{{ dados.pedido.id }}</strong>?</p>
-              @if (dados.pedido.situacao === 'CONFIRMADO') {
-                <p>Os itens da venda serão devolvidos ao estoque.</p>
+            <form (ngSubmit)="aplicarAcao(dados.pedido.id)" novalidate>
+              <h2 id="titulo-acao-venda">{{ acaoPendente() === 'confirmar' ? 'Confirmar venda' : 'Cancelar venda' }}</h2>
+              @if (acaoPendente() === 'confirmar') {
+                <p>A confirmação da venda <strong>#{{ dados.pedido.id }}</strong> dará baixa nos itens do estoque.</p>
+                <label>Vencimento da conta a receber
+                  <input type="date" name="vencimento" [(ngModel)]="vencimento" [disabled]="ocupado()" required />
+                </label>
+              } @else {
+                <p>Confirma o cancelamento da venda <strong>#{{ dados.pedido.id }}</strong>?</p>
+                @if (dados.pedido.situacao === 'CONFIRMADO') {
+                  <p>Os itens da venda serão devolvidos ao estoque.</p>
+                }
               }
-            }
-            @if (erroAcao()) { <p class="erro" role="alert">{{ erroAcao() }}</p> }
-            <div class="acoes-modal">
-              <button type="button" autofocus [disabled]="ocupado()" (click)="fecharConfirmacao()">Voltar</button>
-              <button type="button" class="primario" [disabled]="ocupado()" (click)="aplicarAcao(dados.pedido.id)">
-                {{ ocupado() ? 'Processando…' : acaoPendente() === 'confirmar' ? 'Confirmar venda' : 'Confirmar cancelamento' }}
-              </button>
-            </div>
+              @if (erroAcao()) { <p class="erro" role="alert">{{ erroAcao() }}</p> }
+              <div class="acoes-modal">
+                <button type="button" autofocus [disabled]="ocupado()" (click)="fecharConfirmacao()">Voltar</button>
+                <button type="submit" class="primario" [disabled]="ocupado()">
+                  {{ ocupado() ? 'Processando…' : acaoPendente() === 'confirmar' ? 'Confirmar venda' : 'Confirmar cancelamento' }}
+                </button>
+              </div>
+            </form>
           </dialog>
           @if (dados.pedido.situacao === 'PENDENTE') {
             <button type="button" [disabled]="ocupado()" (click)="editar(dados)">

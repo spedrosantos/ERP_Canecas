@@ -1,3 +1,4 @@
+using Financeiro;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using MS_Venda.Data;
@@ -56,7 +57,7 @@ public class PedidoService(ITenantContextFactory contextFactory, IHttpContextAcc
             return PreencherAsync(repository, pedido, dto, ct);
         }, ct);
 
-    public Task<PedidoDetalheResponseDTO?> ConfirmarAsync(long id, CancellationToken ct)
+    public Task<PedidoDetalheResponseDTO?> ConfirmarAsync(long id, ConfirmarPedidoDTO? dto, CancellationToken ct)
     {
         var usuarioId = ObterUsuarioId();
         return AlterarAsync(id, async (context, repository, pedido) =>
@@ -99,6 +100,8 @@ public class PedidoService(ITenantContextFactory contextFactory, IHttpContextAcc
 
             pedido.Situacao = Pedido.Confirmado;
             pedido.ConfirmadoEm = confirmadoEm;
+            new TitulosTransacionais(context).GerarParaVenda(
+                pedido.Id, pedido.ValorTotal, dto?.Vencimento, usuarioId, confirmadoEm);
         }, ct);
     }
 
@@ -113,6 +116,7 @@ public class PedidoService(ITenantContextFactory contextFactory, IHttpContextAcc
                 case Pedido.Pendente:
                     break;
                 case Pedido.Confirmado:
+                    await new TitulosTransacionais(context).CancelarDaVendaAsync(pedido.Id, canceladoEm, ct);
                     await EstornarSaidasAsync(context, repository, pedido, usuarioId, canceladoEm, ct);
                     break;
                 default:

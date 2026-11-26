@@ -1,7 +1,9 @@
-import { HttpErrorResponse, HttpInterceptorFn, HttpResponse } from '@angular/common/http';
+import { HttpContextToken, HttpErrorResponse, HttpInterceptorFn, HttpResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { tap } from 'rxjs';
 import { NotificacoesService } from '../services/notificacoes.service';
+
+export const MENSAGEM_SUCESSO = new HttpContextToken<string | undefined>(() => undefined);
 
 function mensagemDaApi(resposta: unknown): string | undefined {
   if (!resposta || typeof resposta !== 'object') return undefined;
@@ -54,7 +56,7 @@ export const notificacoesInterceptor: HttpInterceptorFn = (requisicao, next) => 
       const mensagem = login ? 'Login realizado com sucesso.'
         : consultaUsuario ? 'Consulta concluída.'
         : 'Operação concluída com sucesso.';
-      notificacoes.sucesso(mensagemDaApi(evento.body) ?? mensagem);
+      notificacoes.sucesso(mensagemDaApi(evento.body) ?? requisicao.context.get(MENSAGEM_SUCESSO) ?? mensagem);
     },
     error: (erro: unknown) => notificacoes.erro(mensagemErro(erro, login)),
   }));

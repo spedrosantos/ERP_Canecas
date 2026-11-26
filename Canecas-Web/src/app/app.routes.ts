@@ -68,6 +68,18 @@ export const routes: Routes = [
         loadComponent: () => import('./features/compras/compras').then(modulo => modulo.Compras)
       },
       {
+        path: 'financeiro/contas-a-pagar',
+        canActivate: [featureGuard],
+        data: { feature: FEATURES.financeiro, tipo: 'PAGAR' },
+        loadComponent: () => import('./features/financeiro/financeiro').then(modulo => modulo.Financeiro)
+      },
+      {
+        path: 'financeiro/contas-a-receber',
+        canActivate: [featureGuard],
+        data: { feature: FEATURES.financeiro, tipo: 'RECEBER' },
+        loadComponent: () => import('./features/financeiro/financeiro').then(modulo => modulo.Financeiro)
+      },
+      {
         path: 'usuarios',
         canActivate: [featureGuard],
         data: { feature: FEATURES.usuarios },

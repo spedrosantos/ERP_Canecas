@@ -7,6 +7,7 @@ import { FormsModule } from '@angular/forms';
 import { Observable, Subscription, finalize } from 'rxjs';
 import { NotificacoesService } from '../../core/services/notificacoes.service';
 import { Mascara } from '../../shared/directives/mascara';
+import { dataAtualParaFormulario } from '../../shared/formatacao/data-local';
 import { Moeda } from '../../shared/directives/moeda';
 import { BuscaCadastro, CadastroAtivo, URL_BUSCA_CADASTRO } from '../../shared/components/busca-cadastro/busca-cadastro';
 import {
@@ -61,7 +62,9 @@ export class Compras {
   protected readonly erroLista = signal('');
   protected readonly erroAcao = signal('');
   protected readonly aviso = signal('');
-  private readonly dialogoCancelamento = viewChild<ElementRef<HTMLDialogElement>>('dialogoCancelamento');
+  private readonly confirmacao = viewChild<ElementRef<HTMLDialogElement>>('confirmacao');
+  protected readonly acaoPendente = signal<'receber' | 'cancelar' | null>(null);
+  protected vencimento = '';
   protected readonly situacoes: Record<SituacaoPedido, string> = {
     PENDENTE: 'Pendente', RECEBIDO: 'Recebido', CANCELADO: 'Cancelado'
   };
@@ -73,7 +76,7 @@ export class Compras {
   }
 
   protected dialogoAberto(): boolean {
-    return this.dialogoCancelamento()?.nativeElement.open ?? false;
+    return this.acaoPendente() !== null;
   }
 
   protected totalPaginas(dados: Pagina<Pedido>): number {
@@ -218,21 +221,37 @@ export class Compras {
     }, edicao.id), 'Não foi possível salvar o pedido.', 'Pedido salvo.');
   }
 
-  protected abrirCancelamento(dialogo: HTMLDialogElement): void {
+  protected solicitarAcao(acao: 'receber' | 'cancelar', dialogo: HTMLDialogElement): void {
     this.erroAcao.set('');
+    this.vencimento = acao === 'receber' ? dataAtualParaFormulario() : '';
+    this.acaoPendente.set(acao);
     dialogo.showModal();
   }
 
-  protected fecharCancelamento(dialogo: HTMLDialogElement, evento?: Event): void {
+  protected fecharConfirmacao(evento?: Event): void {
     evento?.preventDefault();
     if (this.ocupado()) return;
     this.erroAcao.set('');
-    dialogo.close();
+    this.encerrarConfirmacao();
   }
 
-  protected alterar(id: number, acao: 'receber' | 'cancelar') {
-    this.executar(this.api.alterarSituacao(id, acao), 'Não foi possível atualizar a situação do pedido.',
+  protected aplicarAcao(id: number, valorTotal: number): void {
+    const acao = this.acaoPendente();
+    if (!acao || this.ocupado()) return;
+    if (acao === 'receber' && valorTotal > 0 && !this.vencimento) {
+      this.erroAcao.set('Informe o vencimento da conta a pagar.');
+      return;
+    }
+
+    this.executar(this.api.alterarSituacao(id, acao, this.vencimento || undefined),
+      'Não foi possível atualizar a situação do pedido.',
       acao === 'receber' ? 'Pedido recebido e estoque atualizado.' : 'Pedido cancelado.');
+  }
+
+  private encerrarConfirmacao(): void {
+    const dialogo = this.confirmacao()?.nativeElement;
+    if (dialogo?.open) dialogo.close();
+    this.acaoPendente.set(null);
   }
 
   private executar(consulta: Observable<PedidoDetalhe>, falha: string, sucesso?: string) {
@@ -242,10 +261,9 @@ export class Compras {
     consulta.pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.ocupado.set(false)))
       .subscribe({
         next: detalhe => {
+          this.encerrarConfirmacao();
           this.detalhe.set(detalhe);
           this.edicao.set(null);
-          const dialogo = this.dialogoCancelamento()?.nativeElement;
-          if (dialogo?.open) dialogo.close();
           if (sucesso) {
             this.aviso.set(sucesso);
             this.carregar(this.lista()?.pagina ?? 1);

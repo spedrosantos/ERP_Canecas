@@ -1,3 +1,4 @@
+using Financeiro;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using MS_Compra.Data;
@@ -59,7 +60,7 @@ public class PedidoService(ITenantContextFactory contextFactory, IHttpContextAcc
             return Task.CompletedTask;
         }, ct);
 
-    public Task<PedidoDetalheResponseDTO?> ReceberAsync(long id, CancellationToken ct)
+    public Task<PedidoDetalheResponseDTO?> ReceberAsync(long id, ReceberPedidoDTO? dto, CancellationToken ct)
     {
         var usuarioId = ObterUsuarioId();
         return AlterarPendenteAsync(id, async (context, repository, pedido) =>
@@ -97,6 +98,8 @@ public class PedidoService(ITenantContextFactory contextFactory, IHttpContextAcc
 
             pedido.Situacao = Pedido.Recebido;
             pedido.RecebidoEm = recebidoEm;
+            new TitulosTransacionais(context).GerarParaCompra(
+                pedido.Id, pedido.ValorTotal, dto?.Vencimento, usuarioId, recebidoEm);
         }, ct);
     }
 

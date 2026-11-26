@@ -8,7 +8,7 @@ public interface IPedidoService
     Task<PedidoDetalheResponseDTO?> ObterAsync(long id, CancellationToken ct);
     Task<PedidoDetalheResponseDTO> CadastrarAsync(SalvarPedidoDTO dto, CancellationToken ct);
     Task<PedidoDetalheResponseDTO?> EditarAsync(long id, SalvarPedidoDTO dto, CancellationToken ct);
-    Task<PedidoDetalheResponseDTO?> ConfirmarAsync(long id, CancellationToken ct);
+    Task<PedidoDetalheResponseDTO?> ConfirmarAsync(long id, ConfirmarPedidoDTO? dto, CancellationToken ct);
     Task<PedidoDetalheResponseDTO?> CancelarAsync(long id, CancellationToken ct);
     Task<PaginadoResponseDTO<CadastroAtivoResponseDTO>> ListarClientesAsync(ListarCadastrosDTO filtro, CancellationToken ct);
     Task<PaginadoResponseDTO<CadastroAtivoResponseDTO>> ListarProdutosAsync(ListarCadastrosDTO filtro, CancellationToken ct);

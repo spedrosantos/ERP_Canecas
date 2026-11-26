@@ -1,0 +1,85 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using MS_Financeiro.Data;
+using MS_Financeiro.Data.Interfaces;
+using MS_Financeiro.Authorization;
+using FeatureAuthorization;
+using MultiTenancy.Interfaces;
+using MultiTenancy.Services;
+using Npgsql;
+using MS_Financeiro.Services;
+using MS_Financeiro.Services.Interfaces;
+
+var builder = WebApplication.CreateBuilder(args);
+
+var masterConnection = builder.Configuration.GetConnectionString("MasterConnection")
+    ?? throw new InvalidOperationException("Connection string MasterConnection não configurada.");
+
+builder.Services.AddSingleton(_ => NpgsqlDataSource.Create(masterConnection));
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ITenantConnectionResolver, TenantConnectionResolver>();
+builder.Services.AddScoped<ITenantContextFactory, TenantContextFactory>();
+builder.Services.AddScoped<ITituloService, TituloService>();
+
+var jwtKey = builder.Configuration["Jwt:Key"]
+    ?? throw new InvalidOperationException("Chave JWT não configurada.");
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.SaveToken = true;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(jwtKey)),
+            ClockSkew = TimeSpan.Zero
+        };
+    });
+
+builder.Services.AdicionarAutorizacaoPorFeatures(
+    builder.Configuration.GetSection("Integracoes:Identidade"),
+    builder.Environment.IsDevelopment());
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(FeaturesFinanceiro.Financeiro, policy =>
+    {
+        policy.AddAuthenticationSchemes(
+            JwtBearerDefaults.AuthenticationScheme);
+
+        policy.RequireAuthenticatedUser();
+        policy.RequireAssertion(context =>
+            long.TryParse(context.User.FindFirst("empresa_id")?.Value, out var empresaId) && empresaId > 0 &&
+            long.TryParse(context.User.FindFirst("usuario_id")?.Value, out var usuarioId) && usuarioId > 0);
+
+        policy.AddRequirements(new FeatureRemotaRequirement(
+            FeaturesFinanceiro.Financeiro,
+            JwtBearerDefaults.AuthenticationScheme));
+    });
+});
+
+builder.Services.AddControllers();
+builder.Services.AddOpenApi();
+
+var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+}
+
+app.UseHttpsRedirection();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllers();
+
+app.Run();

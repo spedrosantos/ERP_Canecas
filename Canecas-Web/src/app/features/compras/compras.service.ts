@@ -61,7 +61,7 @@ export class ComprasService {
       : this.http.put<PedidoDetalhe>(`${this.url}/${id}`, dto);
   }
 
-  alterarSituacao(id: number, acao: 'receber' | 'cancelar') {
-    return this.http.post<PedidoDetalhe>(`${this.url}/${id}/${acao}`, null);
+  alterarSituacao(id: number, acao: 'receber' | 'cancelar', vencimento?: string) {
+    return this.http.post<PedidoDetalhe>(`${this.url}/${id}/${acao}`, acao === 'receber' ? { vencimento } : null);
   }
 }
