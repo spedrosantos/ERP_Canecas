@@ -1,0 +1,121 @@
+using Microsoft.EntityFrameworkCore;
+using MS_Compra.Data;
+using MS_Compra.DTOs.Pedidos;
+using MS_Compra.Entities;
+using MS_Compra.Repositories.Interfaces;
+
+namespace MS_Compra.Repositories;
+
+public class PedidoRepository(TenantDbContext context) : IPedidoRepository
+{
+    public Task<PaginadoResponseDTO<PedidoResponseDTO>> ListarAsync(ListarPedidosDTO filtro, CancellationToken ct)
+    {
+        var consulta = context.Pedidos.AsNoTracking();
+        if (filtro.FornecedorId is long fornecedorId)
+            consulta = consulta.Where(x => x.FornecedorId == fornecedorId);
+        if (filtro.Situacao is not null)
+            consulta = consulta.Where(x => x.Situacao == filtro.Situacao);
+
+        var fuso = TimeZoneInfo.FindSystemTimeZoneById("America/Sao_Paulo");
+        if (filtro.DataInicio is DateOnly inicio)
+        {
+            var limite = TimeZoneInfo.ConvertTimeToUtc(inicio.ToDateTime(TimeOnly.MinValue), fuso);
+            consulta = consulta.Where(x => x.CriadoEm >= limite);
+        }
+
+        if (filtro.DataFim is DateOnly fim && fim < DateOnly.MaxValue)
+        {
+            var limite = TimeZoneInfo.ConvertTimeToUtc(fim.AddDays(1).ToDateTime(TimeOnly.MinValue), fuso);
+            consulta = consulta.Where(x => x.CriadoEm < limite);
+        }
+
+        var pedidos = consulta.OrderByDescending(x => x.Id).Select(x => new PedidoResponseDTO(
+            x.Id, x.FornecedorId, x.UsuarioId, x.Situacao, x.ValorTotal, x.Observacao,
+            x.CriadoEm, x.AtualizadoEm, x.RecebidoEm));
+
+        return PaginarAsync(pedidos, filtro.Pagina, filtro.TamanhoPagina, ct);
+    }
+
+    public Task<Pedido?> ObterAsync(long id, CancellationToken ct) =>
+        context.Pedidos.AsNoTracking().Include(x => x.Itens).SingleOrDefaultAsync(x => x.Id == id, ct);
+
+    public async Task<Pedido?> BloquearAsync(long id, CancellationToken ct)
+    {
+        if (context.Database.CurrentTransaction is null)
+            throw new InvalidOperationException("O bloqueio do pedido exige uma transação.");
+
+        var pedidos = await context.Pedidos.FromSqlInterpolated($"""
+            SELECT * FROM compras.pedidos WHERE id = {id} FOR UPDATE
+            """).ToListAsync(ct);
+
+        var pedido = pedidos.SingleOrDefault();
+        if (pedido is not null)
+            await context.Entry(pedido).Collection(x => x.Itens).LoadAsync(ct);
+
+        return pedido;
+    }
+
+    public async Task<bool> BloquearFornecedorAtivoAsync(long id, CancellationToken ct)
+    {
+        var fornecedores = await context.Database.SqlQuery<long>($"""
+            SELECT id AS "Value" FROM cadastro.fornecedores
+            WHERE id = {id} AND ativo FOR SHARE
+            """).ToListAsync(ct);
+
+        return fornecedores.Count == 1;
+    }
+
+    public async Task<int> BloquearProdutosAtivosAsync(long[] ids, CancellationToken ct)
+    {
+        var produtos = await context.Database.SqlQuery<long>($"""
+            SELECT id AS "Value" FROM cadastro.produtos
+            WHERE id = ANY ({ids}) AND ativo ORDER BY id FOR SHARE
+            """).ToListAsync(ct);
+
+        return produtos.Count;
+    }
+
+    public Task<PaginadoResponseDTO<CadastroAtivoResponseDTO>> ListarFornecedoresAsync(
+        ListarCadastrosDTO filtro, CancellationToken ct) =>
+        ListarCadastrosAsync(context.Database.SqlQuery<CadastroAtivoResponseDTO>($"""
+            SELECT id AS "Id", nome AS "Nome" FROM cadastro.fornecedores WHERE ativo
+            """), filtro, ct);
+
+    public Task<PaginadoResponseDTO<CadastroAtivoResponseDTO>> ListarProdutosAsync(
+        ListarCadastrosDTO filtro, CancellationToken ct) =>
+        ListarCadastrosAsync(context.Database.SqlQuery<CadastroAtivoResponseDTO>($"""
+            SELECT id AS "Id", nome AS "Nome" FROM cadastro.produtos WHERE ativo
+            """), filtro, ct);
+
+    public void Adicionar(Pedido pedido) => context.Pedidos.Add(pedido);
+
+    public void RemoverItem(PedidoItem item) => context.Itens.Remove(item);
+
+    private static Task<PaginadoResponseDTO<CadastroAtivoResponseDTO>> ListarCadastrosAsync(
+        IQueryable<CadastroAtivoResponseDTO> consulta, ListarCadastrosDTO filtro, CancellationToken ct)
+    {
+        if (!string.IsNullOrWhiteSpace(filtro.Busca))
+        {
+            var busca = filtro.Busca.Trim();
+            var texto = busca.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
+            var termo = $"%{texto}%";
+            var temCodigo = long.TryParse(busca, out var codigo);
+            consulta = consulta.Where(x => EF.Functions.ILike(x.Nome, termo, "\\") || (temCodigo && x.Id == codigo));
+        }
+
+        return PaginarAsync(consulta.OrderBy(x => x.Nome).ThenBy(x => x.Id),
+            filtro.Pagina, filtro.TamanhoPagina, ct);
+    }
+
+    private static async Task<PaginadoResponseDTO<T>> PaginarAsync<T>(
+        IQueryable<T> consulta, int pagina, int tamanho, CancellationToken ct)
+    {
+        var total = await consulta.LongCountAsync(ct);
+        var deslocamento = (pagina - 1L) * tamanho;
+        IReadOnlyList<T> itens = [];
+        if (deslocamento < total && deslocamento <= int.MaxValue)
+            itens = await consulta.Skip((int)deslocamento).Take(tamanho).ToListAsync(ct);
+
+        return new(itens, total, pagina, tamanho);
+    }
+}
