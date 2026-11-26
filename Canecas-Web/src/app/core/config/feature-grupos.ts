@@ -2,6 +2,7 @@ export const FEATURE_GRUPOS = [
   {
     nome: 'Operações',
     modulos: [
+      { codigo: 'VENDA', nome: 'Vendas' },
       { codigo: 'ESTOQUE', nome: 'Estoque' }
     ]
   },

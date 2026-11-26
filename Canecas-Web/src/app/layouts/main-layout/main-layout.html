@@ -39,7 +39,7 @@
           <span class="rotulo-menu">Início</span>
         </a>
 
-        @if (mostrarEstoque() || mostrarCompras()) {
+        @if (mostrarVendas() || mostrarEstoque() || mostrarCompras()) {
         <details class="configuracoes" #operacoes>
           <summary class="item-menu" title="Operações" (click)="expandirMenu($event, operacoes)">
             <svg class="icone icone-item" aria-hidden="true">
@@ -49,6 +49,17 @@
           </summary>
 
           <ul class="submenu">
+            @if (mostrarVendas()) {
+            <li>
+              <a routerLink="/vendas" routerLinkActive="item-ativo" ariaCurrentWhenActive="page"
+                (click)="menuMovelAberto.set(false)">
+                <svg class="icone icone-acao" aria-hidden="true">
+                  <use href="icons/bootstrap-icons.svg#cart3" />
+                </svg>
+                Vendas
+              </a>
+            </li>
+            }
             @if (mostrarEstoque()) {
             <li>
               <a routerLink="/estoque" routerLinkActive="item-ativo" ariaCurrentWhenActive="page"
