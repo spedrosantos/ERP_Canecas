@@ -6,6 +6,7 @@ namespace MS_Venda.Repositories.Interfaces;
 
 public interface IPedidoRepository
 {
+    Task<DashboardVendaDTO> ObterDashboardAsync(DateOnly inicio, DateOnly fim, CancellationToken ct);
     Task<PaginadoResponseDTO<PedidoResponseDTO>> ListarAsync(ListarPedidosDTO filtro, CancellationToken ct);
     Task<Pedido?> ObterAsync(long id, CancellationToken ct);
     Task<Pedido?> BloquearAsync(long id, CancellationToken ct);

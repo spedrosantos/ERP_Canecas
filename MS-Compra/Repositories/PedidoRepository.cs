@@ -37,6 +37,21 @@ public class PedidoRepository(TenantDbContext context) : IPedidoRepository
         return PaginarAsync(pedidos, filtro.Pagina, filtro.TamanhoPagina, ct);
     }
 
+    public async Task<DashboardCompraDTO> ObterDashboardAsync(DateOnly inicio, DateOnly fim, CancellationToken ct)
+    {
+        var granularidade = fim.DayNumber - inicio.DayNumber < 45 ? "day" : "month";
+        var de = InicioDoDiaUtc(inicio);
+        var ate = fim == DateOnly.MaxValue ? DateTime.MaxValue : InicioDoDiaUtc(fim.AddDays(1));
+        var meses = await context.Database.SqlQuery<CompraPorPeriodoDTO>($"""
+            SELECT date_trunc({granularidade}, recebido_em AT TIME ZONE 'America/Sao_Paulo')::date AS "Mes",
+                SUM(valor_total) AS "Valor"
+            FROM compras.pedidos
+            WHERE situacao = {Pedido.Recebido} AND recebido_em >= {de} AND recebido_em < {ate}
+            GROUP BY 1 ORDER BY 1
+            """).ToListAsync(ct);
+        return new(meses.Sum(x => x.Valor), meses);
+    }
+
     private static DateTime InicioDoDiaUtc(DateOnly data)
     {
         var meiaNoite = data.ToDateTime(TimeOnly.MinValue);

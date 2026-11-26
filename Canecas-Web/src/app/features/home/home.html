@@ -1,3 +1,218 @@
-<section aria-labelledby="titulo-home">
-  <h1 id="titulo-home">Olá, {{ auth.usuario()?.nome }}</h1>
+<section class="dashboard" aria-labelledby="titulo-home">
+  <div class="dashboard-conteudo">
+    <header class="topo">
+      <div>
+        <h1 id="titulo-home">Visão gerencial</h1>
+        <p class="saudacao">Olá, {{ auth.usuario()?.nome }}. Acompanhe os resultados da sua empresa.</p>
+      </div>
+      @if (podeVerVendas() || podeVerCompras() || podeVerFinanceiro()) {
+        <div class="periodo">
+          <div class="atalhos" role="group" aria-label="Atalhos de período">
+            @for (item of atalhos; track item.id) {
+              <button type="button" [attr.aria-pressed]="atalho() === item.id"
+                (click)="selecionarAtalho(item.id)">{{ item.texto }}</button>
+            }
+          </div>
+          @if (atalho() === 'personalizado') {
+            <form class="datas" (ngSubmit)="pesquisar()" aria-label="Período personalizado">
+              <label>De<input type="date" name="dataInicio" [(ngModel)]="filtro.dataInicio" required /></label>
+              <label>Até<input type="date" name="dataFim" [(ngModel)]="filtro.dataFim" required /></label>
+              <button class="primario" type="submit">Aplicar</button>
+            </form>
+            @if (erroPeriodo()) { <p class="erro" role="alert">{{ erroPeriodo() }}</p> }
+          }
+        </div>
+      }
+    </header>
+
+    @if (!permissoesProntas()) {
+      <p class="estado" role="status">Carregando permissões…</p>
+    } @else if (!temIndicadores()) {
+      <p class="estado">Seu perfil ainda não tem acesso aos indicadores dos módulos.</p>
+    } @else {
+      @if (indicadores().length) {
+        <div class="faixa-periodo">
+          <span>
+            {{ dataCurta(periodo().dataInicio) }} a {{ dataCurta(periodo().dataFim) }}
+          </span>
+          @if (periodoComparacao(); as anterior) {
+            <span>Comparação com {{ dataCurta(anterior.dataInicio) }} a {{ dataCurta(anterior.dataFim) }}</span>
+          }
+        </div>
+        <div class="indicadores" aria-label="Indicadores gerenciais" [attr.aria-busy]="carregandoPeriodo()">
+          @for (item of indicadores(); track item.titulo) {
+            <article class="card indicador">
+              <div class="rotulo">
+                <h2>{{ item.titulo }}</h2>
+                <span class="icone-card"><svg class="icone" aria-hidden="true">
+                  <use [attr.href]="'icons/bootstrap-icons.svg#' + item.icone" />
+                </svg></span>
+              </div>
+              <p class="metrica">
+                @if (item.valor === null) { — }
+                @else if (item.margem) { {{ item.valor | number:'1.0-2' }}% }
+                @else { {{ item.valor | currency:'BRL' }} }
+              </p>
+              @let delta = variacao(item);
+              <p class="comparacao">
+                @if (delta !== null) {
+                  <span class="variacao" [class.favoravel]="item.despesa ? delta < 0 : delta > 0"
+                    [class.desfavoravel]="item.despesa ? delta > 0 : delta < 0">
+                    {{ delta > 0 ? '+' : '' }}{{ delta | number:'1.0-2' }}{{ item.margem ? ' p.p.' : '%' }}
+                  </span>
+                  <span>vs. período anterior</span>
+                } @else {
+                  {{ item.valor === null ? 'Valor indisponível' : 'Sem base de comparação' }}
+                }
+              </p>
+            </article>
+          }
+        </div>
+        @if (carregandoPeriodo()) { <p class="atualizando" role="status">Atualizando indicadores…</p> }
+        @if (falhas().length) {
+          <div class="card falha">
+            <p class="erro" role="alert">Não foi possível carregar: {{ falhas().join(', ') }}.</p>
+            <button type="button" (click)="recarregar()">Tentar novamente</button>
+          </div>
+        }
+      }
+
+      @if (vendasAtuais() || comprasAtuais()) {
+        <div class="grade grade-comercial" [class.um-painel]="!vendasAtuais()">
+          @if (vendasAtuais(); as vendas) {
+            <section class="card painel-bi" aria-labelledby="titulo-faturamento">
+              <header class="cabecalho-painel">
+                <div><h2 id="titulo-faturamento">Faturamento e lucro bruto</h2>
+                  <p>Vendas pela data de confirmação · {{ diaria() ? 'por dia' : 'por mês' }}</p></div>
+                <span class="chip">{{ vendas.vendasConfirmadas | number:'1.0-0' }} {{ vendas.vendasConfirmadas === 1 ? 'venda' : 'vendas' }}</span>
+              </header>
+              @if (faturamentoGrafico(); as grafico) {
+                <app-grafico-dashboard [opcoes]="grafico" descricao="Evolução do faturamento e do lucro bruto" />
+                @if (vendas.lucroBruto === null) {
+                  <p class="nota-grafico">Há vendas sem custo registrado. O lucro aparece apenas nos períodos com custo completo.</p>
+                }
+              } @else { <p class="estado vazio-grafico">Nenhuma venda confirmada no período.</p> }
+            </section>
+          }
+          <section class="card painel-bi" aria-labelledby="titulo-comercial">
+            <header class="cabecalho-painel">
+              <div><h2 id="titulo-comercial">Compras e vendas</h2>
+                <p>Compras recebidas e vendas confirmadas · {{ diaria() ? 'por dia' : 'por mês' }}</p></div>
+            </header>
+            @if (comercialGrafico(); as grafico) {
+              <app-grafico-dashboard [opcoes]="grafico" descricao="Comparação entre compras recebidas e vendas confirmadas" />
+            } @else { <p class="estado vazio-grafico">Nenhuma operação no período.</p> }
+          </section>
+        </div>
+      }
+
+      @if (financeiroAtual() || vendasAtuais()) {
+        <div class="grade grade-secundaria">
+          @if (financeiroAtual(); as financeiro) {
+            <section class="card painel-bi compacto" aria-labelledby="titulo-receber">
+              <header class="cabecalho-painel">
+                <div><h2 id="titulo-receber">Contas a receber</h2><p>Por vencimento do título</p></div>
+                <a routerLink="/financeiro/contas-a-receber">Ver contas</a>
+              </header>
+              @if (receberGrafico(); as grafico) {
+                <app-grafico-dashboard [opcoes]="grafico" descricao="Valores recebidos, a vencer e vencidos" />
+              } @else { <p class="estado vazio-grafico">Nenhum valor a receber no período.</p> }
+              <div class="rodape-financeiro">
+                <span>Vencido a receber</span>
+                <strong [class.erro]="financeiro.contasAReceber.saldoVencido > 0">{{ financeiro.contasAReceber.saldoVencido | currency:'BRL' }}</strong>
+              </div>
+            </section>
+            <section class="card painel-bi compacto" aria-labelledby="titulo-pagar">
+              <header class="cabecalho-painel">
+                <div><h2 id="titulo-pagar">Contas a pagar</h2><p>Por vencimento do título</p></div>
+                <a routerLink="/financeiro/contas-a-pagar">Ver contas</a>
+              </header>
+              @if (pagarGrafico(); as grafico) {
+                <app-grafico-dashboard [opcoes]="grafico" descricao="Valores pagos, a vencer e vencidos" />
+              } @else { <p class="estado vazio-grafico">Nenhum valor a pagar no período.</p> }
+              <div class="rodape-financeiro">
+                <span>Vencido a pagar</span>
+                <strong [class.erro]="financeiro.contasAPagar.saldoVencido > 0">{{ financeiro.contasAPagar.saldoVencido | currency:'BRL' }}</strong>
+              </div>
+            </section>
+          }
+          @if (vendasAtuais()) {
+            <section class="card painel-bi compacto" aria-labelledby="titulo-ranking">
+              <header class="cabecalho-painel">
+                <div><h2 id="titulo-ranking">Produtos mais vendidos</h2><p>Top 5 por quantidade vendida</p></div>
+              </header>
+              @if (rankingGrafico(); as grafico) {
+                <app-grafico-dashboard [opcoes]="grafico" descricao="Ranking dos cinco produtos mais vendidos" />
+              } @else { <p class="estado vazio-grafico">Nenhum produto vendido no período.</p> }
+            </section>
+          }
+        </div>
+      }
+
+      @if (vendasAtuais() || podeVerEstoque()) {
+        <div class="grade grade-tabelas" [class.um-painel]="!vendasAtuais() || !podeVerEstoque()">
+          @if (vendasAtuais(); as vendas) {
+            <section class="card" aria-labelledby="titulo-vendas">
+              <header class="cabecalho-painel">
+                <div><h2 id="titulo-vendas">Últimas vendas confirmadas</h2><p>Até cinco vendas do período</p></div>
+                <a routerLink="/vendas">Ver vendas</a>
+              </header>
+              <div class="rolagem" tabindex="0" role="region" aria-label="Vendas confirmadas no período">
+                <table>
+                  <thead><tr><th scope="col">Código</th><th scope="col">Cliente</th><th scope="col">Confirmação</th><th scope="col" class="numero">Total</th></tr></thead>
+                  <tbody>
+                    @for (venda of vendas.ultimasVendas; track venda.id) {
+                      <tr><th scope="row">#{{ venda.id }}</th><td>{{ venda.nomeCliente ?? 'Cliente #' + venda.clienteId }}</td>
+                        <td class="data">{{ formatarConfirmacao(venda.confirmadoEm) }}</td>
+                        <td class="numero">{{ venda.valor | currency:'BRL' }}</td></tr>
+                    } @empty { <tr><td colspan="4" class="estado">Nenhuma venda confirmada no período.</td></tr> }
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          }
+
+          @if (podeVerEstoque()) {
+            @let consulta = estoque();
+            <section class="card" aria-labelledby="titulo-estoque">
+              <header class="cabecalho-painel">
+                <div><h2 id="titulo-estoque">Estoque abaixo do mínimo</h2><p>Posição atual</p></div>
+                <a routerLink="/estoque">Ver estoque</a>
+              </header>
+              @if (consulta && consulta.estado === 'pronto') {
+                @if (consulta.dados.total > 0) {
+                  <div class="estoque-total"><span class="chip alerta">{{ consulta.dados.total }} {{ consulta.dados.total === 1 ? 'produto' : 'produtos' }}</span></div>
+                }
+                <div class="rolagem" tabindex="0" role="region" aria-label="Posição atual de estoque">
+                  <table>
+                    <thead><tr><th scope="col">Produto</th><th scope="col" class="numero">Saldo</th><th scope="col" class="numero">Mínimo</th></tr></thead>
+                    <tbody>
+                      @for (produto of consulta.dados.itens; track produto.produtoId) {
+                        <tr><th scope="row">{{ produto.nomeProduto }}</th>
+                          <td class="numero erro">{{ produto.quantidade | number:'1.0-3' }} {{ produto.unidadeMedida }}</td>
+                          <td class="numero">{{ produto.estoqueMinimo | number:'1.0-3' }} {{ produto.unidadeMedida }}</td></tr>
+                      } @empty { <tr><td colspan="3" class="estado">Nenhum produto abaixo do mínimo.</td></tr> }
+                    </tbody>
+                  </table>
+                </div>
+                @if (consulta.dados.total > consulta.dados.tamanhoPagina || consulta.dados.pagina > 1) {
+                  <nav class="paginacao" aria-label="Paginação do estoque">
+                    <button type="button" aria-label="Página anterior do estoque" [disabled]="consulta.dados.pagina <= 1"
+                      (click)="paginaEstoque.set(consulta.dados.pagina - 1)">‹</button>
+                    <span>Página {{ consulta.dados.pagina }}</span>
+                    <button type="button" aria-label="Próxima página do estoque"
+                      [disabled]="consulta.dados.pagina * consulta.dados.tamanhoPagina >= consulta.dados.total"
+                      (click)="paginaEstoque.set(consulta.dados.pagina + 1)">›</button>
+                  </nav>
+                }
+              } @else if (consulta?.estado === 'erro') {
+                <div class="falha"><p class="erro" role="alert">Não foi possível carregar o estoque.</p>
+                  <button type="button" (click)="recarregarEstoque()">Tentar novamente</button></div>
+              } @else { <p class="estado" role="status">Consultando estoque…</p> }
+            </section>
+          }
+        </div>
+      }
+    }
+  </div>
 </section>

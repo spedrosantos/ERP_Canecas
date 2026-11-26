@@ -1,0 +1,49 @@
+.indicadores, .grade { display: grid; gap: .9rem; }
+.indicadores { grid-template-columns: repeat(auto-fit, minmax(min(100%, 10.5rem), 1fr)); }
+.indicador { padding: .8rem .85rem; }
+.rotulo { display: flex; justify-content: space-between; align-items: center; gap: .35rem; }
+.rotulo h2 { color: var(--apoio-bi); font-size: .78rem; }
+.icone-card {
+  display: grid; place-items: center; width: 1.9rem; height: 1.9rem; flex: 0 0 auto;
+  background: var(--fundo-destaque); color: var(--destaque-bi); border-radius: .55rem;
+}
+.metrica { margin: .48rem 0 .52rem; font-size: clamp(1.18rem, 1.55vw, 1.65rem); font-weight: 760; letter-spacing: -.035em; overflow-wrap: anywhere; }
+.comparacao { margin: 0; color: var(--apoio-bi); font-size: .7rem; }
+.comparacao span + span { display: block; margin-top: .22rem; }
+.variacao, .chip { display: inline-block; border-radius: 1rem; background: #edf1f6; padding: .17rem .45rem; color: #36475d; font-weight: 700; white-space: nowrap; }
+.variacao.favoravel { color: #146450; background: #def4ed; }
+.variacao.desfavoravel, .chip.alerta { color: var(--erro-bi); background: #fce9ed; }
+.chip { font-size: .75rem; }
+.grade { margin-top: .9rem; align-items: stretch; }
+.grade-comercial, .grade-tabelas { grid-template-columns: minmax(0, 1.44fr) minmax(0, 1fr); }
+.grade-secundaria { grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); }
+.um-painel { grid-template-columns: minmax(0, 1fr); }
+.cabecalho-painel {
+  padding: .94rem 1rem .6rem; display: flex; flex-wrap: wrap; align-items: start; justify-content: space-between; gap: .5rem;
+  p { color: var(--apoio-bi); font-size: .78rem; margin: .3rem 0 0; }
+}
+.painel-bi { padding-bottom: .65rem; }
+.painel-bi app-grafico-dashboard { margin: 0 .5rem; }
+.compacto { --altura-grafico: 12.5rem; }
+.vazio-grafico { display: grid; place-items: center; min-height: 7rem; }
+.nota-grafico { color: var(--apoio-bi); font-size: .76rem; margin: .2rem 1rem 0; }
+.rodape-financeiro { display: flex; justify-content: space-between; gap: .5rem; padding: .65rem 1rem 0; border-top: 1px solid var(--borda-bi); font-size: .82rem; }
+.estoque-total { padding: 0 1rem .6rem; }
+.rolagem { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; min-width: 19rem; text-align: left; font-size: .83rem; }
+thead { background: #f7f9fc; color: var(--apoio-bi); }
+th, td { padding: .63rem 1rem; border-bottom: 1px solid var(--borda-bi); }
+tbody th { font-weight: 650; }
+tbody tr:last-child > * { border-bottom: 0; }
+.numero, .data { white-space: nowrap; }
+.numero { text-align: right; font-variant-numeric: tabular-nums; }
+.paginacao { display: flex; align-items: center; justify-content: flex-end; padding: .45rem .85rem; gap: .45rem; font-size: .78rem; border-top: 1px solid var(--borda-bi); }
+
+@media (max-width: 62rem) {
+  .grade-comercial, .grade-tabelas { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 32rem) {
+  th, td { padding-inline: .5rem; }
+  table { font-size: .78rem; }
+}

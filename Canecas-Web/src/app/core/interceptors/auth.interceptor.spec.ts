@@ -23,6 +23,7 @@ describe('Autenticação em Compras e Vendas', () => {
     const api = '/api/' + modulo + '/pedidos';
     const rotas = [
       ['GET', '?pagina=1'],
+      ['GET', '/dashboard?dataInicio=2024-03-01&dataFim=2024-03-31'],
       ['POST', ''],
       ['GET', '/1'],
       ['PUT', '/1'],

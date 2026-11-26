@@ -1,3 +1,53 @@
-section {
-  padding: clamp(1.5rem, 5vw, 4rem);
+:host { display: block; min-width: 0; }
+
+.dashboard {
+  --texto-bi: #18253a;
+  --apoio-bi: #47576d;
+  --borda-bi: #e0e6ee;
+  --destaque-bi: color-mix(in srgb, var(--cor-primaria) 48%, #173b70);
+  --fundo-destaque: color-mix(in srgb, var(--destaque-bi) 9%, white);
+  --erro-bi: #a5213b;
+  min-height: 100dvh;
+  color: var(--texto-bi);
+  background: #f4f6fa;
+  font-family: 'Inter', system-ui, sans-serif;
+
+  :is(h1, h2) { font-family: inherit; margin: 0; }
+  h1 { font-size: clamp(1.7rem, 3vw, 2.4rem); letter-spacing: -.045em; line-height: 1.12; }
+  h2 { font-size: .98rem; letter-spacing: -.018em; }
+  a { color: var(--destaque-bi); font-size: .81rem; font-weight: 700; white-space: nowrap; }
+  :is(button, input) {
+    border: 1px solid var(--borda-bi);
+    border-radius: .5rem;
+    background: white;
+    color: inherit;
+    font: inherit;
+    font-size: .82rem;
+    min-height: 2.25rem;
+    padding: .35rem .65rem;
+  }
+  button { cursor: pointer; font-weight: 650; }
+  button:hover:not(:disabled) { background: var(--fundo-destaque); }
+  button:disabled { opacity: .48; cursor: default; }
+  :focus-visible { outline: 2px solid var(--destaque-bi); outline-offset: 2px; }
+  button.primario { background: var(--destaque-bi); color: white; }
 }
+
+.dashboard-conteudo { max-width: 100rem; margin: 0 auto; padding: clamp(1rem, 2.6vw, 2.5rem); }
+.card { min-width: 0; background: white; border: 1px solid var(--borda-bi); border-radius: .875rem; box-shadow: 0 2px 6px #14223808; }
+.topo { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1rem; align-items: start; }
+.saudacao { color: var(--apoio-bi); font-size: .88rem; margin: .5rem 0 0; }
+.periodo { display: grid; justify-items: end; gap: .55rem; max-width: 100%; }
+.atalhos, .datas { display: flex; flex-wrap: wrap; gap: .3rem; align-items: end; }
+.atalhos { border: 1px solid var(--borda-bi); background: white; padding: .25rem; border-radius: .65rem; }
+.atalhos button { border-color: transparent; white-space: nowrap; }
+.atalhos button[aria-pressed='true'] { background: var(--fundo-destaque); color: var(--destaque-bi); }
+.datas label { display: grid; gap: .25rem; font-size: .75rem; color: var(--apoio-bi); }
+.faixa-periodo { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .45rem; margin: 1.4rem 0 .65rem; color: var(--apoio-bi); font-size: .78rem; }
+.faixa-periodo .icone { margin-inline-end: .3rem; }
+.erro { color: var(--erro-bi); }
+.estado, .atualizando { color: var(--apoio-bi); font-size: .86rem; }
+.estado { margin: 0; padding: 1.1rem; text-align: center; }
+.atualizando { margin: .65rem 0 0; }
+.falha { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .6rem; padding: .7rem .9rem; margin-top: .8rem; }
+.falha p { margin: 0; }
