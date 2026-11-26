@@ -1,3 +1,53 @@
-section {
-  padding: clamp(1.5rem, 5vw, 4rem);
+@use '../../shared/styles/cadastro';
+
+.dashboard {
+  max-width: 86rem;
+  --serie-vendas: var(--botao);
+  --serie-compras: color-mix(in srgb, var(--cor-secundaria) 45%, #55747c);
+}
+
+.saudacao, .criterios { color: var(--secundario); }
+.saudacao { margin: .35rem 0 0; }
+.criterios { margin: .75rem 0 0; font-size: .875rem; }
+.filtros { align-items: end; margin-top: 1.25rem; border-bottom: 1px solid var(--linha); }
+
+.indicadores, .paineis { display: grid; gap: 1rem; margin-top: 1rem; }
+.indicadores { grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); }
+.paineis { grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr)); align-items: start; }
+
+.indicador {
+  margin: 0;
+  padding: .875rem 1rem;
+  min-width: 0;
+
+  dt { color: var(--secundario); font-size: .875rem; }
+  dd { margin: .25rem 0 0; font-size: 1.2rem; font-weight: 700; overflow-wrap: anywhere; }
+  dd + dt { margin-top: .65rem; }
+}
+
+h2 { font-size: 1.05rem; }
+
+.topo-painel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+  padding: .875rem 1rem;
+
+  a { color: var(--botao); }
+}
+
+.tabela-dashboard table { min-width: 18rem; }
+.tabela-dashboard :is(td, th) { padding: .6rem .8rem; }
+.numero, .data { white-space: nowrap; }
+.numero { text-align: right; font-variant-numeric: tabular-nums; }
+
+.paginacao {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: .5rem;
+  padding: .6rem .8rem;
+  border-top: 1px solid var(--linha);
 }

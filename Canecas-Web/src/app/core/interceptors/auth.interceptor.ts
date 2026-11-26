@@ -19,6 +19,7 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
     (request.method === 'PATCH' && /^\/api\/(?:clientes|fornecedores|produtos|categorias|unidades-medida)\/\d+\/situacao\/?$/i.test(caminho)) ||
     (request.method === 'GET' && /^\/api\/consultas\/(?:cep|cnpj)\/?$/i.test(caminho)) ||
     ((request.method === 'GET' || request.method === 'POST') && /^\/api\/(?:compras|vendas)\/pedidos\/?$/i.test(caminho)) ||
+    (request.method === 'GET' && /^\/api\/(?:compras|vendas)\/pedidos\/dashboard\/?$/i.test(caminho)) ||
     ((request.method === 'GET' || request.method === 'PUT') && /^\/api\/(?:compras|vendas)\/pedidos\/\d+\/?$/i.test(caminho)) ||
     (request.method === 'GET' && /^\/api\/compras\/pedidos\/(?:fornecedores|produtos)\/?$/i.test(caminho)) ||
     (request.method === 'POST' && /^\/api\/compras\/pedidos\/\d+\/(?:cancelar|receber)\/?$/i.test(caminho)) ||

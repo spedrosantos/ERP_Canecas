@@ -88,7 +88,7 @@ export class FinanceiroService {
     return this.http.get<TituloDetalhe>(this.base + '/titulos/' + id);
   }
 
-  indicadores(filtro: FiltroTitulos) {
+  indicadores(filtro: Partial<FiltroTitulos>) {
     return this.http.get<{ contasAPagar: IndicadorFinanceiro; contasAReceber: IndicadorFinanceiro }>(
       this.base + '/indicadores', { params: { ...filtro } },
     );

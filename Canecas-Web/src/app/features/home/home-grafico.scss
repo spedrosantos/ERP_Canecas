@@ -1,0 +1,39 @@
+.grafico { grid-column: 1 / -1; }
+.legenda, .meses { list-style: none; margin: 0; }
+.legenda { display: flex; gap: 1rem; padding: 0; font-size: .875rem; }
+.legenda li::before {
+  content: '';
+  display: inline-block;
+  width: .65em;
+  height: .65em;
+  border-radius: 50%;
+  margin-right: .4rem;
+  background: var(--serie);
+}
+
+.serie-vendas { --serie: var(--serie-vendas); }
+.serie-compras { --serie: var(--serie-compras); }
+
+.meses {
+  display: grid;
+  gap: .85rem;
+  padding: .25rem 1rem 1rem;
+
+  li { display: grid; grid-template-columns: minmax(5rem, auto) 1fr; align-items: center; gap: .5rem; }
+  time { color: var(--secundario); font-size: .875rem; }
+}
+
+.barras { display: grid; gap: .3rem; min-width: 0; }
+
+.linha-grafico {
+  display: grid;
+  grid-template-columns: minmax(1rem, 1fr) auto;
+  align-items: center;
+  gap: .5rem;
+  font-size: .8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.trilho, .trilho span { height: .55rem; border-radius: 1rem; }
+.trilho { background: var(--superficie); }
+.trilho span { display: block; background: var(--serie); }

@@ -182,7 +182,7 @@ describe('App', () => {
       fixture.detectChanges();
       expect(tela.querySelector('a[href="/usuarios"]')).not.toBeNull();
       expect(tela.querySelector('a[href="/permissoes"]')).toBeNull();
-      expect(tela.querySelector('h1')?.textContent).toContain('Ana');
+      expect(tela.querySelector('.saudacao')?.textContent).toContain('Ana');
       expect(tema.temaAtual().nomeFantasia).toBe('Empresa Exemplo');
       expect(tela.querySelector('aside header .marca-nome')?.textContent).toBe('Empresa Exemplo');
       expect(tela.querySelector('aside .usuario-nome')?.textContent).toBe('Ana');
