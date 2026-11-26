@@ -5,7 +5,10 @@
       <h1 id="titulo-compras">{{ edicao()?.id ? 'Editar pedido #' + edicao()?.id : edicao() ? 'Novo pedido' : 'Compras' }}</h1>
     </div>
     @if (!edicao() && !detalhe()) {
-      <button type="button" class="primario" [disabled]="ocupado()" (click)="novo()">Novo pedido</button>
+      <button type="button" class="primario" [disabled]="ocupado()" (click)="novo()">
+        <svg aria-hidden="true"><use href="icons/bootstrap-icons.svg#plus-lg" /></svg>
+        Novo pedido
+      </button>
     }
   </header>
 
@@ -104,8 +107,14 @@
           </dl>
         </section>
         <div class="acoes acoes-editor">
-          <button type="button" (click)="voltar()">Voltar</button>
-          <button type="submit" class="primario">Salvar pedido</button>
+          <button type="button" (click)="voltar()">
+            <svg aria-hidden="true"><use href="icons/bootstrap-icons.svg#chevron-left" /></svg>
+            Voltar
+          </button>
+          <button type="submit" class="primario">
+            <svg aria-hidden="true"><use href="icons/bootstrap-icons.svg#check-lg" /></svg>
+            Salvar pedido
+          </button>
         </div>
       </fieldset>
     </form>
@@ -142,19 +151,35 @@
         <div class="confirmacao">
           <p>{{ acao === 'receber' ? 'Confirmar a entrada de todos os itens no estoque?' : 'Confirmar o cancelamento deste pedido?' }}</p>
           <div class="acoes">
-            <button type="button" [disabled]="ocupado()" (click)="confirmacao.set(null)">Voltar</button>
+            <button type="button" [disabled]="ocupado()" (click)="confirmacao.set(null)">
+              <svg aria-hidden="true"><use href="icons/bootstrap-icons.svg#chevron-left" /></svg>
+              Voltar
+            </button>
             <button type="button" class="primario" [disabled]="ocupado()" (click)="alterar(dados.pedido.id, acao)">
+              <svg aria-hidden="true"><use href="icons/bootstrap-icons.svg#check-lg" /></svg>
               {{ acao === 'receber' ? 'Confirmar recebimento' : 'Confirmar cancelamento' }}
             </button>
           </div>
         </div>
       } @else {
         <div class="acoes">
-          <button type="button" [disabled]="ocupado()" (click)="detalhe.set(null); voltar()">Voltar à lista</button>
+          <button type="button" [disabled]="ocupado()" (click)="detalhe.set(null); voltar()">
+            <svg aria-hidden="true"><use href="icons/bootstrap-icons.svg#chevron-left" /></svg>
+            Voltar à lista
+          </button>
           @if (dados.pedido.situacao === 'PENDENTE') {
-            <button type="button" [disabled]="ocupado()" (click)="editar(dados)">Editar</button>
-            <button type="button" [disabled]="ocupado()" (click)="confirmacao.set('cancelar')">Cancelar pedido</button>
-            <button type="button" class="primario" [disabled]="ocupado()" (click)="confirmacao.set('receber')">Receber pedido</button>
+            <button type="button" [disabled]="ocupado()" (click)="editar(dados)">
+              <svg aria-hidden="true"><use href="icons/bootstrap-icons.svg#pencil" /></svg>
+              Editar
+            </button>
+            <button type="button" [disabled]="ocupado()" (click)="confirmacao.set('cancelar')">
+              <svg aria-hidden="true"><use href="icons/bootstrap-icons.svg#dash-circle" /></svg>
+              Cancelar pedido
+            </button>
+            <button type="button" class="primario" [disabled]="ocupado()" (click)="confirmacao.set('receber')">
+              <svg aria-hidden="true"><use href="icons/bootstrap-icons.svg#box-arrow-in-right" /></svg>
+              Receber pedido
+            </button>
           }
         </div>
       }
@@ -173,7 +198,10 @@
         </label>
         <label>Data inicial<input name="dataInicio" type="date" [(ngModel)]="filtro.dataInicio" /></label>
         <label>Data final<input name="dataFim" type="date" [(ngModel)]="filtro.dataFim" /></label>
-        <button type="submit" [disabled]="ocupado()">Pesquisar</button>
+        <button type="submit" [disabled]="ocupado()">
+          <svg aria-hidden="true"><use href="icons/bootstrap-icons.svg#search" /></svg>
+          Pesquisar
+        </button>
       </form>
       @if (carregando()) { <p class="estado" role="status">Carregando pedidos…</p> }
       @if (erroLista()) { <p class="estado erro" role="alert">{{ erroLista() }}</p> }
@@ -192,7 +220,10 @@
                       <td>{{ situacoes[pedido.situacao] }}</td>
                       <td>{{ pedido.valorTotal | currency:'BRL':'symbol':'1.2-2' }}</td>
                       <td><button type="button" [disabled]="ocupado()" [attr.aria-label]="'Ver pedido #' + pedido.id"
-                        (click)="abrir(pedido.id)">Abrir</button></td>
+                        (click)="abrir(pedido.id)">
+                          <svg aria-hidden="true"><use href="icons/bootstrap-icons.svg#eye" /></svg>
+                          Abrir
+                        </button></td>
                     </tr>
                   }
                 </tbody>
@@ -201,9 +232,15 @@
             <div class="paginacao">
               <span>{{ dados.total }} {{ dados.total === 1 ? 'pedido' : 'pedidos' }} · Página {{ dados.pagina }}</span>
               <div class="acoes">
-                <button type="button" [disabled]="dados.pagina <= 1 || ocupado()" (click)="carregar(dados.pagina - 1)">Anterior</button>
+                <button type="button" [disabled]="dados.pagina <= 1 || ocupado()" (click)="carregar(dados.pagina - 1)">
+                  <svg aria-hidden="true"><use href="icons/bootstrap-icons.svg#chevron-left" /></svg>
+                  Anterior
+                </button>
                 <button type="button" [disabled]="dados.pagina * dados.tamanhoPagina >= dados.total || ocupado()"
-                  (click)="carregar(dados.pagina + 1)">Próxima</button>
+                  (click)="carregar(dados.pagina + 1)">
+                    Próxima
+                    <svg aria-hidden="true"><use href="icons/bootstrap-icons.svg#chevron-right" /></svg>
+                  </button>
               </div>
             </div>
           } @else {
