@@ -79,7 +79,7 @@ describe('Compras', () => {
     http.verify();
   });
 
-  it('confirma o recebimento integral e retira ações de um pedido recebido', () => {
+  it('recebe o pedido com um clique e retira ações de um pedido recebido', () => {
     const fixture = TestBed.createComponent(Compras);
     const http = TestBed.inject(HttpTestingController);
     const tela: HTMLElement = fixture.nativeElement;
@@ -98,8 +98,6 @@ describe('Compras', () => {
     fixture.detectChanges();
 
     clicar('Receber pedido');
-    http.expectNone(`${api}/12/receber`);
-    clicar('Confirmar recebimento');
     const recebimento = http.expectOne({ method: 'POST', url: `${api}/12/receber` });
     expect(recebimento.request.body).toBeNull();
     recebimento.flush({

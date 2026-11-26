@@ -55,7 +55,7 @@ export class Compras {
   protected readonly erroLista = signal('');
   protected readonly erroAcao = signal('');
   protected readonly aviso = signal('');
-  protected readonly confirmacao = signal<'receber' | 'cancelar' | null>(null);
+  protected readonly confirmarCancelamento = signal(false);
   protected readonly situacoes: Record<SituacaoPedido, string> = {
     PENDENTE: 'Pendente', RECEBIDO: 'Recebido', CANCELADO: 'Cancelado'
   };
@@ -135,7 +135,7 @@ export class Compras {
   protected voltar() {
     this.edicao.set(null);
     this.erroAcao.set('');
-    this.confirmacao.set(null);
+    this.confirmarCancelamento.set(false);
   }
 
   protected selecionarFornecedor(edicao: Edicao, fornecedor: CadastroAtivo) {
@@ -218,7 +218,7 @@ export class Compras {
         next: detalhe => {
           this.detalhe.set(detalhe);
           this.edicao.set(null);
-          this.confirmacao.set(null);
+          this.confirmarCancelamento.set(false);
           if (sucesso) {
             this.aviso.set(sucesso);
             this.carregar(this.lista()?.pagina ?? 1);

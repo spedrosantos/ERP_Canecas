@@ -147,17 +147,17 @@
           </tbody>
         </table>
       </div>
-      @if (confirmacao(); as acao) {
+      @if (confirmarCancelamento()) {
         <div class="confirmacao">
-          <p>{{ acao === 'receber' ? 'Confirmar a entrada de todos os itens no estoque?' : 'Confirmar o cancelamento deste pedido?' }}</p>
+          <p>Confirmar o cancelamento deste pedido?</p>
           <div class="acoes">
-            <button type="button" [disabled]="ocupado()" (click)="confirmacao.set(null)">
+            <button type="button" [disabled]="ocupado()" (click)="confirmarCancelamento.set(false)">
               <svg aria-hidden="true"><use href="icons/bootstrap-icons.svg#chevron-left" /></svg>
               Voltar
             </button>
-            <button type="button" class="primario" [disabled]="ocupado()" (click)="alterar(dados.pedido.id, acao)">
+            <button type="button" class="primario" [disabled]="ocupado()" (click)="alterar(dados.pedido.id, 'cancelar')">
               <svg aria-hidden="true"><use href="icons/bootstrap-icons.svg#check-lg" /></svg>
-              {{ acao === 'receber' ? 'Confirmar recebimento' : 'Confirmar cancelamento' }}
+              Confirmar cancelamento
             </button>
           </div>
         </div>
@@ -172,11 +172,11 @@
               <svg aria-hidden="true"><use href="icons/bootstrap-icons.svg#pencil" /></svg>
               Editar
             </button>
-            <button type="button" [disabled]="ocupado()" (click)="confirmacao.set('cancelar')">
+            <button type="button" [disabled]="ocupado()" (click)="confirmarCancelamento.set(true)">
               <svg aria-hidden="true"><use href="icons/bootstrap-icons.svg#dash-circle" /></svg>
               Cancelar pedido
             </button>
-            <button type="button" class="primario" [disabled]="ocupado()" (click)="confirmacao.set('receber')">
+            <button type="button" class="primario" [disabled]="ocupado()" (click)="alterar(dados.pedido.id, 'receber')">
               <svg aria-hidden="true"><use href="icons/bootstrap-icons.svg#box-arrow-in-right" /></svg>
               Receber pedido
             </button>
