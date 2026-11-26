@@ -4,6 +4,7 @@ namespace MS_Compra.Services.Interfaces;
 
 public interface IPedidoService
 {
+    Task<DashboardCompraDTO> ObterDashboardAsync(DateOnly inicio, DateOnly fim, CancellationToken ct);
     Task<PaginadoResponseDTO<PedidoResponseDTO>> ListarAsync(ListarPedidosDTO filtro, CancellationToken ct);
     Task<PedidoDetalheResponseDTO?> ObterAsync(long id, CancellationToken ct);
     Task<PedidoDetalheResponseDTO> CadastrarAsync(SalvarPedidoDTO dto, CancellationToken ct);

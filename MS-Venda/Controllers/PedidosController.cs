@@ -30,6 +30,23 @@ public class PedidosController(IPedidoService service) : ControllerBase
         }
     }
 
+    [HttpGet("dashboard")]
+    public async Task<ActionResult<DashboardVendaDTO>> ObterDashboard(
+        [FromQuery, Required] DateOnly? dataInicio, [FromQuery, Required] DateOnly? dataFim, CancellationToken ct)
+    {
+        if (dataInicio is not { } inicio || dataFim is not { } fim)
+            return BadRequest(new { mensagem = "Informe as datas inicial e final." });
+
+        try
+        {
+            return Ok(await service.ObterDashboardAsync(inicio, fim, ct));
+        }
+        catch (ValidationException ex)
+        {
+            return BadRequest(new { mensagem = ex.Message });
+        }
+    }
+
     [HttpGet("{id:long}")]
     public Task<ActionResult<PedidoDetalheResponseDTO>> Obter(long id, CancellationToken ct) =>
         ExecutarAsync(() => service.ObterAsync(id, ct));

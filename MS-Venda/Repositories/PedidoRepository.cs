@@ -1,3 +1,4 @@
+using System.Data;
 using Microsoft.EntityFrameworkCore;
 using MS_Venda.Data;
 using MS_Venda.DTOs.Pedidos;
@@ -37,6 +38,62 @@ public class PedidoRepository(TenantDbContext context) : IPedidoRepository
 
         return PaginarAsync(pedidos, filtro.Pagina, filtro.TamanhoPagina, ct);
     }
+
+    public async Task<DashboardVendaDTO> ObterDashboardAsync(DateOnly inicio, DateOnly fim, CancellationToken ct)
+    {
+        var de = InicioDoDiaUtc(inicio);
+        var ate = fim == DateOnly.MaxValue ? DateTime.MaxValue : InicioDoDiaUtc(fim.AddDays(1));
+        await using var leitura = await context.Database.BeginTransactionAsync(IsolationLevel.RepeatableRead, ct);
+
+        var meses = await context.Database.SqlQuery<VendaMensalDTO>($"""
+            SELECT date_trunc('month', confirmado_em AT TIME ZONE 'America/Sao_Paulo')::date AS "Mes",
+                SUM(valor_total) AS "Valor", COUNT(*) AS "Quantidade"
+            FROM vendas.pedidos
+            WHERE situacao = {Pedido.Confirmado} AND confirmado_em >= {de} AND confirmado_em < {ate}
+            GROUP BY 1 ORDER BY 1
+            """).ToListAsync(ct);
+
+        var custo = await context.Database.SqlQuery<CustoDashboard>($"""
+            SELECT COALESCE(SUM(i.quantidade * i.custo_unitario), 0) AS "Valor",
+                COALESCE(BOOL_OR(i.custo_unitario IS NULL), FALSE) AS "Incompleto"
+            FROM vendas.pedidos p
+            LEFT JOIN vendas.pedidos_itens i ON i.pedido_id = p.id
+            WHERE p.situacao = {Pedido.Confirmado} AND p.confirmado_em >= {de} AND p.confirmado_em < {ate}
+            """).SingleAsync(ct);
+
+        var ranking = await context.Database.SqlQuery<ProdutoMaisVendidoDTO>($"""
+            SELECT i.produto_id AS "ProdutoId", pr.nome AS "NomeProduto", SUM(i.quantidade) AS "Quantidade"
+            FROM vendas.pedidos p
+            JOIN vendas.pedidos_itens i ON i.pedido_id = p.id
+            LEFT JOIN cadastro.produtos pr ON pr.id = i.produto_id
+            WHERE p.situacao = {Pedido.Confirmado} AND p.confirmado_em >= {de} AND p.confirmado_em < {ate}
+            GROUP BY i.produto_id, pr.nome
+            ORDER BY SUM(i.quantidade) DESC, i.produto_id
+            LIMIT 5
+            """).ToListAsync(ct);
+
+        var ultimas = await context.Database.SqlQuery<VendaRecenteDTO>($"""
+            SELECT p.id AS "Id", p.cliente_id AS "ClienteId", c.nome AS "NomeCliente",
+                p.confirmado_em AS "ConfirmadoEm", p.valor_total AS "Valor"
+            FROM vendas.pedidos p
+            LEFT JOIN cadastro.clientes c ON c.id = p.cliente_id
+            WHERE p.situacao = {Pedido.Confirmado} AND p.confirmado_em >= {de} AND p.confirmado_em < {ate}
+            ORDER BY p.confirmado_em DESC, p.id DESC
+            LIMIT 5
+            """).ToListAsync(ct);
+
+        await leitura.CommitAsync(ct);
+        var faturamento = meses.Sum(x => x.Valor);
+        decimal? lucro = custo.Incompleto ? null : faturamento - custo.Valor;
+        decimal? margem = faturamento > 0 && lucro.HasValue
+            ? decimal.Round(lucro.Value / faturamento * 100, 2, MidpointRounding.AwayFromZero)
+            : null;
+        return new(faturamento, meses.Sum(x => x.Quantidade),
+            lucro.HasValue ? decimal.Round(lucro.Value, 2, MidpointRounding.AwayFromZero) : null,
+            margem, meses, ranking, ultimas);
+    }
+
+    private sealed record CustoDashboard(decimal Valor, bool Incompleto);
 
     private static DateTime InicioDoDiaUtc(DateOnly data)
     {

@@ -23,6 +23,7 @@ from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 from financeiro import executar_financeiro
+from dashboard import executar_dashboard
 
 RAIZ = Path(__file__).resolve().parents[2]
 ROTA = "/api/vendas/pedidos"
@@ -45,8 +46,10 @@ def token(empresa, usuario=1):
 class IdentidadeDeTeste(BaseHTTPRequestHandler):
     def do_GET(self):
         esperados = {"/api/usuarios/me/features/verificar?codigo=" + codigo
-                     for codigo in ("VENDA", "COMPRA", "FINANCEIRO")}
-        status = 204 if self.path in esperados and self.headers.get("Authorization") in TOKENS else 403
+                     for codigo in ("VENDA", "COMPRA", "FINANCEIRO", "ESTOQUE")}
+        autorizacao = self.headers.get("Authorization")
+        venda_apenas = autorizacao == f"Bearer {TOKEN_SO_VENDAS}" and self.path.endswith("?codigo=VENDA")
+        status = 204 if (self.path in esperados and autorizacao in TOKENS) or venda_apenas else 403
         self.send_response(status)
         self.end_headers()
 
@@ -55,6 +58,7 @@ class IdentidadeDeTeste(BaseHTTPRequestHandler):
 
 
 TOKEN_A, TOKEN_B, TOKEN_A_OPERADOR = token(1), token(2), token(1, 2)
+TOKEN_SO_VENDAS = token(2, 2)
 TOKENS = {f"Bearer {credencial}" for credencial in (TOKEN_A, TOKEN_B, TOKEN_A_OPERADOR)}
 
 
@@ -190,7 +194,7 @@ def executar(porta, sql):
 
 def iniciar():
     pg = Path(subprocess.check_output(["pg_config", "--bindir"], text=True).strip())
-    projetos = ("MS-Venda", "MS-Compra", "MS-Financeiro")
+    projetos = ("MS-Venda", "MS-Compra", "MS-Financeiro", "MS-Estoque")
     dlls = {projeto: RAIZ / projeto / "bin/Debug/net10.0" / (projeto + ".dll")
             for projeto in projetos}
     if not all(dll.is_file() for dll in dlls.values()):
@@ -241,6 +245,7 @@ def iniciar():
                 try:
                     executar(portas["MS-Venda"], psql)
                     executar_financeiro(portas, psql, cliente_http, TOKEN_A, TOKEN_B)
+                    executar_dashboard(portas, psql, cliente_http, TOKEN_A, TOKEN_B, TOKEN_SO_VENDAS)
                 except Exception:
                     for projeto in projetos:
                         print((Path(pasta) / (projeto + ".log")).read_text())

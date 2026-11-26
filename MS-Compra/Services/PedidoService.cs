@@ -17,6 +17,15 @@ namespace MS_Compra.Services;
 public class PedidoService(ITenantContextFactory contextFactory, IHttpContextAccessor httpContextAccessor)
     : IPedidoService
 {
+    public async Task<DashboardCompraDTO> ObterDashboardAsync(DateOnly inicio, DateOnly fim, CancellationToken ct)
+    {
+        if (inicio > fim)
+            throw new ValidationException("A data inicial não pode ser maior que a final.");
+
+        await using var context = await contextFactory.CriarAsync(ct);
+        return await new PedidoRepository(context).ObterDashboardAsync(inicio, fim, ct);
+    }
+
     public async Task<PaginadoResponseDTO<PedidoResponseDTO>> ListarAsync(ListarPedidosDTO filtro, CancellationToken ct)
     {
         if (filtro.DataInicio > filtro.DataFim)
