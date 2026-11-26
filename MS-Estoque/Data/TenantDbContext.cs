@@ -4,10 +4,17 @@ using MS_Estoque.Entities;
 
 namespace MS_Estoque.Data;
 
-public class TenantDbContext(
-    DbContextOptions<TenantDbContext> options)
-    : DbContext(options)
+public class TenantDbContext : DbContext
 {
+    public TenantDbContext(DbContextOptions<TenantDbContext> options)
+        : this((DbContextOptions)options)
+    {
+    }
+
+    protected TenantDbContext(DbContextOptions options) : base(options)
+    {
+    }
+
     public DbSet<Saldo> Saldos => Set<Saldo>();
 
     public DbSet<MovimentacaoEstoque> Movimentacoes =>

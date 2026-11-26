@@ -1,0 +1,118 @@
+.campos-editor {
+  display: grid;
+  gap: 1.25rem;
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.caminho {
+  margin: 0 0 .25rem;
+  color: var(--secundario);
+  font-size: .875rem;
+}
+
+.cartao-editor {
+  padding: clamp(1rem, 2vw, 1.5rem);
+
+  h2 { font-size: 1.15rem; }
+}
+
+.dados-pedido {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+
+  @media (min-width: 42rem) {
+    &:has(.data-pedido) { grid-template-columns: minmax(0, 1fr) 10rem; }
+  }
+  gap: 1rem;
+}
+
+.data-pedido {
+  display: grid;
+  align-content: start;
+  gap: .625rem;
+  span { font-size: .875rem; font-weight: 600; }
+}
+
+.cartao-itens {
+  padding: 0;
+
+  .topo-itens { padding: clamp(1rem, 2vw, 1.5rem); }
+}
+
+.incluir-produto {
+  display: flex;
+  align-items: end;
+  gap: .625rem;
+
+  app-busca-cadastro { flex: 1; max-width: 34rem; }
+}
+
+.adicionar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .375rem;
+  min-height: 2.625rem;
+
+  svg { width: 1rem; height: 1rem; }
+}
+
+.tabela-editor {
+  max-height: 29rem;
+  overflow: auto;
+  border-block: 1px solid var(--linha);
+
+  table { min-width: 47rem; table-layout: fixed; }
+  .col-quantidade { width: 9rem; }
+  .col-custo { width: 12rem; }
+  .col-subtotal { width: 13rem; }
+  .col-acoes { width: 5rem; }
+  thead th {
+    position: sticky;
+    top: 0;
+    background: var(--superficie);
+  }
+  th, td { vertical-align: middle; }
+  input { width: 100%; font-variant-numeric: tabular-nums; }
+}
+
+.nome-produto {
+  background: transparent;
+  font-size: inherit;
+  overflow-wrap: anywhere;
+
+  small { display: block; margin-top: .2rem; color: var(--secundario); font-weight: 400; }
+}
+
+.subtotal { overflow: hidden; text-overflow: ellipsis; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.itens-vazios { padding-block: 1.5rem; text-align: center; color: var(--secundario); }
+
+.fechamento-pedido {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+  align-items: center;
+  gap: .875rem 1.5rem;
+
+  @media (min-width: 58rem) {
+    grid-template-columns: 9rem 12rem 19rem;
+    justify-content: end;
+  }
+  padding: 1rem clamp(1rem, 2vw, 1.5rem);
+  margin: 0;
+  background: var(--superficie);
+  border-radius: 0 0 .875rem .875rem;
+
+  dt { color: var(--secundario); font-size: .875rem; }
+  dd { margin: .25rem 0 0; font-size: 1.125rem; font-weight: 700; }
+  .total-pedido {
+    background: #fff;
+    border-radius: .5rem;
+    padding: .625rem .875rem;
+    dd { font-size: 1.375rem; }
+  }
+}
+
+.acoes-editor { justify-content: flex-end; }

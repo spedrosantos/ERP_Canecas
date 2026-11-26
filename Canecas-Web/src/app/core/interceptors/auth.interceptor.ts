@@ -18,6 +18,10 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
     ((request.method === 'GET' || request.method === 'PUT') && /^\/api\/(?:clientes|fornecedores|produtos|categorias|unidades-medida)\/\d+\/?$/i.test(caminho)) ||
     (request.method === 'PATCH' && /^\/api\/(?:clientes|fornecedores|produtos|categorias|unidades-medida)\/\d+\/situacao\/?$/i.test(caminho)) ||
     (request.method === 'GET' && /^\/api\/consultas\/(?:cep|cnpj)\/?$/i.test(caminho)) ||
+    ((request.method === 'GET' || request.method === 'POST') && /^\/api\/compras\/pedidos\/?$/i.test(caminho)) ||
+    ((request.method === 'GET' || request.method === 'PUT') && /^\/api\/compras\/pedidos\/\d+\/?$/i.test(caminho)) ||
+    (request.method === 'GET' && /^\/api\/compras\/pedidos\/(?:fornecedores|produtos)\/?$/i.test(caminho)) ||
+    (request.method === 'POST' && /^\/api\/compras\/pedidos\/\d+\/(?:cancelar|receber)\/?$/i.test(caminho)) ||
     (request.method === 'GET' && /^\/api\/estoque\/(?:saldos|movimentacoes)\/?$/i.test(caminho)) ||
     (request.method === 'POST' && /^\/api\/estoque\/movimentacoes\/ajuste\/?$/i.test(caminho)) ||
     (request.method === 'POST' && /^\/api\/estoque\/movimentacoes\/\d+\/estorno\/?$/i.test(caminho)) ||

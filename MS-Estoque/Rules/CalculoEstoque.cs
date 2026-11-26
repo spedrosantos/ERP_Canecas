@@ -12,12 +12,7 @@ public static class CalculoEstoque
     {
         ValidarQuantidade(quantidade);
 
-        if (custoUnitario < 0 ||
-            custoUnitario > 99999999999.9999m ||
-            decimal.Round(custoUnitario, 4) != custoUnitario)
-        {
-            throw new ValidationException("Custo unitário inválido.");
-        }
+        ValidarCustoUnitario(custoUnitario);
 
         var novaQuantidade = saldo.Quantidade + quantidade;
 
@@ -80,7 +75,17 @@ public static class CalculoEstoque
         return RegistrarSaida(saldo, original.Quantidade);
     }
 
-    private static void ValidarQuantidade(decimal quantidade)
+    public static void ValidarCustoUnitario(decimal custoUnitario)
+    {
+        if (custoUnitario < 0 ||
+            custoUnitario > 99999999999.9999m ||
+            decimal.Round(custoUnitario, 4) != custoUnitario)
+        {
+            throw new ValidationException("Custo unitário inválido.");
+        }
+    }
+
+    public static void ValidarQuantidade(decimal quantidade)
     {
         if (quantidade <= 0 ||
             quantidade > 999999999999.999m ||

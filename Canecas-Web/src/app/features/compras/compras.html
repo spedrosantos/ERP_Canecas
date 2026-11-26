@@ -1,0 +1,253 @@
+<section class="pagina" aria-labelledby="titulo-compras">
+  <header class="cabecalho">
+    <div>
+      @if (edicao()) { <p class="caminho">Compras</p> }
+      <h1 id="titulo-compras">{{ edicao()?.id ? 'Editar pedido #' + edicao()?.id : edicao() ? 'Novo pedido' : 'Compras' }}</h1>
+    </div>
+    @if (!edicao() && !detalhe()) {
+      <button type="button" class="primario" [disabled]="ocupado()" (click)="novo()">
+        <svg class="icone" aria-hidden="true"><use href="icons/bootstrap-icons.svg#plus-lg" /></svg>
+        Novo pedido
+      </button>
+    }
+  </header>
+
+  @if (aviso()) { <p class="aviso" role="status">{{ aviso() }}</p> }
+  @if (erroAcao() && !dialogoAberto()) { <p class="erro" role="alert">{{ erroAcao() }}</p> }
+  @if (ocupado()) { <p role="status">Processando pedido…</p> }
+
+  @if (edicao(); as dados) {
+    <form (ngSubmit)="salvar(dados)">
+      <fieldset class="campos-editor" [disabled]="ocupado()">
+        <section class="painel cartao-editor" aria-labelledby="titulo-dados-pedido">
+          <h2 id="titulo-dados-pedido">Dados do pedido</h2>
+          <div class="dados-pedido">
+            <app-busca-cadastro tipo="fornecedores" rotulo="Fornecedor"
+              [selecionado]="dados.nomeFornecedor ?? (dados.fornecedorId ? '#' + dados.fornecedorId : '')"
+              (escolhido)="selecionarFornecedor(dados, $event)" />
+            @if (dados.criadoEm) {
+              <div class="data-pedido">
+                <span>Data do pedido</span>
+                <time [attr.datetime]="dados.criadoEm">{{ dados.criadoEm | date:'dd/MM/yyyy' }}</time>
+              </div>
+            }
+          </div>
+        </section>
+
+        <section class="painel cartao-editor cartao-itens" aria-labelledby="titulo-itens-pedido">
+          <header class="topo-itens">
+            <h2 id="titulo-itens-pedido">Itens do pedido</h2>
+            <div class="incluir-produto">
+              <app-busca-cadastro tipo="produtos" rotulo="Buscar produto"
+                [selecionado]="produtoSelecionado()?.nome ?? ''"
+                (escolhido)="produtoSelecionado.set($event)" />
+              <button type="button" class="adicionar" [disabled]="!produtoSelecionado()"
+                (click)="adicionarProduto(dados)">
+                <svg class="icone" aria-hidden="true"><use href="icons/bootstrap-icons.svg#plus-lg" /></svg>
+                Adicionar
+              </button>
+            </div>
+          </header>
+
+          <div class="rolagem tabela-editor" tabindex="0" role="region" aria-label="Itens do pedido">
+            <table>
+              <colgroup><col /><col class="col-quantidade" /><col class="col-custo" />
+                <col class="col-subtotal" /><col class="col-acoes" /></colgroup>
+              <thead>
+                <tr>
+                  <th scope="col">Produto</th><th scope="col">Quantidade</th>
+                  <th scope="col">Custo unitário</th><th scope="col" class="subtotal">Subtotal</th>
+                  <th scope="col" class="coluna-acoes">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of dados.itens; track item.produtoId; let indice = $index) {
+                  <tr>
+                    <th scope="row" class="nome-produto">
+                      <strong>{{ item.nome ?? 'Produto #' + item.produtoId }}</strong>
+                      <small>#{{ item.produtoId }} @if (item.unidadeMedida) { · {{ item.unidadeMedida }} }</small>
+                    </th>
+                    <td>
+                      <input type="text" inputmode="decimal" appMascara="decimal" required
+                        [attr.aria-label]="'Quantidade de ' + (item.nome ?? 'produto #' + item.produtoId)"
+                        [name]="'quantidade-' + item.produtoId" [(ngModel)]="item.quantidade" />
+                    </td>
+                    <td>
+                      <input type="text" inputmode="numeric" appMoeda required
+                        [attr.aria-label]="'Custo unitário de ' + (item.nome ?? 'produto #' + item.produtoId)"
+                        [name]="'custo-' + item.produtoId" [(ngModel)]="item.custoUnitario" />
+                    </td>
+                    <td class="subtotal">
+                      @if (item.quantidade !== null && item.custoUnitario !== null) {
+                        {{ subtotal(item) | currency:'BRL':'symbol':'1.2-2' }}
+                      } @else { — }
+                    </td>
+                    <td class="coluna-acoes">
+                      <button type="button" class="botao-icone" title="Remover produto"
+                        [attr.aria-label]="'Remover ' + (item.nome ?? 'produto #' + item.produtoId)"
+                        (click)="dados.itens.splice(indice, 1)">
+                        <svg class="icone" aria-hidden="true"><use href="icons/bootstrap-icons.svg#x-lg" /></svg>
+                      </button>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="5" class="itens-vazios">Nenhum item adicionado.</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          @let resumo = resumir(dados.itens);
+          <dl class="fechamento-pedido">
+            <div><dt>Produtos distintos</dt><dd>{{ dados.itens.length }}</dd></div>
+            <div><dt>Quantidade total de itens</dt><dd>{{ resumo.quantidade | number:'1.0-3' }}</dd></div>
+            <div class="total-pedido"><dt>Valor total do pedido</dt>
+              <dd>{{ resumo.valor | currency:'BRL':'symbol':'1.2-2' }}</dd>
+            </div>
+          </dl>
+        </section>
+        <div class="acoes acoes-editor">
+          <button type="button" (click)="voltar()">
+            <svg class="icone" aria-hidden="true"><use href="icons/bootstrap-icons.svg#chevron-left" /></svg>
+            Voltar
+          </button>
+          <button type="submit" class="primario">
+            <svg class="icone" aria-hidden="true"><use href="icons/bootstrap-icons.svg#check-lg" /></svg>
+            Salvar pedido
+          </button>
+        </div>
+      </fieldset>
+    </form>
+  } @else if (detalhe(); as dados) {
+    <section class="painel conteudo" aria-labelledby="titulo-pedido">
+      <h2 id="titulo-pedido">Pedido #{{ dados.pedido.id }}</h2>
+      <dl class="resumo-pedido">
+        <div><dt>Situação</dt><dd>{{ situacoes[dados.pedido.situacao] }}</dd></div>
+        <div><dt>Código do fornecedor</dt><dd>{{ dados.pedido.fornecedorId }}</dd></div>
+        <div><dt>Total</dt><dd>{{ dados.pedido.valorTotal | currency:'BRL':'symbol':'1.2-2' }}</dd></div>
+        <div><dt>Criado em</dt><dd>{{ dados.pedido.criadoEm | date:'dd/MM/yyyy HH:mm' }}</dd></div>
+        @if (dados.pedido.recebidoEm) {
+          <div><dt>Recebido em</dt><dd>{{ dados.pedido.recebidoEm | date:'dd/MM/yyyy HH:mm' }}</dd></div>
+        }
+        @if (dados.pedido.observacao) {
+          <div><dt>Observação</dt><dd class="observacao">{{ dados.pedido.observacao }}</dd></div>
+        }
+      </dl>
+      <div class="rolagem" tabindex="0" role="region" aria-label="Itens do pedido">
+        <table>
+          <thead><tr><th scope="col">Produto</th><th scope="col">Quantidade</th><th scope="col">Custo unitário</th></tr></thead>
+          <tbody>
+            @for (item of dados.itens; track item.id) {
+              <tr>
+                <td>{{ item.nomeProduto ?? item.produtoId }}</td>
+                <td>{{ item.quantidade | number:'1.0-3' }} {{ item.unidadeMedida }}</td>
+                <td>{{ item.custoUnitario | currency:'BRL':'symbol':'1.2-4' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <div class="acoes">
+        <button type="button" [disabled]="ocupado()" (click)="detalhe.set(null); voltar()">
+          <svg class="icone" aria-hidden="true"><use href="icons/bootstrap-icons.svg#chevron-left" /></svg>
+          Voltar à lista
+        </button>
+        @if (dados.pedido.situacao === 'PENDENTE') {
+          <dialog #dialogoCancelamento aria-labelledby="titulo-cancelamento" (cancel)="fecharCancelamento(dialogoCancelamento, $event)">
+            <h2 id="titulo-cancelamento">Cancelar pedido</h2>
+            <p>Confirma o cancelamento do pedido <strong>#{{ dados.pedido.id }}</strong>?</p>
+            @if (erroAcao()) { <p class="erro" role="alert">{{ erroAcao() }}</p> }
+            <div class="acoes-modal">
+              <button type="button" autofocus [disabled]="ocupado()" (click)="fecharCancelamento(dialogoCancelamento)">Voltar</button>
+              <button type="button" class="primario" [disabled]="ocupado()" (click)="alterar(dados.pedido.id, 'cancelar')">
+                {{ ocupado() ? 'Cancelando…' : 'Confirmar cancelamento' }}
+              </button>
+            </div>
+          </dialog>
+          <button type="button" [disabled]="ocupado()" (click)="editar(dados)">
+            <svg class="icone" aria-hidden="true"><use href="icons/bootstrap-icons.svg#pencil" /></svg>
+            Editar
+          </button>
+          <button type="button" [disabled]="ocupado()" (click)="abrirCancelamento(dialogoCancelamento)">
+            <svg class="icone" aria-hidden="true"><use href="icons/bootstrap-icons.svg#dash-circle" /></svg>
+            Cancelar pedido
+          </button>
+          <button type="button" class="primario" [disabled]="ocupado()" (click)="alterar(dados.pedido.id, 'receber')">
+            <svg class="icone" aria-hidden="true"><use href="icons/bootstrap-icons.svg#box-arrow-in-right" /></svg>
+            Receber pedido
+          </button>
+        }
+      </div>
+    </section>
+  } @else {
+    <div class="painel painel-lista" [attr.aria-busy]="carregando()">
+      <form class="filtros" (ngSubmit)="pesquisar()">
+        <label>Código do fornecedor<input name="fornecedor" type="number" min="1" [(ngModel)]="filtro.fornecedorId" /></label>
+        <label>Situação
+          <select name="situacao" [(ngModel)]="filtro.situacao">
+            <option value="">Todas</option>
+            <option value="PENDENTE">Pendente</option>
+            <option value="RECEBIDO">Recebido</option>
+            <option value="CANCELADO">Cancelado</option>
+          </select>
+        </label>
+        <label>Data inicial<input name="dataInicio" type="date" [(ngModel)]="filtro.dataInicio" /></label>
+        <label>Data final<input name="dataFim" type="date" [(ngModel)]="filtro.dataFim" /></label>
+        <button type="submit" [disabled]="ocupado()">
+          <svg class="icone" aria-hidden="true"><use href="icons/bootstrap-icons.svg#search" /></svg>
+          Pesquisar
+        </button>
+      </form>
+      @if (carregando()) { <p class="estado" role="status">Carregando pedidos…</p> }
+      @if (erroLista()) { <p class="estado erro" role="alert">{{ erroLista() }}</p> }
+      @if (!carregando()) {
+        @if (lista(); as dados) {
+          @if (dados.itens.length) {
+            <div class="rolagem" tabindex="0" role="region" aria-label="Pedidos de compra">
+              <table>
+                <thead><tr><th scope="col" class="codigo">Código</th><th scope="col">Fornecedor</th><th scope="col">Criado em</th><th scope="col" class="coluna-situacao">Situação</th><th scope="col">Total</th><th scope="col" class="coluna-acoes">Ações</th></tr></thead>
+                <tbody>
+                  @for (pedido of dados.itens; track pedido.id) {
+                    <tr>
+                      <th scope="row" class="codigo">{{ pedido.id }}</th>
+                      <td>#{{ pedido.fornecedorId }}</td>
+                      <td>{{ pedido.criadoEm | date:'dd/MM/yyyy HH:mm' }}</td>
+                      <td class="coluna-situacao">
+                        <span class="situacao" [class.ativa]="pedido.situacao === 'RECEBIDO'">
+                          {{ situacoes[pedido.situacao] }}
+                        </span>
+                      </td>
+                      <td>{{ pedido.valorTotal | currency:'BRL':'symbol':'1.2-2' }}</td>
+                      <td class="coluna-acoes"><button type="button" class="botao-icone" title="Ver pedido" [disabled]="ocupado()"
+                        [attr.aria-label]="'Ver pedido #' + pedido.id"
+                        (click)="abrir(pedido.id)">
+                          <svg class="icone" aria-hidden="true"><use href="icons/bootstrap-icons.svg#eye" /></svg>
+                        </button></td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <nav class="paginacao" aria-label="Paginação de pedidos">
+              <span>{{ dados.total }} {{ dados.total === 1 ? 'pedido' : 'pedidos' }}</span>
+              <div class="acoes">
+                <button type="button" class="botao-icone" aria-label="Página anterior" title="Página anterior"
+                  [disabled]="dados.pagina <= 1 || ocupado()" (click)="carregar(dados.pagina - 1)">
+                  <svg class="icone" aria-hidden="true"><use href="icons/bootstrap-icons.svg#chevron-left" /></svg>
+                </button>
+                <span>Página {{ dados.pagina }} de {{ totalPaginas(dados) }}</span>
+                <button type="button" class="botao-icone" aria-label="Próxima página" title="Próxima página"
+                  [disabled]="dados.pagina * dados.tamanhoPagina >= dados.total || ocupado()"
+                  (click)="carregar(dados.pagina + 1)">
+                  <svg class="icone" aria-hidden="true"><use href="icons/bootstrap-icons.svg#chevron-right" /></svg>
+                </button>
+              </div>
+            </nav>
+          } @else {
+            <p class="estado">Nenhum pedido encontrado.</p>
+          }
+        }
+      }
+    </div>
+  }
+</section>

@@ -46,6 +46,8 @@ export class MainLayout {
     this.features.permiteRota(FEATURES.estoque)
   );
 
+  protected readonly mostrarCompras = computed(() => this.features.permiteRota(FEATURES.compras));
+
   constructor() {
     effect(() => {
       if (this.router.currentNavigation() || !this.auth.obterToken() || !this.features.prontas()) {

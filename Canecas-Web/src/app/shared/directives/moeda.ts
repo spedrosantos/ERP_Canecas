@@ -19,11 +19,8 @@ export class Moeda implements ControlValueAccessor {
   private readonly formato = new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',
-    maximumFractionDigits: 4,
-  });
-  private readonly formatoEdicao = new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   });
   private valor: number | null = null;
   private alterar: (valor: number | null) => void = () => {};
@@ -47,7 +44,6 @@ export class Moeda implements ControlValueAccessor {
   }
 
   protected editar(): void {
-    if (this.valor !== null) this.campo.value = this.formatoEdicao.format(this.valor);
     this.campo.select();
   }
 
