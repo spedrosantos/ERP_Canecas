@@ -86,6 +86,34 @@
         </details>
         }
 
+        @if (mostrarFinanceiro()) {
+        <details class="configuracoes" #financeiro>
+          <summary class="item-menu" title="Financeiro" (click)="expandirMenu($event, financeiro)">
+            <svg class="icone icone-item" aria-hidden="true">
+              <use href="icons/bootstrap-icons.svg#cash-stack" />
+            </svg>
+            <span class="rotulo-menu">Financeiro</span>
+          </summary>
+
+          <ul class="submenu">
+            <li>
+              <a routerLink="/financeiro/contas-a-pagar" routerLinkActive="item-ativo" ariaCurrentWhenActive="page"
+                (click)="menuMovelAberto.set(false)">
+                <svg class="icone icone-acao" aria-hidden="true"><use href="icons/bootstrap-icons.svg#dash-circle" /></svg>
+                Contas a Pagar
+              </a>
+            </li>
+            <li>
+              <a routerLink="/financeiro/contas-a-receber" routerLinkActive="item-ativo" ariaCurrentWhenActive="page"
+                (click)="menuMovelAberto.set(false)">
+                <svg class="icone icone-acao" aria-hidden="true"><use href="icons/bootstrap-icons.svg#plus-circle" /></svg>
+                Contas a Receber
+              </a>
+            </li>
+          </ul>
+        </details>
+        }
+
         @if (mostrarClientes() || mostrarFornecedores() || mostrarProdutos()) {
 
         <details class="configuracoes" #cadastros>

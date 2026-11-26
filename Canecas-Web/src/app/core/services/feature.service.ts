@@ -16,6 +16,7 @@ export const FEATURES = {
   produtos: 'PRODUTO',
   estoque: 'ESTOQUE',
   vendas: 'VENDA',
+  financeiro: 'FINANCEIRO',
   compras: 'COMPRA',
 } as const;
 

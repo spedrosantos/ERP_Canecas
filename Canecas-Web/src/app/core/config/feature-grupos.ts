@@ -7,6 +7,10 @@ export const FEATURE_GRUPOS = [
     ]
   },
   {
+    nome: 'Financeiro',
+    modulos: [{ codigo: 'FINANCEIRO', nome: 'Contas a Pagar e Receber' }]
+  },
+  {
     nome: 'Cadastros',
     modulos: [
       { codigo: 'CLIENTE', nome: 'Clientes' },

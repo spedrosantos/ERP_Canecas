@@ -1,0 +1,89 @@
+@use '../../shared/styles/cadastro';
+
+.lista, .detalhe, .indicadores {
+  margin-top: 1.25rem;
+}
+
+.detalhe {
+  padding: 1rem;
+
+  .cabecalho .acoes {
+    flex-wrap: wrap;
+  }
+}
+
+.resumo, .indicadores {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+  gap: 0.75rem;
+
+  dt { color: var(--secundario); }
+  dd { margin: 0.25rem 0 0; font-weight: 650; }
+}
+
+.indicadores .painel {
+  padding: 0.75rem 1rem;
+
+  dd { font-size: 1.125rem; }
+}
+
+.filtros { align-items: end; }
+.lista table { min-width: 53rem; }
+
+.valor {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.texto-longo { overflow-wrap: anywhere; }
+
+.situacao.parcial {
+  background: #fff3d6;
+  color: #784c05;
+}
+
+.paginacao {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--linha);
+}
+
+.campos {
+  display: grid;
+  gap: 0.875rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+
+  textarea {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--linha);
+    border-radius: 0.5rem;
+    color: inherit;
+    font: inherit;
+    resize: vertical;
+  }
+}
+
+.saldo-editor {
+  padding: 0.75rem;
+  background: var(--superficie);
+  border-radius: 0.5rem;
+  margin: 0;
+}
+
+.campo-valor {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.5rem;
+
+  label { flex: 1 1 9rem; }
+}

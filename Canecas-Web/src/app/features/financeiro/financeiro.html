@@ -1,0 +1,222 @@
+<section class="pagina" aria-labelledby="titulo-financeiro">
+  <header class="cabecalho">
+    <h1 id="titulo-financeiro">{{ tituloPagina }}</h1>
+  </header>
+
+  @if (detalhe(); as dados) {
+    <section class="painel detalhe" aria-labelledby="titulo-detalhe" [attr.aria-busy]="abrindo()">
+      <header class="cabecalho">
+        <h2 id="titulo-detalhe">Título #{{ dados.titulo.id }}</h2>
+        <div class="acoes">
+          <button type="button" [disabled]="abrindo()" (click)="voltar()">Voltar à lista</button>
+          @if (podeBaixar(dados.titulo)) {
+            <button class="primario" type="button" [disabled]="abrindo()" (click)="iniciarBaixa(editor)">
+              <svg class="icone icone-acao" aria-hidden="true"><use href="icons/bootstrap-icons.svg#plus-lg" /></svg>
+              {{ rotuloBaixa }}
+            </button>
+          }
+        </div>
+      </header>
+      @if (erroDetalhe()) {
+        <p class="erro" role="alert">{{ erroDetalhe() }}</p>
+        <button type="button" (click)="abrir(dados.titulo.id)">Atualizar detalhes</button>
+      }
+      <dl class="resumo">
+        <div><dt>{{ contraparte }}</dt><dd>{{ nome(dados.titulo) }}</dd></div>
+        <div><dt>Origem</dt><dd>{{ origem(dados.titulo) }}</dd></div>
+        <div><dt>Vencimento</dt><dd>{{ dados.titulo.vencimento | date:'dd/MM/yyyy' }}</dd></div>
+        <div><dt>Valor original</dt><dd>{{ dados.titulo.valor | currency:'BRL' }}</dd></div>
+        <div><dt>Valor baixado</dt><dd>{{ dados.titulo.valorBaixado | currency:'BRL' }}</dd></div>
+        <div><dt>Saldo</dt><dd>{{ dados.titulo.saldo | currency:'BRL' }}</dd></div>
+        <div>
+          <dt>Situação</dt>
+          <dd><span class="situacao" [class.ativa]="dados.titulo.situacao === 'QUITADO'"
+            [class.parcial]="dados.titulo.situacao === 'PARCIAL'"
+            [class.negativa]="dados.titulo.situacao === 'VENCIDO' || dados.titulo.situacao === 'CANCELADO'">
+            {{ situacoes[dados.titulo.situacao] }}
+          </span></dd>
+        </div>
+      </dl>
+
+      <h3>Histórico de baixas</h3>
+      <div class="rolagem" tabindex="0" role="region" aria-label="Histórico de baixas">
+        <table>
+          <thead><tr>
+            <th scope="col" class="codigo">Código</th><th scope="col">Data</th>
+            <th scope="col">Forma de pagamento</th><th scope="col" class="valor">Valor</th>
+            <th scope="col">Responsável</th><th scope="col">Detalhes</th>
+            <th scope="col" class="coluna-acoes">Ações</th>
+          </tr></thead>
+          <tbody>
+            @for (baixa of dados.baixas; track baixa.id) {
+              <tr>
+                <th scope="row" class="codigo">{{ baixa.id }}</th>
+                <td>{{ baixa.criadoEm | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td>{{ formas[baixa.formaPagamento] }}</td>
+                <td class="valor">{{ baixa.valor | currency:'BRL' }}</td>
+                <td>#{{ baixa.usuarioId }}</td>
+                <td>
+                  @if (baixa.observacao) { <div class="texto-longo">{{ baixa.observacao }}</div> }
+                  @if (baixa.estornadoEm) {
+                    <span class="situacao negativa">Estornado</span>
+                    <div>{{ baixa.estornadoEm | date:'dd/MM/yyyy HH:mm' }} · Usuário #{{ baixa.usuarioEstornoId }}</div>
+                    <div class="texto-longo">{{ baixa.motivoEstorno }}</div>
+                  } @else if (!baixa.observacao) { — }
+                </td>
+                <td class="coluna-acoes">
+                  @if (!baixa.estornadoEm) {
+                    <button type="button" class="botao-icone" title="Estornar baixa"
+                      [attr.aria-label]="'Estornar baixa ' + baixa.id" [disabled]="abrindo()"
+                      (click)="iniciarEstorno(editor, baixa)">
+                      <svg class="icone" aria-hidden="true"><use href="icons/bootstrap-icons.svg#arrow-clockwise" /></svg>
+                    </button>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="7" class="estado">Nenhuma baixa registrada.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <dialog #editor aria-labelledby="titulo-editor-financeiro" (cancel)="fechar(editor, $event)">
+        @if (acao(); as atual) {
+          <form (ngSubmit)="salvar(editor, dados.titulo)" novalidate>
+            <h2 id="titulo-editor-financeiro">{{ atual.tipo === 'baixa' ? rotuloBaixa : 'Estornar baixa' }}</h2>
+            <fieldset class="campos" [disabled]="salvando()">
+              @if (atual.tipo === 'baixa') {
+                <p class="saldo-editor">Saldo disponível: <strong>{{ dados.titulo.saldo | currency:'BRL' }}</strong></p>
+                <div class="campo-valor">
+                  <label>Valor
+                    <input type="text" name="valor" inputmode="numeric" appMoeda [(ngModel)]="formulario.valor" required />
+                  </label>
+                  <button type="button" (click)="formulario.valor = dados.titulo.saldo">Usar saldo total</button>
+                </div>
+                <label>Forma de pagamento
+                  <select name="formaPagamento" [(ngModel)]="formulario.formaPagamento" required>
+                    <option value="">Selecione</option>
+                    @for (forma of opcoesForma; track forma) {
+                      <option [value]="forma">{{ formas[forma] }}</option>
+                    }
+                  </select>
+                </label>
+                <label>Observação
+                  <textarea name="observacao" rows="2" maxlength="500" [(ngModel)]="formulario.observacao"></textarea>
+                </label>
+              } @else {
+                <p class="saldo-editor">Baixa #{{ atual.baixa.id }} · <strong>{{ atual.baixa.valor | currency:'BRL' }}</strong></p>
+                <label>Motivo do estorno
+                  <textarea name="motivo" rows="3" maxlength="500" [(ngModel)]="formulario.motivo" required></textarea>
+                </label>
+              }
+            </fieldset>
+            @if (erroAcao()) { <p class="erro" role="alert">{{ erroAcao() }}</p> }
+            <div class="acoes-modal">
+              <button type="button" [disabled]="salvando()" (click)="fechar(editor)">Cancelar</button>
+              <button class="primario" type="submit" [disabled]="salvando()">
+                {{ salvando() ? 'Salvando…' : atual.tipo === 'estorno' ? 'Confirmar estorno' : rotuloBaixa }}
+              </button>
+            </div>
+          </form>
+        }
+      </dialog>
+    </section>
+  } @else {
+    @if (indicadores(); as valores) {
+      <dl class="indicadores" aria-label="Indicadores dos títulos filtrados">
+        <div class="painel"><dt>Em aberto</dt><dd>{{ valores.aberto | currency:'BRL' }}</dd></div>
+        <div class="painel"><dt>Vencidos</dt><dd class="erro">{{ valores.vencido | currency:'BRL' }}</dd></div>
+        <div class="painel"><dt>Quitados</dt><dd>{{ valores.quitado | currency:'BRL' }}</dd></div>
+      </dl>
+    } @else if (lista() && !carregando()) {
+      <p class="erro" role="status">Não foi possível consultar os indicadores.</p>
+    }
+
+    <div class="painel lista" [attr.aria-busy]="carregando() || abrindo()">
+      <form class="filtros" (ngSubmit)="pesquisar()">
+        <label>Código do {{ pagar ? 'fornecedor' : 'cliente' }}
+          <input name="codigo" type="text" inputmode="numeric" maxlength="19" [(ngModel)]="filtro.codigo" />
+        </label>
+        <label>Situação
+          <select name="situacao" [(ngModel)]="filtro.situacao">
+            <option value="">Todas</option>
+            @for (situacao of opcoesSituacao; track situacao) {
+              <option [value]="situacao">{{ situacoes[situacao] }}</option>
+            }
+          </select>
+        </label>
+        <label>Vencimento inicial<input type="date" name="inicio" [(ngModel)]="filtro.inicio" /></label>
+        <label>Vencimento final<input type="date" name="fim" [(ngModel)]="filtro.fim" /></label>
+        <button type="submit">
+          <svg class="icone icone-acao" aria-hidden="true"><use href="icons/bootstrap-icons.svg#search" /></svg>
+          Pesquisar
+        </button>
+        <button type="button" (click)="limparFiltros()">Limpar</button>
+      </form>
+      @if (erroLista()) {
+        <p class="estado erro" role="alert">{{ erroLista() }}</p>
+        @if (!lista() && !carregando()) {
+          <div class="estado"><button type="button" (click)="carregar()">Tentar novamente</button></div>
+        }
+      }
+      @if (erroDetalhe()) { <p class="estado erro" role="alert">{{ erroDetalhe() }}</p> }
+      @if (carregando()) {
+        <p class="estado" role="status">Carregando títulos…</p>
+      } @else if (lista(); as resultados) {
+        <div class="rolagem" tabindex="0" role="region" [attr.aria-label]="tituloPagina">
+          <table>
+            <thead><tr>
+              <th scope="col" class="codigo">Código</th><th scope="col">{{ contraparte }}</th>
+              <th scope="col">Origem</th><th scope="col">Vencimento</th>
+              <th scope="col" class="valor">Valor original</th><th scope="col" class="valor">Valor baixado</th>
+              <th scope="col" class="valor">Saldo</th><th scope="col" class="coluna-situacao">Situação</th>
+              <th scope="col" class="coluna-acoes">Ações</th>
+            </tr></thead>
+            <tbody>
+              @for (titulo of resultados.itens; track titulo.id) {
+                <tr>
+                  <th scope="row" class="codigo">{{ titulo.id }}</th>
+                  <td>{{ nome(titulo) }}</td><td>{{ origem(titulo) }}</td>
+                  <td>{{ titulo.vencimento | date:'dd/MM/yyyy' }}</td>
+                  <td class="valor">{{ titulo.valor | currency:'BRL' }}</td>
+                  <td class="valor">{{ titulo.valorBaixado | currency:'BRL' }}</td>
+                  <td class="valor">{{ titulo.saldo | currency:'BRL' }}</td>
+                  <td class="coluna-situacao"><span class="situacao" [class.ativa]="titulo.situacao === 'QUITADO'"
+                    [class.parcial]="titulo.situacao === 'PARCIAL'"
+                    [class.negativa]="titulo.situacao === 'VENCIDO' || titulo.situacao === 'CANCELADO'">
+                    {{ situacoes[titulo.situacao] }}
+                  </span></td>
+                  <td class="coluna-acoes">
+                    <button type="button" class="botao-icone" title="Ver título" [disabled]="abrindo()"
+                      [attr.aria-label]="'Ver título #' + titulo.id" (click)="abrir(titulo.id)">
+                      <svg class="icone" aria-hidden="true"><use href="icons/bootstrap-icons.svg#eye" /></svg>
+                    </button>
+                  </td>
+                </tr>
+              } @empty {
+                <tr><td colspan="9" class="estado">Nenhum título encontrado.</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        @if (resultados.total) {
+          <nav class="paginacao" aria-label="Paginação de títulos">
+            <span>{{ resultados.total }} {{ resultados.total === 1 ? 'título' : 'títulos' }}</span>
+            <div class="acoes">
+              <button type="button" class="botao-icone" title="Página anterior" aria-label="Página anterior"
+                [disabled]="resultados.pagina <= 1" (click)="carregar(resultados.pagina - 1)">
+                <svg class="icone" aria-hidden="true"><use href="icons/bootstrap-icons.svg#chevron-left" /></svg>
+              </button>
+              <span>Página {{ resultados.pagina }} de {{ totalPaginas(resultados) }}</span>
+              <button type="button" class="botao-icone" title="Próxima página" aria-label="Próxima página"
+                [disabled]="resultados.pagina >= totalPaginas(resultados)" (click)="carregar(resultados.pagina + 1)">
+                <svg class="icone" aria-hidden="true"><use href="icons/bootstrap-icons.svg#chevron-right" /></svg>
+              </button>
+            </div>
+          </nav>
+        }
+      }
+    </div>
+  }
+</section>
