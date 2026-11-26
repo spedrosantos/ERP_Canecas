@@ -1,3 +1,5 @@
+using Financeiro;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -63,8 +65,9 @@ public class PedidosController(IPedidoService service) : ControllerBase
         ExecutarAsync(() => service.CancelarAsync(id, ct));
 
     [HttpPost("{id:long}/confirmar")]
-    public Task<ActionResult<PedidoDetalheResponseDTO>> Confirmar(long id, CancellationToken ct) =>
-        ExecutarAsync(() => service.ConfirmarAsync(id, ct));
+    public Task<ActionResult<PedidoDetalheResponseDTO>> Confirmar(
+        long id, [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] ConfirmarPedidoDTO? dto, CancellationToken ct) =>
+        ExecutarAsync(() => service.ConfirmarAsync(id, dto, ct));
 
     private async Task<ActionResult<PedidoDetalheResponseDTO>> ExecutarAsync(
         Func<Task<PedidoDetalheResponseDTO?>> executar, bool criado = false)
@@ -84,6 +87,10 @@ public class PedidosController(IPedidoService service) : ControllerBase
             return BadRequest(new { mensagem = ex.Message });
         }
         catch (PedidoSituacaoException ex)
+        {
+            return Conflict(new { mensagem = ex.Message });
+        }
+        catch (ConflitoFinanceiroException ex)
         {
             return Conflict(new { mensagem = ex.Message });
         }

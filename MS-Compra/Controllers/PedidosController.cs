@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -55,8 +56,9 @@ public class PedidosController(IPedidoService service) : ControllerBase
         ExecutarAsync(() => service.CancelarAsync(id, ct));
 
     [HttpPost("{id:long}/receber")]
-    public Task<ActionResult<PedidoDetalheResponseDTO>> Receber(long id, CancellationToken ct) =>
-        ExecutarAsync(() => service.ReceberAsync(id, ct));
+    public Task<ActionResult<PedidoDetalheResponseDTO>> Receber(
+        long id, [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] ReceberPedidoDTO? dto, CancellationToken ct) =>
+        ExecutarAsync(() => service.ReceberAsync(id, dto, ct));
 
     private async Task<ActionResult<PedidoDetalheResponseDTO>> ExecutarAsync(
         Func<Task<PedidoDetalheResponseDTO?>> executar, bool criado = false)

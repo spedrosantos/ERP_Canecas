@@ -1,3 +1,4 @@
+using Financeiro;
 using Microsoft.EntityFrameworkCore;
 using MS_Venda.Entities;
 
@@ -12,6 +13,7 @@ public class TenantDbContext(DbContextOptions<TenantDbContext> options)
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.ConfigurarFinanceiro();
 
         var pedido = modelBuilder.Entity<Pedido>();
         pedido.ToTable("pedidos", "vendas");
