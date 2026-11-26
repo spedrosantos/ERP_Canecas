@@ -64,13 +64,23 @@ public class MovimentacaoRepository(
     {
         await context.SaveChangesAsync(cancellationToken);
     }
-    public async Task<(List<MovimentacaoEstoque> Itens, long Total)> ListarAsync(
+    public async Task<(List<MovimentacaoResponseDTO> Itens, long Total)> ListarAsync(
     ListarMovimentacoesDTO filtro,
     CancellationToken cancellationToken = default)
     {
-        var consulta = context.Movimentacoes
-            .AsNoTracking()
-            .AsQueryable();
+        var consulta = context.Database.SqlQuery<MovimentacaoResponseDTO>($"""
+            SELECT m.id AS "Id", m.produto_id AS "ProdutoId",
+                m.tipo AS "Tipo", m.quantidade AS "Quantidade",
+                m.custo_unitario AS "CustoUnitario", m.origem AS "Origem",
+                m.referencia_id AS "ReferenciaId", m.movimentacao_original_id AS "MovimentacaoOriginalId",
+                m.usuario_id AS "UsuarioId", m.justificativa AS "Justificativa",
+                m.criado_em AS "CriadoEm", p.nome AS "NomeProduto", u.nome AS "NomeUsuario",
+                (SELECT e.id FROM estoque.movimentacoes e
+                 WHERE e.movimentacao_original_id = m.id ORDER BY e.id LIMIT 1) AS "EstornoId"
+            FROM estoque.movimentacoes m
+            LEFT JOIN cadastro.produtos p ON p.id = m.produto_id
+            LEFT JOIN identidade.usuarios u ON u.id = m.usuario_id
+            """);
 
         if (filtro.ProdutoId.HasValue)
             consulta = consulta.Where(x =>
@@ -114,7 +124,7 @@ public class MovimentacaoRepository(
             return ([], total);
 
         var itens = await consulta
-            .OrderByDescending(x => x.Id)
+            .OrderBy(x => x.Id)
             .Skip((int)deslocamento)
             .Take(filtro.TamanhoPagina)
             .ToListAsync(cancellationToken);

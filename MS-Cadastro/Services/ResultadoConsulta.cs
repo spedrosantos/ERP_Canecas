@@ -6,7 +6,9 @@ public enum SituacaoConsulta
     EntradaInvalida,
     NaoEncontrado,
     Indisponivel,
-    TempoLimite
+    TempoLimite,
+    LimiteDeConsultas
 }
 
-public record ResultadoConsulta<T>(SituacaoConsulta Situacao, T? Dados = null) where T : class;
+public record ResultadoConsulta<T>(
+    SituacaoConsulta Situacao, T? Dados = null, int? TentarAposSegundos = null) where T : class;

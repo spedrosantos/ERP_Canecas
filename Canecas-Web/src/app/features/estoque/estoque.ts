@@ -1,7 +1,12 @@
-import { Component, OnInit, inject, signal, computed, ElementRef, ViewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, DestroyRef, LOCALE_ID, OnInit, inject, signal, computed, ElementRef, ViewChild } from '@angular/core';
+import { Subscription } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { CommonModule, registerLocaleData } from '@angular/common';
+import localePt from '@angular/common/locales/pt';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Mascara } from '../../shared/directives/mascara';
 
+import { Moeda } from '../../shared/directives/moeda';
 import { EstoqueService } from './estoque.service';
 import {
   SaldoEstoque,
@@ -10,14 +15,19 @@ import {
   OrigemMovimentacao
 } from './estoque.model';
 
+registerLocaleData(localePt, 'pt-BR');
+
 @Component({
   selector: 'app-estoque',
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, Moeda, Mascara],
+  providers: [{ provide: LOCALE_ID, useValue: 'pt-BR' }],
   templateUrl: './estoque.html',
   styleUrl: './estoque.scss'
 })
 export class Estoque implements OnInit {
   private readonly service = inject(EstoqueService);
+  private readonly destroyRef = inject(DestroyRef);
+  private consulta?: Subscription;
   private readonly fb = inject(FormBuilder).nonNullable;
 
   readonly aba = signal<'saldos' | 'movimentacoes'>('saldos');
@@ -68,8 +78,8 @@ export class Estoque implements OnInit {
 
   readonly formularioAjuste = this.fb.group({
     tipo: ['ENTRADA' as TipoMovimentacao, Validators.required],
-    quantidade: [1, [Validators.required, Validators.min(0.001)]],
-    custoUnitario: [0, [Validators.min(0)]],
+    quantidade: [1, [Validators.required, Validators.min(0.001), Validators.max(999999999999.999)]],
+    custoUnitario: [0, [Validators.min(0), Validators.max(99999999999.9999)]],
     justificativa: ['', [
       Validators.required,
       Validators.maxLength(500)
@@ -81,7 +91,7 @@ export class Estoque implements OnInit {
     this.erroEditor.set('');
 
     this.formularioAjuste.reset({
-      tipo: 'ENTRADA',
+      tipo: saldo.produtoAtivo ? 'ENTRADA' : 'SAIDA',
       quantidade: 1,
       custoUnitario: saldo.custoMedio,
       justificativa: ''
@@ -110,10 +120,16 @@ export class Estoque implements OnInit {
 
     if (this.formularioAjuste.invalid) {
       this.formularioAjuste.markAllAsTouched();
+      this.erroEditor.set('Confira a quantidade, o custo e a justificativa.');
       return;
     }
 
     const valores = this.formularioAjuste.getRawValue();
+
+    if (valores.tipo === 'ENTRADA' && valores.custoUnitario == null) {
+      this.erroEditor.set('Informe o custo unitário da entrada.');
+      return;
+    }
 
     if (!valores.justificativa.trim()) {
       this.erroEditor.set('Informe a justificativa.');
@@ -131,7 +147,7 @@ export class Estoque implements OnInit {
         ? valores.custoUnitario
         : null,
       justificativa: valores.justificativa.trim()
-    }).subscribe({
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.salvando.set(false);
         this.fecharAjuste();
@@ -179,6 +195,7 @@ export class Estoque implements OnInit {
 
     if (this.formularioMinimo.invalid) {
       this.formularioMinimo.markAllAsTouched();
+      this.erroEditor.set('Informe um estoque mínimo válido.');
       return;
     }
 
@@ -191,7 +208,7 @@ export class Estoque implements OnInit {
     this.service.configurarMinimo(
       saldo.produtoId,
       estoqueMinimo
-    ).subscribe({
+    ).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.salvando.set(false);
         this.fecharMinimo();
@@ -267,7 +284,7 @@ export class Estoque implements OnInit {
     this.service.estornar(
       movimentacao.id,
       justificativa
-    ).subscribe({
+    ).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.salvando.set(false);
         this.fecharEstorno();
@@ -297,6 +314,7 @@ export class Estoque implements OnInit {
   }
 
   carregar(pagina = 1): void {
+    this.consulta?.unsubscribe();
     this.pagina.set(pagina);
     this.carregando.set(true);
     this.erro.set('');
@@ -311,17 +329,21 @@ export class Estoque implements OnInit {
   private carregarSaldos(): void {
     const filtro = this.filtrosSaldos.getRawValue();
 
-    this.service.listarSaldos({
+    this.consulta = this.service.listarSaldos({
       busca: filtro.busca.trim() || undefined,
       abaixoDoMinimo: filtro.abaixoDoMinimo === ''
         ? undefined
         : filtro.abaixoDoMinimo === 'true',
       pagina: this.pagina(),
       tamanhoPagina: this.tamanhoPagina
-    }).subscribe({
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: resposta => {
-        this.saldos.set(resposta.itens);
         this.total.set(resposta.total);
+        if (this.pagina() > this.ultimaPagina()) {
+          this.carregar(this.ultimaPagina());
+          return;
+        }
+        this.saldos.set(resposta.itens);
         this.carregando.set(false);
       },
       error: () => {
@@ -334,7 +356,7 @@ export class Estoque implements OnInit {
   private carregarMovimentacoes(): void {
     const filtro = this.filtrosMovimentacoes.getRawValue();
 
-    this.service.listarMovimentacoes({
+    this.consulta = this.service.listarMovimentacoes({
       produtoId: Number(filtro.produtoId) || undefined,
       tipo: (filtro.tipo as TipoMovimentacao) || undefined,
       origem: (filtro.origem as OrigemMovimentacao) || undefined,
@@ -342,7 +364,7 @@ export class Estoque implements OnInit {
       dataFim: filtro.dataFim || undefined,
       pagina: this.pagina(),
       tamanhoPagina: this.tamanhoPagina
-    }).subscribe({
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: resposta => {
         this.movimentacoes.set(resposta.itens);
         this.total.set(resposta.total);

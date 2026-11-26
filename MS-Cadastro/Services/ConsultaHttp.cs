@@ -11,6 +11,15 @@ internal static class ConsultaHttp
         try
         {
             using var resposta = await http.GetAsync(caminho, cancellationToken);
+            if (resposta.StatusCode == HttpStatusCode.TooManyRequests)
+            {
+                var retryAfter = resposta.Headers.RetryAfter;
+                var espera = retryAfter?.Delta ?? retryAfter?.Date - DateTimeOffset.UtcNow;
+                int? segundos = espera is { TotalSeconds: > 0 } prazo
+                    ? (int)Math.Min(int.MaxValue, Math.Ceiling(prazo.TotalSeconds))
+                    : null;
+                return new(SituacaoConsulta.LimiteDeConsultas, TentarAposSegundos: segundos);
+            }
             if (resposta.StatusCode == HttpStatusCode.NotFound)
                 return new(SituacaoConsulta.NaoEncontrado);
             if (resposta.StatusCode is HttpStatusCode.RequestTimeout or HttpStatusCode.GatewayTimeout)

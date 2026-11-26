@@ -5,7 +5,7 @@ namespace MS_Estoque.Repositories.Interfaces;
 
 public interface IMovimentacaoRepository
 {
-    Task<(List<MovimentacaoEstoque> Itens, long Total)> ListarAsync(
+    Task<(List<MovimentacaoResponseDTO> Itens, long Total)> ListarAsync(
         ListarMovimentacoesDTO filtro,
         CancellationToken cancellationToken = default);
 

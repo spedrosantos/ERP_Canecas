@@ -40,15 +40,13 @@
                     </td>
                     <td class="coluna-acoes">
                       <div class="acoes">
-                        <button type="button" (click)="editar(registro)">
-                          <svg class="icone icone-acao" aria-hidden="true"><use href="icons/bootstrap-icons.svg#pencil" /></svg>
-                          Editar
+                        <button class="botao-icone" type="button" (click)="editar(registro)" aria-label="Editar" title="Editar">
+                          <svg class="icone" aria-hidden="true"><use href="icons/bootstrap-icons.svg#pencil" /></svg>
                         </button>
-                        <button type="button" (click)="pedirConfirmacao(registro)">
-                          <svg class="icone icone-acao" aria-hidden="true">
+                        <button class="botao-icone" type="button" (click)="pedirConfirmacao(registro)" [attr.aria-label]="registro.ativo ? 'Inativar' : 'Ativar'" [title]="registro.ativo ? 'Inativar' : 'Ativar'">
+                          <svg class="icone" aria-hidden="true">
                             <use [attr.href]="'icons/bootstrap-icons.svg#' + (registro.ativo ? 'dash-circle' : 'plus-circle')" />
                           </svg>
-                          {{ registro.ativo ? 'Inativar' : 'Ativar' }}
                         </button>
                       </div>
                     </td>

@@ -7,6 +7,7 @@ export interface SaldoEstoque {
   produtoId: number;
   nomeProduto: string;
   unidadeMedida: string;
+  produtoAtivo: boolean;
   quantidade: number;
   estoqueMinimo: number;
   custoMedio: number;
@@ -23,6 +24,9 @@ export interface MovimentacaoEstoque {
   referenciaId: number | null;
   movimentacaoOriginalId: number | null;
   usuarioId: number;
+  nomeProduto: string | null;
+  nomeUsuario: string | null;
+  estornoId: number | null;
   justificativa: string | null;
   criadoEm: string;
 }

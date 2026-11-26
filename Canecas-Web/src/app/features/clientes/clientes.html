@@ -77,15 +77,13 @@
                 @if (podeGerenciar()) {
                   <td class="coluna-acoes">
                     <div class="acoes">
-                      <button type="button" (click)="abrirEditor(cliente)">
-                        <svg class="icone icone-acao" aria-hidden="true"><use href="icons/bootstrap-icons.svg#pencil" /></svg>
-                        Editar
+                      <button class="botao-icone" type="button" (click)="abrirEditor(cliente)" aria-label="Editar" title="Editar">
+                        <svg class="icone" aria-hidden="true"><use href="icons/bootstrap-icons.svg#pencil" /></svg>
                       </button>
-                      <button type="button" (click)="confirmarSituacao(cliente)">
-                        <svg class="icone icone-acao" aria-hidden="true">
+                      <button class="botao-icone" type="button" (click)="confirmarSituacao(cliente)" [attr.aria-label]="cliente.ativo ? 'Inativar' : 'Ativar'" [title]="cliente.ativo ? 'Inativar' : 'Ativar'">
+                        <svg class="icone" aria-hidden="true">
                           <use [attr.href]="'icons/bootstrap-icons.svg#' + (cliente.ativo ? 'dash-circle' : 'plus-circle')" />
                         </svg>
-                        {{ cliente.ativo ? 'Inativar' : 'Ativar' }}
                       </button>
                     </div>
                   </td>
@@ -154,14 +152,14 @@
         }
       </label>
       <label>Nome fantasia <input type="text" formControlName="nomeFantasia" maxlength="150" /></label>
-      <label>Telefone <input type="tel" formControlName="telefone" maxlength="20" /></label>
+      <label>Telefone <input type="tel" appMascara="telefone" autocomplete="tel" formControlName="telefone" /></label>
       <label>E-mail <input type="email" formControlName="email" maxlength="150" /></label>
 
       <h3 class="secao-campos">Endereço</h3>
       <div class="campo">
         <label for="cliente-cep">CEP</label>
         <div class="com-consulta">
-          <input id="cliente-cep" type="text" inputmode="numeric" formControlName="cep" maxlength="9"
+          <input id="cliente-cep" type="text" inputmode="numeric" appMascara="cep" autocomplete="postal-code" formControlName="cep"
             aria-describedby="erro-cep-cliente" />
           <button type="button" [disabled]="!!consultando()" (click)="consultar('cep')">
             <svg class="icone icone-acao" aria-hidden="true"><use href="icons/bootstrap-icons.svg#search" /></svg>

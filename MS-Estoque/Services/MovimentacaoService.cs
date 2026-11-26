@@ -33,13 +33,13 @@ public class MovimentacaoService(
             SELECT id AS "Value"
             FROM cadastro.produtos
             WHERE id = {dto.ProdutoId}
-              AND ativo = TRUE
+              AND (ativo OR {dto.Tipo} = 'SAIDA')
             FOR SHARE
             """).ToListAsync(cancellationToken);
 
         if (produtos.Count == 0)
             throw new ValidationException(
-                "Produto inexistente ou inativo.");
+                "Produto inexistente ou inativo. Produtos inativos permitem apenas saída.");
 
         var repository = new MovimentacaoRepository(context);
 
@@ -211,7 +211,7 @@ public class MovimentacaoService(
             filtro, cancellationToken);
 
         return new MovimentacoesPaginadasResponseDTO(
-            itens.Select(Mapear).ToList(),
+            itens,
             total,
             filtro.Pagina,
             filtro.TamanhoPagina

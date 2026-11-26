@@ -16,7 +16,7 @@ public class ConsultaCepService(HttpClient http) : IConsultaCepService
             http, $"ws/{normalizado}/json/", cancellationToken);
         var dados = resultado.Dados;
         if (dados is null)
-            return new(resultado.Situacao);
+            return new(resultado.Situacao, TentarAposSegundos: resultado.TentarAposSegundos);
 
         if (dados.Erro.ValueKind == JsonValueKind.True
             || (dados.Erro.ValueKind == JsonValueKind.String && dados.Erro.GetString() == "true"))

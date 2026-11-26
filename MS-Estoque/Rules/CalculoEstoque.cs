@@ -76,40 +76,8 @@ public static class CalculoEstoque
             throw new ValidationException(
                 "Tipo de movimentação inválido.");
 
-        if (original.Quantidade > saldo.Quantidade)
-            throw new ValidationException(
-                "Saldo insuficiente para realizar o estorno.");
-
-        var valorAtual = saldo.Quantidade * saldo.CustoMedio;
-
-        var valorEstorno =
-            original.Quantidade * original.CustoUnitario;
-
-        var novaQuantidade =
-            saldo.Quantidade - original.Quantidade;
-
-        var novoValor = valorAtual - valorEstorno;
-
-        if (novaQuantidade > 0 && novoValor < 0)
-            throw new ValidationException(
-                "O estorno resultaria em um custo de estoque negativo.");
-
-        saldo.Quantidade = novaQuantidade;
-
-        saldo.CustoMedio = novaQuantidade == 0
-            ? 0
-            : Math.Round(
-                novoValor / novaQuantidade,
-                4,
-                MidpointRounding.AwayFromZero);
-
-        if (saldo.CustoMedio > 99999999999.9999m)
-            throw new ValidationException(
-                "Limite de custo médio excedido.");
-
-        saldo.AtualizadoEm = DateTime.UtcNow;
-
-        return original.CustoUnitario;
+        // O estorno é uma saída na data atual, valorizada pelo custo médio vigente.
+        return RegistrarSaida(saldo, original.Quantidade);
     }
 
     private static void ValidarQuantidade(decimal quantidade)

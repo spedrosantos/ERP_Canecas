@@ -30,6 +30,8 @@ public static class IntegracoesHttp
         builder.ConfigureHttpClient(cliente =>
         {
             cliente.BaseAddress = endereco;
+            cliente.DefaultRequestHeaders.UserAgent.ParseAdd("CanecasERP/1.0");
+            cliente.DefaultRequestHeaders.Accept.ParseAdd("application/json");
             cliente.Timeout = TimeSpan.FromSeconds(timeout);
             cliente.MaxResponseContentBufferSize = 1024 * 1024;
         })

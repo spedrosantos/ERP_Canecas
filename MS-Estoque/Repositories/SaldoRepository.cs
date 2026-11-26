@@ -17,6 +17,7 @@ public class SaldoRepository(
                 p.id AS "ProdutoId",
                 p.nome AS "NomeProduto",
                 u.sigla AS "UnidadeMedida",
+                p.ativo AS "ProdutoAtivo",
                 COALESCE(s.quantidade, 0) AS "Quantidade",
                 COALESCE(s.estoque_minimo, 0) AS "EstoqueMinimo",
                 COALESCE(s.custo_medio, 0) AS "CustoMedio",

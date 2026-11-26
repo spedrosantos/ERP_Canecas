@@ -83,7 +83,10 @@ describe('Clientes', () => {
       .toBe('Fantasia consultada');
     confirmacao.querySelector<HTMLButtonElement>('button')!.click();
 
-    preencher('#cliente-cep', '01001-000');
+    preencher('#cliente-cep', '01001000');
+    expect(tela.querySelector<HTMLInputElement>('#cliente-cep')?.value).toBe('01001-000');
+    preencher('[formControlName="telefone"]', '11912345678');
+    expect(tela.querySelector<HTMLInputElement>('[formControlName="telefone"]')?.value).toBe('(11) 91234-5678');
     tela.querySelector<HTMLButtonElement>('.com-consulta button')!.click();
     http.expectOne('/api/consultas/cep?cep=01001000').flush(null, {
       status: 503, statusText: 'Service Unavailable',
@@ -93,7 +96,7 @@ describe('Clientes', () => {
     const cadastro = http.expectOne({ method: 'POST', url: '/api/clientes' });
     expect(cadastro.request.body).toMatchObject({
       tipoPessoa: 'J', nome: 'Nome manual', nomeFantasia: 'Fantasia consultada',
-      cpfCnpj: '12ABC34501DE35', cep: '01001000',
+      cpfCnpj: '12ABC34501DE35', cep: '01001000', telefone: '11912345678',
     });
     cadastro.flush({ id: 1, ...cadastro.request.body });
     listar().flush({ itens: [], total: 0, pagina: 1, tamanhoPagina: 20 });

@@ -17,7 +17,7 @@ public class ConsultaCnpjService(HttpClient http) : IConsultaCnpjService
             http, $"api/cnpj/v1/{normalizado}", cancellationToken);
         var dados = resultado.Dados;
         if (dados is null)
-            return new(resultado.Situacao);
+            return new(resultado.Situacao, TentarAposSegundos: resultado.TentarAposSegundos);
 
         if (!DocumentoFiscal.TentarNormalizarCnpj(dados.Cnpj, out var retornado)
             || retornado != normalizado || string.IsNullOrWhiteSpace(dados.RazaoSocial))

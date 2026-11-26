@@ -66,16 +66,15 @@
                 <td class="coluna-acoes">
                   <div class="acoes">
                     @if (podeEditar()) {
-                    <button type="button" (click)="abrirEditor(editor, usuario)">
-                      <svg class="icone icone-acao" aria-hidden="true"><use href="icons/bootstrap-icons.svg#pencil" /></svg>Editar
+                    <button class="botao-icone" type="button" (click)="abrirEditor(editor, usuario)" aria-label="Editar" title="Editar">
+                      <svg class="icone" aria-hidden="true"><use href="icons/bootstrap-icons.svg#pencil" /></svg>
                     </button>
-                    <button type="button" (click)="abrirConfirmacao(confirmacao, usuario)">
-                      <svg class="icone icone-acao" aria-hidden="true"><use [attr.href]="'icons/bootstrap-icons.svg#' + (usuario.ativo ? 'dash-circle' : 'plus-circle')" /></svg>
-                      {{ usuario.ativo ? 'Desativar' : 'Ativar' }}
+                    <button class="botao-icone" type="button" (click)="abrirConfirmacao(confirmacao, usuario)" [attr.aria-label]="usuario.ativo ? 'Desativar' : 'Ativar'" [title]="usuario.ativo ? 'Desativar' : 'Ativar'">
+                      <svg class="icone" aria-hidden="true"><use [attr.href]="'icons/bootstrap-icons.svg#' + (usuario.ativo ? 'dash-circle' : 'plus-circle')" /></svg>
                     </button>
                     } @else {
-                      <button type="button" (click)="abrirEditor(editor, usuario, true)">
-                        <svg class="icone icone-acao" aria-hidden="true"><use href="icons/bootstrap-icons.svg#key" /></svg>Alterar senha
+                      <button class="botao-icone" type="button" (click)="abrirEditor(editor, usuario, true)" aria-label="Alterar senha" title="Alterar senha">
+                        <svg class="icone" aria-hidden="true"><use href="icons/bootstrap-icons.svg#key" /></svg>
                       </button>
                     }
                   </div>
